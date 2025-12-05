@@ -7,7 +7,7 @@ export function renderSidebar() {
         <div class="sidebar-header">
             <div class="logo-area">
                 <i class="ph ph-scales" style="font-size: 24px; color: var(--accent);"></i>
-                <span class="app-title">LexManager AI</span>
+                <span class="app-title">Decrevi Advocatus</span>
             </div>
         </div>
         
