@@ -76,37 +76,44 @@ export function createCaseView(caseId) {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        let newCount = 0;
+        // alert("Iniciando subida de " + files.length + " archivos..."); // Debug
 
-        // Use global pdfjsLib from CDN
+        let newCount = 0;
         const pdfLib = window.pdfjsLib;
 
         for (const file of files) {
-            if (file.type === 'application/pdf') {
-                // Handle PDF: Split into pages
-                try {
+            try {
+                if (file.type === 'application/pdf') {
+                    // Handle PDF
+                    if (!pdfLib) throw new Error("Librería PDF no cargada");
                     await processPdfFile(caseId, file, pdfLib);
                     newCount++;
-                } catch (err) {
-                    console.error("Error processing PDF", err);
-                    alert("Error al procesar el PDF: " + err.message);
+                } else {
+                    // Handle Image
+                    // alert("Procesando imagen: " + file.name); // Debug
+                    const result = await addImageToCase(caseId, file);
+                    if (result) {
+                        newCount++;
+                    } else {
+                        alert("Error: No se pudo agregar la imagen " + file.name);
+                    }
                 }
-            } else {
-                // Handle Image
-                await addImageToCase(caseId, file);
-                newCount++;
+            } catch (err) {
+                console.error("Error en archivo " + file.name, err);
+                alert("Error subiendo " + file.name + ": " + err.message);
             }
         }
 
         if (newCount > 0) {
+            // alert("Subida completada. Refrescando..."); // Debug
             // Refresh view by reloading hash
-            // Refresh view by reloading hash
-            // Force a reload of the current view
             const currentHash = window.location.hash;
-            window.location.hash = ''; // Clear hash temporarily
+            window.location.hash = '';
             setTimeout(() => {
-                window.location.hash = currentHash; // Restore hash to trigger change
-            }, 10);
+                window.location.hash = currentHash;
+            }, 50); // Increased timeout slightly
+        } else {
+            alert("No se agregaron archivos. Revisa la consola.");
         }
     };
 

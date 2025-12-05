@@ -349,7 +349,10 @@ export async function addImageToCase(caseId, fileObj) {
                 console.log("Archivo subido a Firebase Storage:", fileUrl);
             } catch (e) {
                 console.error("Error subiendo archivo a Firebase:", e);
+                alert("Error de conexión al subir archivo: " + e.message + "\nSe guardará localmente.");
             }
+        } else {
+            console.warn("Storage no disponible, usando URL local");
         }
 
         const newImg = {
