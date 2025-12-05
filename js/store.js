@@ -348,12 +348,12 @@ export async function addImageToCase(caseId, fileObj) {
 
                 const uploadTask = fileRef.put(fileObj);
 
-                // Wait for upload with 15s timeout
+                // Wait for upload with 45s timeout
                 await new Promise((resolve, reject) => {
                     const timeoutId = setTimeout(() => {
                         uploadTask.cancel();
-                        reject(new Error("Tiempo de espera agotado (15s). Verifica tu conexión."));
-                    }, 15000);
+                        reject(new Error("La conexión es lenta (timeout 45s)."));
+                    }, 45000);
 
                     uploadTask.on('state_changed',
                         (snapshot) => {
@@ -375,7 +375,7 @@ export async function addImageToCase(caseId, fileObj) {
             } catch (e) {
                 console.error("Error subiendo archivo a Firebase:", e);
                 // Fallback to local URL if upload fails
-                alert("No se pudo subir a la nube: " + e.message + "\nSe guardará localmente.");
+                alert("Aviso: " + e.message + "\n\nLa imagen se guardó en tu teléfono, pero no se pudo sincronizar con la nube.");
             }
         } else {
             console.warn("Storage no disponible, usando URL local");
