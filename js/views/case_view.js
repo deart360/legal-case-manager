@@ -34,7 +34,7 @@ export function createCaseView(caseId) {
     const imagesHtml = `
         <div class="documents-grid">
             ${c.images.map(img => `
-                <div class="doc-card" onclick="openImageViewer('${img.id}', '${caseId}')">
+                <div class="doc-card" onclick="event.stopPropagation(); window.openImage('${caseId}', '${img.id}')">
                     <div class="doc-preview">
                         <img src="${img.url}" alt="${img.type}">
                         <div class="doc-overlay">
@@ -86,7 +86,7 @@ export function createCaseView(caseId) {
                 }
             } else {
                 // Handle Image
-                addImageToCase(caseId, file);
+                await addImageToCase(caseId, file);
                 newCount++;
             }
         }
@@ -97,15 +97,7 @@ export function createCaseView(caseId) {
         }
     };
 
-    // Inject global image viewer logic if not already present (lazy implementation)
-    if (!window.openImageViewer) {
-        window.openImageViewer = (imgUrl, imgType) => {
-            // This is handled by the image_viewer.js view, but for quick access:
-            window.location.hash = '#viewer';
-            // In a real app we'd pass data. For now, router handles #viewer by showing a demo.
-            // To make it real, we'd need to update the router or store state.
-        };
-    }
+
 
     return container;
 }
