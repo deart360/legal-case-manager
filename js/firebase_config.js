@@ -26,7 +26,10 @@ try {
 
     console.log("✅ Firebase conectado: " + firebaseConfig.projectId);
 
-});
+    console.log("✅ Firebase conectado: " + firebaseConfig.projectId);
+
+} catch (e) {
+    console.error("❌ Error inicializando Firebase:", e);
 }
 
 export function checkConnection() {
@@ -39,10 +42,6 @@ export function checkConnection() {
         statusInd.classList.add('connected');
         statusInd.title = "Conectado a Firebase";
     }
-}
-
-} catch (e) {
-    console.error("❌ Error inicializando Firebase:", e);
 }
 
 export { db, storage, analytics };
