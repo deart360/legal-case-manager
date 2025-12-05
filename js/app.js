@@ -49,15 +49,113 @@ window.promptAddSubject = (stateId) => {
     }
 };
 
-window.promptAddCase = (subjectId) => {
-    const title = prompt('Título del Asunto (ej. Juicio Sucesorio):');
-    if (!title) return;
-    const expediente = prompt('Número de Expediente (ej. 555/2024):');
-    if (!expediente) return;
-    const juzgado = prompt('Juzgado (ej. Juzgado 1 Civil):');
+// --- Modal Logic ---
 
-    import('./store.js').then(store => {
-        const newId = store.addCase(subjectId, title, expediente, juzgado || 'Sin asignar');
-        window.navigateTo(`#case/${newId}`);
-    });
+window.openCaseModal = async (subjectId, caseId = null) => {
+    const modal = document.getElementById('case-modal');
+    const form = document.getElementById('case-form');
+    const title = document.getElementById('case-modal-title');
+
+    // Reset form
+    form.reset();
+    document.getElementById('case-id').value = '';
+    document.getElementById('case-subject-id').value = subjectId || '';
+
+    if (caseId) {
+        // Edit Mode
+        title.innerText = 'Editar Expediente';
+        document.getElementById('case-id').value = caseId;
+
+        // Load data
+        const store = await import('./store.js');
+        const c = store.getCase(caseId);
+        if (c) {
+            document.getElementById('case-expediente').value = c.expediente || '';
+
+            // Parse Juzgado: "Juzgado 12 F.oral" -> Num: 12, Type: F.oral
+            const juzgadoMatch = (c.juzgado || '').match(/Juzgado\s+(\d+)\s*(.*)/);
+            if (juzgadoMatch) {
+                document.getElementById('case-juzgado-num').value = juzgadoMatch[1];
+                document.getElementById('case-juzgado-type').value = juzgadoMatch[2] || '';
+            } else {
+                // Fallback if format doesn't match
+                document.getElementById('case-juzgado-num').value = (c.juzgado || '').replace(/\D/g, '');
+                document.getElementById('case-juzgado-type').value = '';
+            }
+
+            document.getElementById('case-juicio').value = c.juicio || '';
+            document.getElementById('case-actor').value = c.actor || '';
+
+            if (c.demandado) {
+                document.getElementById('case-demandado').value = c.demandado;
+                document.getElementById('case-no-demandado').checked = false;
+                document.getElementById('case-demandado').disabled = false;
+            } else {
+                document.getElementById('case-no-demandado').checked = true;
+                document.getElementById('case-demandado').value = '';
+                document.getElementById('case-demandado').disabled = true;
+            }
+        }
+    } else {
+        // Add Mode
+        title.innerText = 'Nuevo Expediente';
+    }
+
+    modal.classList.remove('hidden');
+};
+
+window.closeCaseModal = () => {
+    document.getElementById('case-modal').classList.add('hidden');
+};
+
+window.toggleDemandado = (checkbox) => {
+    const input = document.getElementById('case-demandado');
+    if (checkbox.checked) {
+        input.value = '';
+        input.disabled = true;
+    } else {
+        input.disabled = false;
+    }
+};
+
+// Form Submission
+document.getElementById('case-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const caseId = document.getElementById('case-id').value;
+    const subjectId = document.getElementById('case-subject-id').value;
+
+    const juzgadoNum = document.getElementById('case-juzgado-num').value;
+    const juzgadoType = document.getElementById('case-juzgado-type').value;
+
+    const data = {
+        expediente: document.getElementById('case-expediente').value,
+        juzgado: `Juzgado ${juzgadoNum} ${juzgadoType}`.trim(), // Format: Juzgado 12 F.oral
+        juicio: document.getElementById('case-juicio').value,
+        actor: document.getElementById('case-actor').value,
+        demandado: document.getElementById('case-no-demandado').checked ? null : document.getElementById('case-demandado').value
+    };
+
+    const store = await import('./store.js');
+
+    if (caseId) {
+        // Update
+        await store.updateCase(caseId, data);
+    } else {
+        // Create
+        await store.addCase(subjectId, data);
+    }
+
+    window.closeCaseModal();
+
+    // Refresh
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+});
+
+window.confirmDeleteCase = async (caseId) => {
+    if (confirm('¿Estás seguro de que quieres eliminar este expediente? Esta acción no se puede deshacer.')) {
+        const store = await import('./store.js');
+        await store.deleteCase(caseId);
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
+    }
 };

@@ -246,13 +246,12 @@ export async function addSubject(stateId, name) {
     return null;
 }
 
-export async function addCase(subjectId, title, expediente, juzgado) {
+export async function addCase(subjectId, caseData) {
     const newId = `exp-${Date.now()}`;
     const newCase = {
         id: newId,
-        title,
-        expediente,
-        juzgado,
+        title: `${caseData.actor} vs ${caseData.demandado || 'N/A'}`, // Auto-generate title
+        ...caseData,
         status: 'Nuevo',
         lastUpdate: new Date().toISOString().split('T')[0],
         images: [],
@@ -280,6 +279,55 @@ export async function addCase(subjectId, title, expediente, juzgado) {
     }
 
     return newId;
+}
+
+export async function updateCase(caseId, updatedData) {
+    const c = appData.cases[caseId];
+    if (!c) return false;
+
+    // Merge data
+    Object.assign(c, updatedData);
+
+    // Update title if actor/demandado changed
+    if (updatedData.actor || updatedData.demandado) {
+        c.title = `${c.actor || updatedData.actor} vs ${c.demandado || updatedData.demandado || 'N/A'}`;
+    }
+
+    // Firebase Update
+    if (db) {
+        try {
+            await db.collection('cases').doc(caseId).update(updatedData);
+        } catch (e) {
+            console.error("Error actualizando en Firebase:", e);
+        }
+    }
+    return true;
+}
+
+export async function deleteCase(caseId) {
+    // Remove from cases map
+    delete appData.cases[caseId];
+
+    // Remove reference from subjects
+    for (const state of appData.states) {
+        for (const subject of state.subjects) {
+            const idx = subject.cases.indexOf(caseId);
+            if (idx !== -1) {
+                subject.cases.splice(idx, 1);
+                break;
+            }
+        }
+    }
+
+    // Firebase Delete
+    if (db) {
+        try {
+            await db.collection('cases').doc(caseId).delete();
+        } catch (e) {
+            console.error("Error borrando en Firebase:", e);
+        }
+    }
+    return true;
 }
 
 export async function addImageToCase(caseId, fileObj) {

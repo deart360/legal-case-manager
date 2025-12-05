@@ -49,7 +49,68 @@
         <!-- Sidebar will be injected here -->
         <aside id="sidebar" class="sidebar"></aside>
 
-        <!-- Main Content Area -->
+        <!-- Case Modal (Add/Edit) -->
+        <div id="case-modal" class="modal hidden">
+            <div class="modal-content glass-card p-6" style="max-width: 500px; width: 90%;">
+                <div class="modal-header mb-4 flex justify-between items-center">
+                    <h3 class="h3" id="case-modal-title">Nuevo Expediente</h3>
+                    <button class="btn-icon-sm" onclick="closeCaseModal()"><i class="ph ph-x"></i></button>
+                </div>
+                <form id="case-form" class="flex flex-col gap-4">
+                    <input type="hidden" id="case-id">
+                    <input type="hidden" id="case-subject-id">
+
+                    <div class="form-group">
+                        <label class="text-sm text-muted">No. Expediente</label>
+                        <input type="text" id="case-expediente" class="input-field" placeholder="Ej. 123/2025" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="text-sm text-muted">Juzgado</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="case-juzgado-num" class="input-field flex-1"
+                                placeholder="Número (Ej. 12)" required>
+                            <select id="case-juzgado-type" class="input-field" style="width: 140px;">
+                                <option value="">Tipo...</option>
+                                <option value="F">F (Familiar)</option>
+                                <option value="C">C (Civil)</option>
+                                <option value="F.oral">F.oral</option>
+                                <option value="C.oral">C.oral</option>
+                                <option value="P">P (Penal)</option>
+                                <option value="L">L (Laboral)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="text-sm text-muted">Juicio</label>
+                        <input type="text" id="case-juicio" class="input-field" placeholder="Ej. Divorcio Incausado"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="text-sm text-muted">Actor</label>
+                        <input type="text" id="case-actor" class="input-field" placeholder="Nombre del Actor" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="text-sm text-muted">Demandado</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="case-demandado" class="input-field flex-1"
+                                placeholder="Nombre del Demandado">
+                            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                                <input type="checkbox" id="case-no-demandado" onchange="toggleDemandado(this)">
+                                No tiene
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary w-full mt-2">Guardar Expediente</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Infographic Modal -->
         <main id="main-content" class="main-content">
             <header id="top-bar" class="top-bar">
                 <!-- Dynamic Header Content -->

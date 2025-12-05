@@ -49,7 +49,7 @@ export function createFolderView(folderId) {
         `;
     } else if (folderType === 'subject') {
         const addCaseBtn = `
-            <button class="btn-primary mb-4" onclick="window.promptAddCase('${data.id}')">
+            <button class="btn-primary mb-4" onclick="window.openCaseModal('${data.id}')">
                 <i class="ph ph-plus"></i> Nuevo Expediente
             </button>
         `;
@@ -67,17 +67,27 @@ export function createFolderView(folderId) {
                     ${data.cases.map(caseId => {
                 const c = getCase(caseId);
                 return `
-                            <div class="case-item card" onclick="window.navigateTo('#case/${caseId}')">
-                                <div class="case-icon"><i class="ph ph-file-text"></i></div>
-                                <div class="case-details">
-                                    <div class="case-title">${c.title}</div>
-                                    <div class="case-meta">
-                                        <span class="badge">${c.expediente}</span>
-                                        <span>${c.juzgado}</span>
-                                        <span class="status ${c.status.toLowerCase()}">${c.status}</span>
+                            <div class="case-item card relative group">
+                                <div class="case-content flex-1" onclick="window.navigateTo('#case/${caseId}')">
+                                    <div class="case-icon"><i class="ph ph-file-text"></i></div>
+                                    <div class="case-details">
+                                        <div class="case-title">${c.title}</div>
+                                        <div class="case-meta">
+                                            <span class="badge">${c.expediente}</span>
+                                            <span>Juzgado ${c.juzgado}</span>
+                                            <span class="status ${c.status.toLowerCase()}">${c.status}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="case-arrow"><i class="ph ph-caret-right"></i></div>
+                                <div class="case-actions-hover absolute right-4 top-4 hidden group-hover:flex gap-2">
+                                    <button class="btn-icon-sm bg-glass" onclick="event.stopPropagation(); window.openCaseModal('${data.id}', '${caseId}')" title="Editar">
+                                        <i class="ph ph-pencil"></i>
+                                    </button>
+                                    <button class="btn-icon-sm bg-glass text-danger" onclick="event.stopPropagation(); window.confirmDeleteCase('${caseId}')" title="Eliminar">
+                                        <i class="ph ph-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="case-arrow" onclick="window.navigateTo('#case/${caseId}')"><i class="ph ph-caret-right"></i></div>
                             </div>
                         `;
             }).join('')}
