@@ -43,7 +43,7 @@ export function renderSidebar() {
                                             </a>
                                         ` : '';
     }).join('')}
-                                     <div class="nav-item add-case" onclick="window.promptAddCase('${subject.id}')">
+                                     <div class="nav-item add-case" onclick="window.openCaseModal('${subject.id}')">
                                         <i class="ph ph-plus-circle"></i>
                                         <span>Nuevo Asunto</span>
                                     </div>

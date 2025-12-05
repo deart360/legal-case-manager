@@ -1,4 +1,3 @@
-```javascript
 import { getCase, addImageToCase } from '../store.js';
 
 export function createCaseView(caseId) {
@@ -43,8 +42,7 @@ export function createCaseView(caseId) {
         // Image Grid
         const imagesHtml = `
     < div class="documents-grid" >
-        ${
-            c.images.map(img => `
+        ${c.images.map(img => `
                     <div class="doc-card" onclick="event.stopPropagation(); window.openImage('${caseId}', '${img.id}')">
                         <div class="doc-preview">
                             <img src="${img.url}" alt="${img.type}">
@@ -62,7 +60,7 @@ export function createCaseView(caseId) {
                         </div>
                     </div>
                 `).join('')
-}
+            }
                 
                 < !--Upload Placeholder-- >
     <div class="doc-card upload-card" onclick="document.getElementById('file-upload').click()">
@@ -151,7 +149,7 @@ async function processPdfFile(caseId, file, pdfLib) {
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
 
         // Add metadata
-        blob.name = `${ file.name } - Pág ${ i } `;
+        blob.name = `${file.name} - Pág ${i} `;
 
         // We need to pass the name explicitly or modify store to read it
         // For now, let's rely on store modification in next step or current behavior
