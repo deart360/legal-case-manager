@@ -331,7 +331,7 @@ export async function deleteCase(caseId) {
 }
 
 export async function addImageToCase(caseId, fileObj) {
-    alert("Store: Buscando caso " + caseId); // Debug
+    // alert("Store: Buscando caso " + caseId); // Removed Debug
     const c = appData.cases[caseId];
     if (c) {
         const name = fileObj.name || 'Documento';
@@ -343,38 +343,42 @@ export async function addImageToCase(caseId, fileObj) {
         // Firebase Storage Upload
         if (storage) {
             try {
-                alert("Store: Iniciando subida a Firebase..."); // Debug
                 const storageRef = storage.ref();
                 const fileRef = storageRef.child(`cases/${caseId}/${fileObj.name}-${Date.now()}`);
 
-                // Add a timeout to the upload to prevent hanging
                 const uploadTask = fileRef.put(fileObj);
 
-                // Wait for upload
+                // Wait for upload with 15s timeout
                 await new Promise((resolve, reject) => {
+                    const timeoutId = setTimeout(() => {
+                        uploadTask.cancel();
+                        reject(new Error("Tiempo de espera agotado (15s). Verifica tu conexión."));
+                    }, 15000);
+
                     uploadTask.on('state_changed',
                         (snapshot) => {
                             // Progress
                         },
                         (error) => {
+                            clearTimeout(timeoutId);
                             reject(error);
                         },
                         () => {
+                            clearTimeout(timeoutId);
                             resolve();
                         }
                     );
                 });
 
                 fileUrl = await fileRef.getDownloadURL();
-                alert("Store: Subida completada. URL: " + fileUrl); // Debug
                 console.log("Archivo subido a Firebase Storage:", fileUrl);
             } catch (e) {
                 console.error("Error subiendo archivo a Firebase:", e);
-                alert("Error subiendo a nube: " + e.message + "\nUsando modo local.");
+                // Fallback to local URL if upload fails
+                alert("No se pudo subir a la nube: " + e.message + "\nSe guardará localmente.");
             }
         } else {
             console.warn("Storage no disponible, usando URL local");
-            alert("Aviso: Nube no conectada. Se guardará solo en este dispositivo.");
         }
 
         const newImg = {
@@ -397,7 +401,7 @@ export async function addImageToCase(caseId, fileObj) {
                     images: firebase.firestore.FieldValue.arrayUnion(newImg),
                     lastUpdate: c.lastUpdate
                 });
-                alert("Store: Base de datos actualizada."); // Debug
+                // alert("Store: Base de datos actualizada."); // Removed Debug
             } catch (e) {
                 console.error("Error actualizando caso en Firebase:", e);
                 alert("Error guardando datos: " + e.message);

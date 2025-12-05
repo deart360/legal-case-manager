@@ -94,7 +94,7 @@ export function createCaseView(caseId) {
             uploadBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Procesando...';
             uploadBtn.disabled = true;
 
-            alert("Detectados " + files.length + " archivos. Iniciando proceso..."); // Active Debug
+            // alert("Detectados " + files.length + " archivos. Iniciando proceso..."); // Removed Debug
 
             let newCount = 0;
             const pdfLib = window.pdfjsLib;
@@ -108,17 +108,16 @@ export function createCaseView(caseId) {
                         newCount++;
                     } else {
                         // Handle Image
-                        // alert("Procesando imagen: " + file.name); // Debug
                         const result = await addImageToCase(caseId, file);
                         if (result) {
                             newCount++;
                         } else {
-                            alert("Error: No se pudo agregar la imagen " + file.name);
+                            console.error("Error agregando imagen:", file.name);
                         }
                     }
                 } catch (err) {
                     console.error("Error en archivo " + file.name, err);
-                    alert("Error subiendo " + file.name + ": " + err.message);
+                    alert("Error procesando " + file.name + ": " + err.message);
                 }
             }
 
@@ -127,11 +126,11 @@ export function createCaseView(caseId) {
             uploadBtn.disabled = false;
 
             if (newCount > 0) {
-                alert("Subida exitosa. Actualizando pantalla..."); // Active Debug
                 // Re-render in place
                 render();
             } else {
-                alert("No se agregaron archivos. Revisa la consola.");
+                // Only alert if absolutely nothing happened
+                // alert("No se agregaron archivos. Revisa la consola.");
             }
         };
     };
