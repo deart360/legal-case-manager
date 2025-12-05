@@ -331,6 +331,7 @@ export async function deleteCase(caseId) {
 }
 
 export async function addImageToCase(caseId, fileObj) {
+    // alert("Store: Buscando caso " + caseId); // Debug
     const c = appData.cases[caseId];
     if (c) {
         const name = fileObj.name || 'Documento';
@@ -342,17 +343,38 @@ export async function addImageToCase(caseId, fileObj) {
         // Firebase Storage Upload
         if (storage) {
             try {
+                // alert("Store: Iniciando subida a Firebase..."); // Debug
                 const storageRef = storage.ref();
                 const fileRef = storageRef.child(`cases/${caseId}/${fileObj.name}-${Date.now()}`);
-                await fileRef.put(fileObj);
+
+                // Add a timeout to the upload to prevent hanging
+                const uploadTask = fileRef.put(fileObj);
+
+                // Wait for upload
+                await new Promise((resolve, reject) => {
+                    uploadTask.on('state_changed',
+                        (snapshot) => {
+                            // Progress
+                        },
+                        (error) => {
+                            reject(error);
+                        },
+                        () => {
+                            resolve();
+                        }
+                    );
+                });
+
                 fileUrl = await fileRef.getDownloadURL();
+                // alert("Store: Subida completada. URL: " + fileUrl); // Debug
                 console.log("Archivo subido a Firebase Storage:", fileUrl);
             } catch (e) {
                 console.error("Error subiendo archivo a Firebase:", e);
-                alert("Error de conexión al subir archivo: " + e.message + "\nSe guardará localmente.");
+                alert("Error subiendo a nube: " + e.message + "\nUsando modo local.");
             }
         } else {
             console.warn("Storage no disponible, usando URL local");
+            alert("Aviso: Nube no conectada. Se guardará solo en este dispositivo.");
         }
 
         const newImg = {
@@ -375,12 +397,16 @@ export async function addImageToCase(caseId, fileObj) {
                     images: firebase.firestore.FieldValue.arrayUnion(newImg),
                     lastUpdate: c.lastUpdate
                 });
+                // alert("Store: Base de datos actualizada."); // Debug
             } catch (e) {
                 console.error("Error actualizando caso en Firebase:", e);
+                alert("Error guardando datos: " + e.message);
             }
         }
 
         return newImg;
+    } else {
+        alert("Error crítico: No se encontró el caso en memoria local.");
     }
     return null;
 }
