@@ -49,6 +49,11 @@ export function createCaseView(caseId) {
                             <div class="doc-overlay">
                                 <i class="ph ph-magnifying-glass-plus"></i>
                             </div>
+                            <button class="btn-icon-xs bg-glass text-danger absolute top-2 right-2" 
+                                    onclick="event.stopPropagation(); window.confirmDeleteImage('${caseId}', '${img.id}')"
+                                    title="Eliminar documento">
+                                <i class="ph ph-trash"></i>
+                            </button>
                         </div>
                         <div class="doc-info">
                             <span class="doc-type">${img.type}</span>
@@ -135,8 +140,21 @@ export function createCaseView(caseId) {
         };
     };
 
+    // Listen for AI updates
+    const aiUpdateHandler = (e) => {
+        if (e.detail.caseId === caseId) {
+            // alert("AI Finalizó análisis. Actualizando..."); // Optional feedback
+            render();
+        }
+    };
+    window.addEventListener('case-updated', aiUpdateHandler);
+
     // Initial render
     render();
+
+    // Cleanup listener when view is removed (simple approximation)
+    // In a full framework we'd use a proper lifecycle hook.
+    // For now, we rely on the fact that the container will be removed.
 
     return container;
 }

@@ -421,9 +421,88 @@ export async function addImageToCase(caseId, fileObj) {
             }
         }
 
+        // Trigger Mock AI Analysis
+        mockAnalyzeImage(caseId, newImg.id);
+
         return newImg;
     } else {
         alert("Error crítico: No se encontró el caso en memoria local.");
     }
     return null;
+}
+
+// Mock AI Analysis Service
+async function mockAnalyzeImage(caseId, imgId) {
+    console.log(`Iniciando análisis AI para imagen ${imgId}...`);
+
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, 2500));
+
+    const c = appData.cases[caseId];
+    if (!c) return;
+
+    const img = c.images.find(i => i.id === imgId);
+    if (!img) return;
+
+    // Generate mock insights based on file type/name (randomized for demo)
+    const isDeadline = Math.random() > 0.3; // 70% chance of finding a deadline
+    const days = Math.floor(Math.random() * 10) + 3;
+
+    const updates = {
+        summary: `Documento analizado por IA. Se identifica como ${img.type}. Contenido relevante extraído.`,
+        nextAction: isDeadline ? 'Atender vencimiento de término' : 'Revisar contenido y archivar',
+        deadline: isDeadline ? getRelativeDate(days) : null
+    };
+
+    // Apply updates locally
+    Object.assign(img, updates);
+
+    // Update Firebase
+    if (db) {
+        try {
+            // Note: Updating a single item in an array in Firestore is hard.
+            // We typically replace the whole array or use a subcollection.
+            // For this demo, we'll replace the whole images array.
+            await db.collection('cases').doc(caseId).update({
+                images: c.images
+            });
+            console.log("AI Analysis updated in Firebase");
+
+            // Notify UI to refresh if possible (using a custom event)
+            window.dispatchEvent(new CustomEvent('case-updated', { detail: { caseId } }));
+
+        } catch (e) {
+            console.error("Error updating AI analysis:", e);
+        }
+    }
+}
+
+export async function deleteImageFromCase(caseId, imgId) {
+    const c = appData.cases[caseId];
+    if (!c) return false;
+
+    const imgIndex = c.images.findIndex(i => i.id === imgId);
+    if (imgIndex === -1) return false;
+
+    const img = c.images[imgIndex];
+
+    // Remove locally
+    c.images.splice(imgIndex, 1);
+
+    // Update Firebase
+    if (db) {
+        try {
+            await db.collection('cases').doc(caseId).update({
+                images: firebase.firestore.FieldValue.arrayRemove(img)
+            });
+        } catch (e) {
+            console.error("Error eliminando imagen de Firebase:", e);
+            // Fallback: update entire array
+            await db.collection('cases').doc(caseId).update({
+                images: c.images
+            });
+        }
+    }
+
+    return true;
 }

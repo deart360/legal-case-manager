@@ -153,9 +153,30 @@ document.getElementById('case-form').addEventListener('submit', async (e) => {
 });
 
 window.confirmDeleteCase = async (caseId) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este expediente? Esta acción no se puede deshacer.')) {
+    if (confirm('¿Estás seguro de eliminar este expediente? Esta acción no se puede deshacer.')) {
         const store = await import('./store.js');
-        await store.deleteCase(caseId);
-        window.dispatchEvent(new HashChangeEvent('hashchange'));
+        const result = await store.deleteCase(caseId);
+        if (result) {
+            window.location.hash = '#dashboard';
+        } else {
+            alert('Error al eliminar el expediente');
+        }
+    }
+};
+
+window.confirmDeleteImage = async (caseId, imgId) => {
+    if (confirm('¿Eliminar este documento del expediente?')) {
+        const { deleteImageFromCase } = await import('./store.js');
+        const result = await deleteImageFromCase(caseId, imgId);
+        if (result) {
+            // Force refresh of current view
+            const currentHash = window.location.hash;
+            window.location.hash = '';
+            setTimeout(() => {
+                window.location.hash = currentHash;
+            }, 10);
+        } else {
+            alert('Error al eliminar la imagen');
+        }
     }
 };
