@@ -61,7 +61,7 @@ export function renderSidebar() {
                 <div class="user-info">
                     <span class="name">Diego Amador</span>
                     <span class="name">Diego Amador</span>
-                    <span class="role">Abogado Titular</span>
+                    <span class="role">Abogado</span>
                 </div>
                 <div id="firebase-status-indicator" class="status-indicator-sidebar" title="Estado de conexión"></div>
             </div>
