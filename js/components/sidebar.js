@@ -69,4 +69,9 @@ export function renderSidebar() {
     `;
 
     sidebar.innerHTML = html;
+
+    // Check connection status after rendering
+    import('../firebase_config.js').then(fb => {
+        if (fb.checkConnection) fb.checkConnection();
+    });
 }

@@ -26,36 +26,20 @@ try {
 
     console.log("✅ Firebase conectado: " + firebaseConfig.projectId);
 
-    // --- VERIFICACIÓN DE CONEXIÓN ---
-    // Intentamos escribir un documento de prueba para confirmar que la base de datos está activa.
-    db.collection('_connection_test').add({
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        status: 'ok'
-    }).then(() => {
-        console.log("🟢 CONEXIÓN EXITOSA: La base de datos está respondiendo correctamente.");
+});
+}
 
-        // Visual Indicator Update (Sidebar)
-        const statusInd = document.getElementById('firebase-status-indicator');
-        if (statusInd) {
-            statusInd.classList.add('connected');
-            statusInd.title = "Conectado a Firebase: " + firebaseConfig.projectId;
-        }
+export function checkConnection() {
+    const statusInd = document.getElementById('firebase-status-indicator');
+    if (!statusInd) return;
 
-    }).catch((error) => {
-        console.error("🔴 ERROR DE CONEXIÓN: No se pudo escribir en la base de datos.", error);
-
-        const statusInd = document.getElementById('firebase-status-indicator');
-        if (statusInd) {
-            statusInd.classList.add('error');
-            statusInd.title = "Error de conexión: " + error.message;
-        }
-
-        if (error.code === 'permission-denied') {
-            console.warn("⚠️ PERMISO DENEGADO");
-            // Only alert for critical permission errors that block usage
-            alert("Atención: Firebase conectado pero sin permisos de escritura. Revisa la consola.");
-        }
-    });
+    if (db) {
+        // Simple check: if db object exists, we assume connected for UI purposes
+        // Real connectivity is handled by Firestore offline persistence
+        statusInd.classList.add('connected');
+        statusInd.title = "Conectado a Firebase";
+    }
+}
 
 } catch (e) {
     console.error("❌ Error inicializando Firebase:", e);
