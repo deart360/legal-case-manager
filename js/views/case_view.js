@@ -8,12 +8,12 @@ export function createCaseView(caseId) {
     const render = () => {
         const c = getCase(caseId);
         if (!c) {
-            container.innerHTML = `< h2 > Expediente no encontrado</h2 > `;
+            container.innerHTML = `<h2>Expediente no encontrado</h2>`;
             return;
         }
 
         const header = `
-    < div class="case-header mb-6" >
+            <div class="case-header mb-6">
                 <div class="breadcrumb text-sm text-muted mb-2">
                     <span onclick="window.history.back()" style="cursor:pointer"> Atrás </span> / ${c.expediente}
                 </div>
@@ -36,13 +36,13 @@ export function createCaseView(caseId) {
                         </button>
                     </div>
                 </div>
-            </div >
-    `;
+            </div>
+        `;
 
         // Image Grid
         const imagesHtml = `
-    < div class="documents-grid" >
-        ${c.images.map(img => `
+            <div class="documents-grid">
+                ${c.images.map(img => `
                     <div class="doc-card" onclick="event.stopPropagation(); window.openImage('${caseId}', '${img.id}')">
                         <div class="doc-preview">
                             <img src="${img.url}" alt="${img.type}">
@@ -59,16 +59,15 @@ export function createCaseView(caseId) {
                             <span class="text-xs text-muted truncate">${img.nextAction}</span>
                         </div>
                     </div>
-                `).join('')
-            }
+                `).join('')}
                 
-                < !--Upload Placeholder-- >
-    <div class="doc-card upload-card" onclick="document.getElementById('file-upload').click()">
-        <i class="ph ph-plus"></i>
-        <span>Anexar Foto</span>
-    </div>
-            </div >
-    `;
+                <!-- Upload Placeholder -->
+                <div class="doc-card upload-card" onclick="document.getElementById('file-upload').click()">
+                    <i class="ph ph-plus"></i>
+                    <span>Anexar Foto</span>
+                </div>
+            </div>
+        `;
 
         container.innerHTML = header + imagesHtml;
 
