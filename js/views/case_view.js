@@ -89,6 +89,11 @@ export function createCaseView(caseId) {
             const files = Array.from(e.target.files);
             if (files.length === 0) return;
 
+            // UI Feedback
+            const originalText = uploadBtn.innerHTML;
+            uploadBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Procesando...';
+            uploadBtn.disabled = true;
+
             alert("Detectados " + files.length + " archivos. Iniciando proceso..."); // Active Debug
 
             let newCount = 0;
@@ -116,6 +121,10 @@ export function createCaseView(caseId) {
                     alert("Error subiendo " + file.name + ": " + err.message);
                 }
             }
+
+            // Restore UI
+            uploadBtn.innerHTML = originalText;
+            uploadBtn.disabled = false;
 
             if (newCount > 0) {
                 alert("Subida exitosa. Actualizando pantalla..."); // Active Debug

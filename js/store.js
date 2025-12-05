@@ -331,7 +331,7 @@ export async function deleteCase(caseId) {
 }
 
 export async function addImageToCase(caseId, fileObj) {
-    // alert("Store: Buscando caso " + caseId); // Debug
+    alert("Store: Buscando caso " + caseId); // Debug
     const c = appData.cases[caseId];
     if (c) {
         const name = fileObj.name || 'Documento';
@@ -343,7 +343,7 @@ export async function addImageToCase(caseId, fileObj) {
         // Firebase Storage Upload
         if (storage) {
             try {
-                // alert("Store: Iniciando subida a Firebase..."); // Debug
+                alert("Store: Iniciando subida a Firebase..."); // Debug
                 const storageRef = storage.ref();
                 const fileRef = storageRef.child(`cases/${caseId}/${fileObj.name}-${Date.now()}`);
 
@@ -366,7 +366,7 @@ export async function addImageToCase(caseId, fileObj) {
                 });
 
                 fileUrl = await fileRef.getDownloadURL();
-                // alert("Store: Subida completada. URL: " + fileUrl); // Debug
+                alert("Store: Subida completada. URL: " + fileUrl); // Debug
                 console.log("Archivo subido a Firebase Storage:", fileUrl);
             } catch (e) {
                 console.error("Error subiendo archivo a Firebase:", e);
@@ -397,7 +397,7 @@ export async function addImageToCase(caseId, fileObj) {
                     images: firebase.firestore.FieldValue.arrayUnion(newImg),
                     lastUpdate: c.lastUpdate
                 });
-                // alert("Store: Base de datos actualizada."); // Debug
+                alert("Store: Base de datos actualizada."); // Debug
             } catch (e) {
                 console.error("Error actualizando caso en Firebase:", e);
                 alert("Error guardando datos: " + e.message);
