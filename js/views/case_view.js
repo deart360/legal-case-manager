@@ -20,7 +20,14 @@ export function createCaseView(caseId) {
                     <h1 class="h2">${c.title}</h1>
                     <p class="text-muted">${c.juzgado} • Última act: ${c.lastUpdate}</p>
                 </div>
-                <div class="case-actions">
+                <div class="case-actions flex gap-2">
+                    <button class="btn-icon-sm bg-glass" onclick="window.openCaseModal('', '${caseId}')" title="Editar">
+                        <i class="ph ph-pencil"></i>
+                    </button>
+                    <button class="btn-icon-sm bg-glass text-danger" onclick="window.confirmDeleteCase('${caseId}')" title="Eliminar">
+                        <i class="ph ph-trash"></i>
+                    </button>
+                    <div class="w-px h-6 bg-white/10 mx-2"></div>
                     <input type="file" id="file-upload" class="hidden" accept="image/*,application/pdf" multiple>
                     <button class="btn-primary" onclick="document.getElementById('file-upload').click()">
                         <i class="ph ph-camera"></i> Anexar Fotos/PDF
@@ -93,7 +100,13 @@ export function createCaseView(caseId) {
 
         if (newCount > 0) {
             // Refresh view by reloading hash
-            window.dispatchEvent(new HashChangeEvent('hashchange'));
+            // Refresh view by reloading hash
+            // Force a reload of the current view
+            const currentHash = window.location.hash;
+            window.location.hash = ''; // Clear hash temporarily
+            setTimeout(() => {
+                window.location.hash = currentHash; // Restore hash to trigger change
+            }, 10);
         }
     };
 
