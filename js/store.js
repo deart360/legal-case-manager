@@ -404,7 +404,20 @@ export async function addImageToCase(caseId, fileObj) {
                 // alert("Store: Base de datos actualizada."); // Removed Debug
             } catch (e) {
                 console.error("Error actualizando caso en Firebase:", e);
-                alert("Error guardando datos: " + e.message);
+
+                // If document doesn't exist (e.g. mock case), create it
+                if (e.code === 'not-found' || e.message.includes('No document to update')) {
+                    try {
+                        console.log("Caso no existe en nube, creando copia completa...");
+                        await db.collection('cases').doc(caseId).set(c);
+                        // alert("Aviso: Se creó el expediente en la nube para sincronización.");
+                    } catch (createErr) {
+                        console.error("Error creando caso en Firebase:", createErr);
+                        alert("Error guardando datos en nube: " + createErr.message);
+                    }
+                } else {
+                    alert("Error guardando datos: " + e.message);
+                }
             }
         }
 
