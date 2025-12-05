@@ -30,8 +30,8 @@ export function createCaseView(caseId) {
                             <i class="ph ph-trash"></i>
                         </button>
                         <div class="w-px h-6 bg-white/10 mx-2"></div>
-                        <input type="file" id="file-upload" class="hidden" accept="image/*,application/pdf" multiple>
-                        <button class="btn-primary" onclick="document.getElementById('file-upload').click()">
+                        <input type="file" id="file-upload-${caseId}" class="hidden" accept="image/*,application/pdf" multiple>
+                        <button class="btn-primary btn-upload-trigger">
                             <i class="ph ph-camera"></i> Anexar Fotos/PDF
                         </button>
                     </div>
@@ -62,7 +62,7 @@ export function createCaseView(caseId) {
                 `).join('')}
                 
                 <!-- Upload Placeholder -->
-                <div class="doc-card upload-card" onclick="document.getElementById('file-upload').click()">
+                <div class="doc-card upload-card">
                     <i class="ph ph-plus"></i>
                     <span>Anexar Foto</span>
                 </div>
@@ -72,12 +72,24 @@ export function createCaseView(caseId) {
         container.innerHTML = header + imagesHtml;
 
         // Re-attach handlers
-        const fileInput = container.querySelector('#file-upload');
+        const fileInput = container.querySelector(`#file-upload-${caseId}`);
+        const uploadBtn = container.querySelector('.btn-upload-trigger');
+        const uploadCard = container.querySelector('.upload-card');
+
+        // Bind click events programmatically to avoid ID collisions
+        const triggerUpload = () => {
+            // alert("Abriendo selector de archivos..."); // Debug trigger
+            fileInput.click();
+        };
+
+        if (uploadBtn) uploadBtn.onclick = triggerUpload;
+        if (uploadCard) uploadCard.onclick = triggerUpload;
+
         fileInput.onchange = async (e) => {
             const files = Array.from(e.target.files);
             if (files.length === 0) return;
 
-            // alert("Iniciando subida de " + files.length + " archivos..."); // Debug
+            alert("Detectados " + files.length + " archivos. Iniciando proceso..."); // Active Debug
 
             let newCount = 0;
             const pdfLib = window.pdfjsLib;
@@ -106,8 +118,8 @@ export function createCaseView(caseId) {
             }
 
             if (newCount > 0) {
-                // alert("Subida completada. Refrescando..."); // Debug
-                // Re-render in place instead of reloading hash
+                alert("Subida exitosa. Actualizando pantalla..."); // Active Debug
+                // Re-render in place
                 render();
             } else {
                 alert("No se agregaron archivos. Revisa la consola.");
