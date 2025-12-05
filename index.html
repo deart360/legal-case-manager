@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión Legal AI</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/layout.css?v=3">
+    <link rel="stylesheet" href="styles/dashboard.css">
+    <link rel="stylesheet" href="styles/case_view.css">
+    <link rel="stylesheet" href="styles/image_viewer.css">
+
+    <!-- Icons (Phosphor Icons for a premium look) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- PDF.js for client-side PDF processing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
+</head>
+
+<body>
+    <script>
+        window.onerror = function (msg, url, line, col, error) {
+            alert("Error Global:\n" + msg + "\n\nEn: " + url + ":" + line);
+            return false;
+        };
+        window.addEventListener('error', function (e) {
+            if (e.target.tagName === 'SCRIPT') {
+                alert("Error de carga de script: " + e.target.src);
+            }
+        }, true);
+    </script>
+    <div id="app">
+        <!-- Sidebar will be injected here -->
+        <aside id="sidebar" class="sidebar"></aside>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="main-content">
+            <header id="top-bar" class="top-bar">
+                <!-- Dynamic Header Content -->
+            </header>
+            <div id="view-container" class="view-container scroll-y">
+                <!-- Views (Dashboard, Files, etc) injected here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="image-viewer-modal" class="modal hidden"></div>
+
+
+
+    <!-- Scripts -->
+    <script type="module" src="js/app.js?v=3"></script>
+</body>
+
+</html>

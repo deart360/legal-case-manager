@@ -1,0 +1,146 @@
+import { getCase, addImageToCase } from '../store.js';
+
+export function createCaseView(caseId) {
+    const container = document.createElement('div');
+    container.className = 'case-view p-6';
+
+    const c = getCase(caseId);
+    if (!c) {
+        container.innerHTML = `<h2>Expediente no encontrado</h2>`;
+        return container;
+    }
+
+    const header = `
+        <div class="case-header mb-6">
+            <div class="breadcrumb text-sm text-muted mb-2">
+                <span onclick="window.history.back()" style="cursor:pointer"> Atrás </span> / ${c.expediente}
+            </div>
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="h2">${c.title}</h1>
+                    <p class="text-muted">${c.juzgado} • Última act: ${c.lastUpdate}</p>
+                </div>
+                <div class="case-actions">
+                    <input type="file" id="file-upload" class="hidden" accept="image/*,application/pdf" multiple>
+                    <button class="btn-primary" onclick="document.getElementById('file-upload').click()">
+                        <i class="ph ph-camera"></i> Anexar Fotos/PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Image Grid
+    const imagesHtml = `
+        <div class="documents-grid">
+            ${c.images.map(img => `
+                <div class="doc-card" onclick="openImageViewer('${img.id}', '${caseId}')">
+                    <div class="doc-preview">
+                        <img src="${img.url}" alt="${img.type}">
+                        <div class="doc-overlay">
+                            <i class="ph ph-magnifying-glass-plus"></i>
+                        </div>
+                    </div>
+                    <div class="doc-info">
+                        <span class="doc-type">${img.type}</span>
+                        ${img.deadline ? `<span class="doc-status urgent"><i class="ph-fill ph-clock"></i> Vence: ${img.deadline}</span>` : ''}
+                    </div>
+                    <div class="doc-ai-summary">
+                        <i class="ph-fill ph-sparkle text-accent"></i>
+                        <span class="text-xs text-muted truncate">${img.nextAction}</span>
+                    </div>
+                </div>
+            `).join('')}
+            
+            <!-- Upload Placeholder -->
+            <div class="doc-card upload-card" onclick="document.getElementById('file-upload').click()">
+                <i class="ph ph-plus"></i>
+                <span>Anexar Foto</span>
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = header + imagesHtml;
+
+    // Inject handlers
+    // Handle File Upload
+    const fileInput = container.querySelector('#file-upload');
+    fileInput.onchange = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        let newCount = 0;
+
+        // Use global pdfjsLib from CDN
+        const pdfLib = window.pdfjsLib;
+
+        for (const file of files) {
+            if (file.type === 'application/pdf') {
+                // Handle PDF: Split into pages
+                try {
+                    await processPdfFile(caseId, file, pdfLib);
+                    newCount++;
+                } catch (err) {
+                    console.error("Error processing PDF", err);
+                    alert("Error al procesar el PDF: " + err.message);
+                }
+            } else {
+                // Handle Image
+                addImageToCase(caseId, file);
+                newCount++;
+            }
+        }
+
+        if (newCount > 0) {
+            // Refresh view by reloading hash
+            window.dispatchEvent(new HashChangeEvent('hashchange'));
+        }
+    };
+
+    // Inject global image viewer logic if not already present (lazy implementation)
+    if (!window.openImageViewer) {
+        window.openImageViewer = (imgUrl, imgType) => {
+            // This is handled by the image_viewer.js view, but for quick access:
+            window.location.hash = '#viewer';
+            // In a real app we'd pass data. For now, router handles #viewer by showing a demo.
+            // To make it real, we'd need to update the router or store state.
+        };
+    }
+
+    return container;
+}
+
+async function processPdfFile(caseId, file, pdfLib) {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfLib.getDocument(arrayBuffer).promise;
+
+    // Iterate through all pages
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+
+        // Set scale for good quality
+        const viewport = page.getViewport({ scale: 1.5 });
+
+        // Create a canvas to render the page
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        // Render PDF page into canvas context
+        await page.render({
+            canvasContext: context,
+            viewport: viewport
+        }).promise;
+
+        // Convert canvas to Blob (Image)
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+
+        // Add metadata
+        blob.name = `${file.name} - Pág ${i}`;
+
+        // We need to pass the name explicitly or modify store to read it
+        // For now, let's rely on store modification in next step or current behavior
+        addImageToCase(caseId, blob);
+    }
+}

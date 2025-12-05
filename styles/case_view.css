@@ -1,0 +1,252 @@
+/* Folder & Case Views */
+
+/* Grid Folders (Submenu) */
+.grid-folders {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.5rem;
+}
+
+.folder-card {
+    background: var(--glass-panel);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--glass-shadow);
+}
+
+.folder-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(255, 255, 255, 0.2);
+    background: var(--glass-panel-hover);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
+.folder-card .icon {
+    font-size: 3.5rem;
+    color: var(--text-muted);
+    transition: color 0.3s;
+}
+
+.folder-card:hover .icon {
+    color: #60a5fa;
+    filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.5));
+}
+
+.folder-card .name {
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: var(--text-main);
+}
+
+.folder-card.new-folder {
+    border-style: dashed;
+    background: transparent;
+}
+
+/* Case List */
+.case-item {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.25rem;
+    background: var(--glass-panel);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 1rem;
+}
+
+.case-item:hover {
+    background: var(--glass-panel-hover);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(4px);
+}
+
+.case-icon {
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: var(--text-muted);
+    border: 1px solid var(--glass-border);
+}
+
+.case-details {
+    flex: 1;
+}
+
+.case-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-main);
+}
+
+.case-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    align-items: center;
+}
+
+.badge {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+
+/* Case Documents Grid */
+.documents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.doc-card {
+    background: var(--glass-panel);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--glass-shadow);
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+}
+
+.doc-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.doc-preview {
+    height: 220px;
+    background: #1e293b;
+    position: relative;
+    overflow: hidden;
+}
+
+.doc-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.8;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.doc-card:hover .doc-preview img {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.doc-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.5rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.doc-card:hover .doc-overlay {
+    opacity: 1;
+}
+
+.doc-info {
+    padding: 1rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.doc-type {
+    display: block;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-main);
+}
+
+.doc-status.urgent {
+    color: #fca5a5;
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.doc-ai-summary {
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    color: var(--text-muted);
+}
+
+/* Buttons */
+.btn-primary {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    transition: all 0.2s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.6);
+}
+
+/* Upload Card Placeholder */
+.upload-card {
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-weight: 600;
+    min-height: 300px;
+}
+
+.upload-card i {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.upload-card:hover {
+    border-color: #60a5fa;
+    color: #60a5fa;
+    background: rgba(59, 130, 246, 0.05);
+}
