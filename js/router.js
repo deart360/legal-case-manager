@@ -1,3 +1,5 @@
+let currentRequestId = 0;
+
 export function initRouter() {
     window.addEventListener('hashchange', handleRoute);
     handleRoute(); // Initial load
@@ -6,27 +8,44 @@ export function initRouter() {
 function handleRoute() {
     const hash = window.location.hash || '#dashboard';
     const viewContainer = document.getElementById('view-container');
+    const requestId = ++currentRequestId;
 
-    console.log('Navigating to:', hash);
+    console.log('Navigating to:', hash, 'ReqID:', requestId);
 
-    viewContainer.innerHTML = ''; // Clear current view
+    // Helper to handle view loading
+    const loadView = (promise) => {
+        promise.then(module => {
+            // If a newer request started, ignore this one
+            if (requestId !== currentRequestId) return;
+
+            viewContainer.innerHTML = ''; // Clear only when ready
+
+            if (hash === '#dashboard') {
+                viewContainer.appendChild(module.createDashboardView());
+            } else if (hash.startsWith('#folder')) {
+                const folderId = hash.split('/')[1];
+                viewContainer.appendChild(module.createFolderView(folderId));
+            } else if (hash.startsWith('#case')) {
+                const caseId = hash.split('/')[1];
+                viewContainer.appendChild(module.createCaseView(caseId));
+            }
+        }).catch(err => {
+            console.error("Error loading view:", err);
+            if (requestId === currentRequestId) {
+                viewContainer.innerHTML = '<div class="p-6"><h2>Error cargando la vista</h2><p>' + err.message + '</p></div>';
+            }
+        });
+    };
 
     // Simple routing logic
     if (hash === '#dashboard') {
-        import('./views/dashboard.js').then(module => {
-            viewContainer.appendChild(module.createDashboardView());
-        });
+        loadView(import('./views/dashboard.js'));
     } else if (hash.startsWith('#folder')) {
-        import('./views/folder_view.js').then(module => {
-            const folderId = hash.split('/')[1];
-            viewContainer.appendChild(module.createFolderView(folderId));
-        });
+        loadView(import('./views/folder_view.js'));
     } else if (hash.startsWith('#case')) {
-        import('./views/case_view.js').then(module => {
-            const caseId = hash.split('/')[1];
-            viewContainer.appendChild(module.createCaseView(caseId));
-        });
+        loadView(import('./views/case_view.js'));
     } else {
+        // 404
         viewContainer.innerHTML = '<h2>404 - Not Found</h2>';
     }
 }
