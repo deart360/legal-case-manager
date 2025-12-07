@@ -75,7 +75,7 @@ function renderFullDashboard(container) {
                 <!-- Urgent Terms Widget -->
                 <div class="card urgent-widget">
                     <div class="card-header">
-                        <h3 class="h3 text-danger"><i class="ph-fill ph-warning-circle"></i> Términos (2 Semanas)</h3>
+                        <h3 class="h3 text-danger"><i class="ph-fill ph-warning-circle"></i> Términos</h3>
                     </div>
                     <div class="urgent-list" id="urgent-terms-list">
                          <!-- Dynamic Content -->
@@ -262,13 +262,16 @@ function updateUrgentTerms(container, events) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const twoWeeksOut = new Date(today);
-    twoWeeksOut.setDate(today.getDate() + 14);
+    const startRange = new Date(today);
+    startRange.setDate(today.getDate() - 7); // Previous week
 
-    // Filter for urgent tasks or deadlines within the next 14 days
+    const endRange = new Date(today);
+    endRange.setDate(today.getDate() + 7); // Next week
+
+    // Filter for urgent tasks or deadlines within the range
     const urgentEvents = events.filter(e => {
         const eDate = new Date(e.date + 'T00:00:00');
-        return (e.urgent || e.type === 'deadline') && eDate >= today && eDate <= twoWeeksOut;
+        return (e.urgent || e.type === 'deadline') && eDate >= startRange && eDate <= endRange;
     }).sort((a, b) => new Date(a.date) - new Date(b.date));
 
     if (urgentEvents.length === 0) {
@@ -286,6 +289,7 @@ function updateUrgentTerms(container, events) {
 
         if (diffDays === 0) { daysLabel = 'HOY'; daysClass = 'text-danger'; }
         else if (diffDays === 1) { daysLabel = 'día'; }
+        else if (diffDays < 0) { daysLabel = 'días (Vencido)'; daysClass = 'text-muted'; }
 
         // Clean title for display
         const title = e.title.split('(')[0].trim();
@@ -298,8 +302,8 @@ function updateUrgentTerms(container, events) {
                     <span class="term-desc">${title}</span>
                     <span class="text-xs text-muted">${eDate.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}</span>
                 </div>
-                <div class="countdown ${diffDays <= 3 ? 'bg-red-900/20 border-red-500/30' : ''}">
-                    <span class="days ${daysClass}">${diffDays}</span>
+                <div class="countdown ${diffDays <= 3 && diffDays >= 0 ? 'bg-red-900/20 border-red-500/30' : ''}">
+                    <span class="days ${daysClass}">${Math.abs(diffDays)}</span>
                     <span class="label">${daysLabel}</span>
                 </div>
             </div>
