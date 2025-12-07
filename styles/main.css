@@ -46,6 +46,9 @@ body {
   /* Full screen gradient */
   color: var(--text-main);
   height: 100vh;
+  /* Fallback */
+  height: 100dvh;
+  /* Dynamic Viewport Height */
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
@@ -53,6 +56,9 @@ body {
 #app {
   display: flex;
   height: 100vh;
+  /* Fallback */
+  height: 100dvh;
+  /* Dynamic Viewport Height */
   width: 100vw;
   background-image:
     radial-gradient(circle at 80% 20%, rgba(56, 189, 248, 0.08) 0%, transparent 25%),
