@@ -120,13 +120,14 @@ export let appData = storedData ? JSON.parse(storedData) : {
             ],
             tasks: []
         }
-    ],
-dashboardTasks: [
-    { id: 'dt1', title: 'Revisar acuerdo Exp 1234/2024', date: getRelativeDate(0), type: 'urgent', caseId: 'exp-001' },
-    { id: 'dt2', title: 'Presentar promoción Exp 888/2023', date: getRelativeDate(1), type: 'normal', caseId: 'exp-003' },
-    { id: 'dt3', title: 'Llamar a cliente (Divorcio)', date: getRelativeDate(0), type: 'normal', caseId: 'exp-001' },
-    { id: 'dt4', title: 'Pagar copias certificadas', date: getRelativeDate(2), type: 'normal', caseId: 'exp-005' }
-]
+    },
+    // Mock user tasks for dashboard
+    dashboardTasks: [
+        { id: 'dt1', title: 'Revisar acuerdo Exp 1234/2024', date: getRelativeDate(0), type: 'urgent', caseId: 'exp-001' },
+        { id: 'dt2', title: 'Presentar promoción Exp 888/2023', date: getRelativeDate(1), type: 'normal', caseId: 'exp-003' },
+        { id: 'dt3', title: 'Llamar a cliente (Divorcio)', date: getRelativeDate(0), type: 'normal', caseId: 'exp-001' },
+        { id: 'dt4', title: 'Pagar copias certificadas', date: getRelativeDate(2), type: 'normal', caseId: 'exp-005' }
+    ]
 };
 
 // Helper to save to LocalStorage
