@@ -13,6 +13,32 @@
     overflow: hidden;
 }
 
+@media (max-width: 1024px) {
+    .dash-grid {
+        grid-template-columns: 1fr;
+        /* Stack columns */
+        height: auto;
+        overflow: visible;
+        padding-bottom: 80px;
+        /* Space for bottom nav if added, or just breathing room */
+    }
+
+    .left-col,
+    .right-col {
+        overflow: visible;
+        height: auto;
+    }
+
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    /* On mobile, let the page scroll naturally */
+    #main-content {
+        overflow-y: auto;
+    }
+}
+
 .left-col {
     overflow-y: auto;
     padding-right: 0.5rem;
@@ -451,7 +477,7 @@
 .cal-body {
     min-height: 300px;
 }
-}
+
 
 /* Infographic Modal (Document Style) */
 .infographic-container.document-style {

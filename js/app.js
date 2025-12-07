@@ -3,11 +3,13 @@
  */
 import { initRouter } from './router.js';
 import { renderSidebar } from './components/sidebar.js';
+import { initResponsive } from './responsive.js';
 import { appData } from './store.js';
 import { showImageViewer } from './views/image_viewer.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Legal App Initializing...');
+    initResponsive();
 
     try {
         // Initialize Core layout
