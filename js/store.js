@@ -374,12 +374,20 @@ export async function addImageToCase(caseId, fileObj, onProgress) {
 
                 const uploadTask = fileRef.put(fileObj);
 
-                // Wait for upload with 45s timeout
+                // Wait for upload with 120s timeout
                 await new Promise((resolve, reject) => {
                     const timeoutId = setTimeout(() => {
                         uploadTask.cancel();
-                        reject(new Error("La conexión es lenta (timeout 45s)."));
-                    }, 45000);
+                        reject(new Error("La conexión expiró (timeout 120s). Posible bloqueo de seguridad (CORS)."));
+                    }, 120000);
+
+                    // Detect stall
+                    const stallCheckId = setTimeout(() => {
+                        if (uploadTask.snapshot.bytesTransferred === 0) {
+                            console.warn("La subida no ha comenzado después de 5s. Posible error de CORS.");
+                            if (onProgress) onProgress(1); // Fake 1% to show life
+                        }
+                    }, 5000);
 
                     uploadTask.on('state_changed',
                         (snapshot) => {
@@ -391,10 +399,13 @@ export async function addImageToCase(caseId, fileObj, onProgress) {
                         },
                         (error) => {
                             clearTimeout(timeoutId);
+                            clearTimeout(stallCheckId);
+                            console.error("Firebase Storage Error:", error.code, error.message);
                             reject(error);
                         },
                         () => {
                             clearTimeout(timeoutId);
+                            clearTimeout(stallCheckId);
                             resolve();
                         }
                     );
