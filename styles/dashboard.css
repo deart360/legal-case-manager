@@ -26,35 +26,50 @@
 }
 
 /* Fix for white bar at bottom on mobile */
+html {
+    height: 100%;
+    background: #0f172a;
+    /* Fallback color matching the dark theme */
+}
+
 body {
     background-attachment: fixed;
-    /* Keep gradient fixed */
-    min-height: 100vh;
+    min-height: 100%;
+    position: relative;
 }
 
 @media (max-width: 1024px) {
     .dash-grid {
         grid-template-columns: 1fr;
-        /* Stack columns */
         height: auto;
         overflow: visible;
-        padding-bottom: 80px;
-        /* Space for bottom nav if added, or just breathing room */
+        padding-bottom: 100px;
+        /* More breathing room */
     }
 
-    .left-col,
-    .right-col {
-        overflow: visible;
-        height: auto;
+    /* Calendar Mobile Fix */
+    .calendar-card {
+        overflow-x: auto;
+        /* Allow horizontal scroll */
     }
 
-    .card {
-        margin-bottom: 1rem;
+    .calendar-wrapper {
+        min-width: 600px;
+        /* Force minimum width to prevent squashing */
+        padding-bottom: 1rem;
     }
 
-    /* On mobile, let the page scroll naturally */
-    #main-content {
-        overflow-y: auto;
+    .cal-header,
+    .cal-body {
+        min-width: 600px;
+        /* Ensure grid stays wide enough */
+    }
+
+    /* Adjust height for mobile scrolling */
+    .cal-body {
+        min-height: 300px;
+        max-height: 500px;
+        /* Limit height */
     }
 }
 
