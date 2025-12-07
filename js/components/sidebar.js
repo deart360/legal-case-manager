@@ -9,6 +9,9 @@ export function renderSidebar() {
                 <img src="assets/logo.jpg" alt="Logo" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover;">
                 <span class="app-title" style="color: var(--accent); text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);">Decrevi Advocatus</span>
             </div>
+            <button id="sidebar-collapse" class="btn-icon-sm" style="margin-left: auto; color: var(--text-muted);">
+                <i class="ph ph-arrows-in-line-horizontal"></i>
+            </button>
         </div>
         
         <nav class="sidebar-nav">
@@ -60,7 +63,6 @@ export function renderSidebar() {
                 <div class="avatar">DA</div>
                 <div class="user-info">
                     <span class="name">Diego Amador</span>
-                    <span class="name">Diego Amador</span>
                     <span class="role">Abogado</span>
                 </div>
                 <div id="firebase-status-indicator" class="status-indicator-sidebar" title="Estado de conexión"></div>
@@ -69,6 +71,20 @@ export function renderSidebar() {
     `;
 
     sidebar.innerHTML = html;
+
+    // Sidebar Collapse Logic
+    const collapseBtn = sidebar.querySelector('#sidebar-collapse');
+    if (collapseBtn) {
+        collapseBtn.onclick = () => {
+            sidebar.classList.toggle('collapsed');
+            const icon = collapseBtn.querySelector('i');
+            if (sidebar.classList.contains('collapsed')) {
+                icon.classList.replace('ph-arrows-in-line-horizontal', 'ph-arrows-out-line-horizontal');
+            } else {
+                icon.classList.replace('ph-arrows-out-line-horizontal', 'ph-arrows-in-line-horizontal');
+            }
+        };
+    }
 
     // Check connection status after rendering
     import('../firebase_config.js').then(fb => {
