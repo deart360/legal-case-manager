@@ -1,26 +1,27 @@
 :root {
-  /* Liquid Glass Palette */
+  /* Liquid Glass Palette (Deluxe Gold & Green) */
   --bg-app: #000000;
-  /* Fallback */
-  --bg-gradient: radial-gradient(circle at 0% 0%, #1e293b 0%, #0f172a 50%, #020617 100%);
+  /* Deep Dark Green Gradient */
+  --bg-gradient: radial-gradient(circle at 0% 0%, #0f291e 0%, #051c12 50%, #020617 100%);
 
-  /* Glass Surfaces */
-  --glass-panel: rgba(255, 255, 255, 0.03);
-  --glass-panel-hover: rgba(255, 255, 255, 0.07);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  /* Glass Surfaces (Gold Tinted) */
+  --glass-panel: rgba(212, 175, 55, 0.03);
+  --glass-panel-hover: rgba(212, 175, 55, 0.08);
+  --glass-border: rgba(212, 175, 55, 0.15);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
   --glass-blur: blur(16px);
 
   /* Text Colors (Light on Dark) */
-  --text-main: #f8fafc;
+  --text-main: #fefcf5;
+  /* Off-white Gold */
   --text-muted: #94a3b8;
-  --text-accent: #38bdf8;
-  /* Sky 400 */
+  --text-accent: #fcd34d;
+  /* Light Gold */
 
   /* Accents */
-  --accent: #3b82f6;
-  /* Blue 500 */
-  --accent-glow: 0 0 20px rgba(59, 130, 246, 0.5);
+  --accent: #d4af37;
+  /* Gold */
+  --accent-glow: 0 0 20px rgba(212, 175, 55, 0.4);
   --danger: #ef4444;
 
   /* Dimensions */

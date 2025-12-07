@@ -6,8 +6,8 @@ export function renderSidebar() {
     const html = `
         <div class="sidebar-header">
             <div class="logo-area">
-                <i class="ph ph-scales" style="font-size: 24px; color: var(--accent);"></i>
-                <span class="app-title">Decrevi Advocatus</span>
+                <img src="assets/logo.jpg" alt="Logo" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover;">
+                <span class="app-title" style="color: var(--accent); text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);">Decrevi Advocatus</span>
             </div>
         </div>
         
