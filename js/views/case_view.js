@@ -160,36 +160,41 @@ export function createCaseView(caseId) {
 }
 
 async function processPdfFile(caseId, file, pdfLib) {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfLib.getDocument(arrayBuffer).promise;
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfLib.getDocument(arrayBuffer).promise;
 
-    // Iterate through all pages
-    for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
+        // Iterate through all pages
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
 
-        // Set scale for good quality
-        const viewport = page.getViewport({ scale: 1.5 });
+            // Set scale for good quality
+            const viewport = page.getViewport({ scale: 1.5 });
 
-        // Create a canvas to render the page
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+            // Create a canvas to render the page
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
 
-        // Render PDF page into canvas context
-        await page.render({
-            canvasContext: context,
-            viewport: viewport
-        }).promise;
+            // Render PDF page into canvas context
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
 
-        // Convert canvas to Blob (Image)
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+            // Convert canvas to Blob (Image)
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
 
-        // Add metadata
-        blob.name = `${file.name} - Pág ${i} `;
+            // Add metadata
+            // Create a File object from Blob to preserve name property for store
+            const imageFile = new File([blob], `${file.name.replace('.pdf', '')} - Pág ${i}.jpg`, { type: 'image/jpeg' });
 
-        // We need to pass the name explicitly or modify store to read it
-        // For now, let's rely on store modification in next step or current behavior
-        addImageToCase(caseId, blob);
+            // Upload the image
+            await addImageToCase(caseId, imageFile);
+        }
+    } catch (e) {
+        console.error("Error procesando PDF:", e);
+        throw new Error("No se pudo leer el PDF. Asegúrate de que no esté corrupto o protegido con contraseña.");
     }
 }

@@ -9,7 +9,12 @@ const getRelativeDate = (days) => {
 };
 
 // Local Cache / Fallback Data
-export let appData = {
+// Local Cache / Fallback Data
+const LOCAL_STORAGE_KEY = 'legal_case_manager_data_v1';
+
+// Load initial data from LocalStorage or use default
+let storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+export let appData = storedData ? JSON.parse(storedData) : {
     states: [
         {
             id: 'cdmx',
@@ -54,6 +59,7 @@ export let appData = {
                 { id: 't1', title: 'Audiencia Conciliatoria', date: getRelativeDate(5), urgent: true }
             ]
         },
+        // ... (Other mock cases would be here if not loaded from LS)
         'exp-002': {
             id: 'exp-002',
             title: 'Sucesión Intestamentaria - Familia López',
@@ -114,15 +120,20 @@ export let appData = {
             ],
             tasks: []
         }
-    },
-    // Mock user tasks for dashboard
-    dashboardTasks: [
-        { id: 'dt1', title: 'Revisar acuerdo Exp 1234/2024', date: getRelativeDate(0), type: 'urgent', caseId: 'exp-001' },
-        { id: 'dt2', title: 'Presentar promoción Exp 888/2023', date: getRelativeDate(1), type: 'normal', caseId: 'exp-003' },
-        { id: 'dt3', title: 'Llamar a cliente (Divorcio)', date: getRelativeDate(0), type: 'normal', caseId: 'exp-001' },
-        { id: 'dt4', title: 'Pagar copias certificadas', date: getRelativeDate(2), type: 'normal', caseId: 'exp-005' }
-    ]
+    ],
+dashboardTasks: [
+    { id: 'dt1', title: 'Revisar acuerdo Exp 1234/2024', date: getRelativeDate(0), type: 'urgent', caseId: 'exp-001' },
+    { id: 'dt2', title: 'Presentar promoción Exp 888/2023', date: getRelativeDate(1), type: 'normal', caseId: 'exp-003' },
+    { id: 'dt3', title: 'Llamar a cliente (Divorcio)', date: getRelativeDate(0), type: 'normal', caseId: 'exp-001' },
+    { id: 'dt4', title: 'Pagar copias certificadas', date: getRelativeDate(2), type: 'normal', caseId: 'exp-005' }
+]
 };
+
+// Helper to save to LocalStorage
+function saveToLocal() {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData));
+    console.log("Datos guardados localmente");
+}
 
 // --- Firebase Sync Logic ---
 // In a real app, we would listen to onSnapshot here and update appData.
@@ -134,7 +145,10 @@ async function syncFromFirebase() {
         // 1. Load Cases
         const casesSnapshot = await db.collection('cases').get();
         if (!casesSnapshot.empty) {
-            appData.cases = {}; // Clear mock cases if we have real data
+            // Merge strategy: We trust Firebase more, but we don't want to lose local unsynced changes immediately.
+            // For simplicity in this demo: We overwrite local cases with Firebase cases if they exist.
+            // But we keep local cases that are NOT in Firebase (unsynced new cases).
+
             casesSnapshot.forEach(doc => {
                 appData.cases[doc.id] = doc.data();
             });
@@ -148,6 +162,8 @@ async function syncFromFirebase() {
                 appData.dashboardTasks.push(doc.data());
             });
         }
+
+        saveToLocal(); // Update local storage with synced data
         console.log("Datos sincronizados desde Firebase");
     } catch (e) {
         console.error("Error sincronizando con Firebase:", e);
@@ -267,6 +283,7 @@ export async function addCase(subjectId, caseData) {
             break;
         }
     }
+    saveToLocal();
 
     // Firebase Update
     if (db) {
@@ -292,6 +309,7 @@ export async function updateCase(caseId, updatedData) {
     if (updatedData.actor || updatedData.demandado) {
         c.title = `${c.actor || updatedData.actor} vs ${c.demandado || updatedData.demandado || 'N/A'}`;
     }
+    saveToLocal();
 
     // Firebase Update
     if (db) {
@@ -318,6 +336,7 @@ export async function deleteCase(caseId) {
             }
         }
     }
+    saveToLocal();
 
     // Firebase Delete
     if (db) {
@@ -393,6 +412,7 @@ export async function addImageToCase(caseId, fileObj) {
 
         c.images.push(newImg);
         c.lastUpdate = new Date().toISOString().split('T')[0];
+        saveToLocal();
 
         // Update Case in Firebase
         if (db) {
@@ -456,6 +476,7 @@ async function mockAnalyzeImage(caseId, imgId) {
 
     // Apply updates locally
     Object.assign(img, updates);
+    saveToLocal();
 
     // Update Firebase
     if (db) {
@@ -488,6 +509,7 @@ export async function deleteImageFromCase(caseId, imgId) {
 
     // Remove locally
     c.images.splice(imgIndex, 1);
+    saveToLocal();
 
     // Update Firebase
     if (db) {
