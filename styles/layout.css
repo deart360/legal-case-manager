@@ -1,8 +1,8 @@
 /* Layout Grid & Sidebar Styling */
 #sidebar {
     width: 280px;
-    background: rgba(15, 23, 42, 0.6);
-    /* Semi-transparent dark */
+    background: rgba(5, 28, 18, 0.8);
+    /* Dark Green Tint */
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-right: 1px solid var(--glass-border);
@@ -12,6 +12,104 @@
     transition: width 0.3s ease;
     flex-shrink: 0;
     z-index: 50;
+}
+
+/* ... existing code ... */
+
+.nav-item.active {
+    background: linear-gradient(90deg, rgba(212, 175, 55, 0.15), transparent);
+    /* Gold tint */
+    color: var(--accent);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+/* ... existing code ... */
+
+.avatar {
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, #d4af37, #051c12);
+    /* Gold to Dark Green */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ... existing code ... */
+
+/* Mobile Menu Toggle */
+.menu-toggle {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 60;
+    background: rgba(5, 28, 18, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    color: var(--accent);
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* Mobile Brand Header */
+.mobile-brand {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    left: 4rem;
+    /* Right of toggle */
+    z-index: 60;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(5, 28, 18, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 0.5rem 1rem;
+    border-radius: 99px;
+    border: 1px solid var(--glass-border);
+}
+
+.mobile-brand img {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid var(--accent);
+}
+
+.mobile-brand span {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Sidebar Backdrop */
+/* ... existing code ... */
+
+/* Responsive Queries */
+@media (max-width: 1024px) {
+    .menu-toggle {
+        display: flex;
+    }
+
+    .mobile-brand {
+        display: flex;
+    }
+
+    /* ... existing code ... */
 }
 
 #main-content {
