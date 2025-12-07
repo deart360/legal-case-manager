@@ -31,9 +31,18 @@ export function createCaseView(caseId) {
                         </button>
                         <div class="w-px h-6 bg-white/10 mx-2"></div>
                         <input type="file" id="file-upload-${caseId}" class="hidden" accept="image/*,application/pdf" multiple>
-                        <button class="btn-primary btn-upload-trigger">
-                            <i class="ph ph-camera"></i> Anexar Fotos/PDF
-                        </button>
+                        <div class="flex flex-col items-end">
+                            <button class="btn-primary btn-upload-trigger">
+                                <i class="ph ph-camera"></i> Anexar Fotos/PDF
+                            </button>
+                            <!-- Progress Bar Container -->
+                            <div id="upload-progress-container" class="hidden w-32 mt-2">
+                                <div class="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                                    <div id="upload-progress-bar" class="bg-accent h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+                                </div>
+                                <p id="upload-progress-text" class="text-xs text-right mt-1 text-muted">0%</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -80,6 +89,9 @@ export function createCaseView(caseId) {
         const fileInput = container.querySelector(`#file-upload-${caseId}`);
         const uploadBtn = container.querySelector('.btn-upload-trigger');
         const uploadCard = container.querySelector('.upload-card');
+        const progressContainer = container.querySelector('#upload-progress-container');
+        const progressBar = container.querySelector('#upload-progress-bar');
+        const progressText = container.querySelector('#upload-progress-text');
 
         // Bind click events programmatically to avoid ID collisions
         const triggerUpload = () => {
@@ -96,24 +108,37 @@ export function createCaseView(caseId) {
 
             // UI Feedback
             const originalText = uploadBtn.innerHTML;
-            uploadBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Procesando...';
+            uploadBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Subiendo...';
             uploadBtn.disabled = true;
 
-            // alert("Detectados " + files.length + " archivos. Iniciando proceso..."); // Removed Debug
+            // Show Progress Bar
+            if (progressContainer) progressContainer.classList.remove('hidden');
 
             let newCount = 0;
             const pdfLib = window.pdfjsLib;
 
-            for (const file of files) {
+            for (const [index, file] of files.entries()) {
                 try {
+                    // Update text for multiple files
+                    if (files.length > 1) {
+                        progressText.textContent = `Archivo ${index + 1}/${files.length}`;
+                        progressBar.style.width = '0%';
+                    }
+
+                    const onProgress = (percent) => {
+                        if (progressBar) progressBar.style.width = `${percent}%`;
+                        if (progressText) progressText.textContent = `${Math.round(percent)}%`;
+                    };
+
                     if (file.type === 'application/pdf') {
                         // Handle PDF
                         if (!pdfLib) throw new Error("Librería PDF no cargada");
-                        await processPdfFile(caseId, file, pdfLib);
+                        progressText.textContent = "Procesando PDF...";
+                        await processPdfFile(caseId, file, pdfLib, onProgress); // Pass callback
                         newCount++;
                     } else {
                         // Handle Image
-                        const result = await addImageToCase(caseId, file);
+                        const result = await addImageToCase(caseId, file, onProgress);
                         if (result) {
                             newCount++;
                         } else {
@@ -129,6 +154,7 @@ export function createCaseView(caseId) {
             // Restore UI
             uploadBtn.innerHTML = originalText;
             uploadBtn.disabled = false;
+            if (progressContainer) progressContainer.classList.add('hidden');
 
             if (newCount > 0) {
                 // Re-render in place
@@ -159,13 +185,16 @@ export function createCaseView(caseId) {
     return container;
 }
 
-async function processPdfFile(caseId, file, pdfLib) {
+async function processPdfFile(caseId, file, pdfLib, onProgress) {
     try {
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await pdfLib.getDocument(arrayBuffer).promise;
 
         // Iterate through all pages
         for (let i = 1; i <= pdf.numPages; i++) {
+            // Update progress for PDF processing steps
+            if (onProgress) onProgress((i / pdf.numPages) * 50); // First 50% is processing
+
             const page = await pdf.getPage(i);
 
             // Set scale for good quality
@@ -191,7 +220,15 @@ async function processPdfFile(caseId, file, pdfLib) {
             const imageFile = new File([blob], `${file.name.replace('.pdf', '')} - Pág ${i}.jpg`, { type: 'image/jpeg' });
 
             // Upload the image
-            await addImageToCase(caseId, imageFile);
+            // We pass a sub-progress callback for the upload part (remaining 50%)
+            await addImageToCase(caseId, imageFile, (uploadPercent) => {
+                if (onProgress) {
+                    // Map upload 0-100 to overall 50-100 for this page
+                    // This is a simplification; ideally we track total pages.
+                    // For now, let's just show the upload progress of the current page as the main progress
+                    onProgress(uploadPercent);
+                }
+            });
         }
     } catch (e) {
         console.error("Error procesando PDF:", e);

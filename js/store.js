@@ -350,7 +350,7 @@ export async function deleteCase(caseId) {
     return true;
 }
 
-export async function addImageToCase(caseId, fileObj) {
+export async function addImageToCase(caseId, fileObj, onProgress) {
     // alert("Store: Buscando caso " + caseId); // Removed Debug
     const c = appData.cases[caseId];
     if (c) {
@@ -363,6 +363,12 @@ export async function addImageToCase(caseId, fileObj) {
         // Firebase Storage Upload
         if (storage) {
             try {
+                // Ensure Auth is ready
+                if (!firebase.auth().currentUser) {
+                    console.log("Esperando autenticación...");
+                    await firebase.auth().signInAnonymously();
+                }
+
                 const storageRef = storage.ref();
                 const fileRef = storageRef.child(`cases/${caseId}/${fileObj.name}-${Date.now()}`);
 
@@ -378,6 +384,10 @@ export async function addImageToCase(caseId, fileObj) {
                     uploadTask.on('state_changed',
                         (snapshot) => {
                             // Progress
+                            if (onProgress) {
+                                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                onProgress(progress);
+                            }
                         },
                         (error) => {
                             clearTimeout(timeoutId);
