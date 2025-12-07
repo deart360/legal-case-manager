@@ -15,6 +15,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initialize Core layout
         renderSidebar();
 
+        // Global Error Handler
+        window.onerror = function (msg, url, lineNo, columnNo, error) {
+            // Ignore generic "Script error." from cross-origin scripts (like Firebase)
+            if (msg.toLowerCase().includes('script error')) {
+                console.warn('Ignored cross-origin script error:', msg);
+                return false;
+            }
+
+            const errorMsg = `Error Global:\n${msg}\n\nEn: ${url}:${lineNo}`;
+            console.error(errorMsg, error);
+            // alert(errorMsg); // Disable alert for production/mobile to avoid annoyance
+            return false;
+        };
+
         // Start Routing
         initRouter();
     } catch (err) {

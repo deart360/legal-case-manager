@@ -3,6 +3,18 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
+    flex-wrap: wrap;
+    /* Allow wrapping on small screens */
+    gap: 1rem;
+    padding-top: 3rem;
+    /* Space for mobile menu toggle */
+}
+
+@media (min-width: 1024px) {
+    .dash-header {
+        padding-top: 0;
+        /* Reset on desktop */
+    }
 }
 
 .dash-grid {
@@ -11,6 +23,13 @@
     gap: 1.5rem;
     height: calc(100vh - 140px);
     overflow: hidden;
+}
+
+/* Fix for white bar at bottom on mobile */
+body {
+    background-attachment: fixed;
+    /* Keep gradient fixed */
+    min-height: 100vh;
 }
 
 @media (max-width: 1024px) {
