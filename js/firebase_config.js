@@ -23,8 +23,16 @@ try {
     db = firebase.firestore();
     storage = firebase.storage();
     analytics = firebase.analytics();
+    const auth = firebase.auth();
 
-    console.log("✅ Firebase conectado: " + firebaseConfig.projectId);
+    // Sign in anonymously to ensure we have a valid session for rules
+    auth.signInAnonymously()
+        .then(() => {
+            console.log("✅ Firebase Auth: Firmado anónimamente");
+        })
+        .catch((error) => {
+            console.error("❌ Firebase Auth Error:", error);
+        });
 
     console.log("✅ Firebase conectado: " + firebaseConfig.projectId);
 
