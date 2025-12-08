@@ -95,8 +95,19 @@ function bindEvents(modal) {
     const imgWrapper = document.getElementById('image-wrapper');
     const activeImg = document.getElementById('active-image');
 
+    // Cleanup function to remove global listeners
+    const cleanup = () => {
+        if (currentKeydownHandler) {
+            window.removeEventListener('keydown', currentKeydownHandler);
+            currentKeydownHandler = null;
+        }
+    };
+
     // Close
-    document.getElementById('close-viewer').onclick = () => modal.classList.add('hidden');
+    document.getElementById('close-viewer').onclick = () => {
+        cleanup();
+        modal.classList.add('hidden');
+    };
 
     // Zoom
     const updateTransform = () => {
@@ -127,7 +138,7 @@ function bindEvents(modal) {
 
     window.onmouseup = () => {
         isDragging = false;
-        imgWrapper.style.cursor = 'default';
+        if (imgWrapper) imgWrapper.style.cursor = 'default';
     };
 
     // Wheel Zoom
@@ -160,6 +171,11 @@ function bindEvents(modal) {
     }
 
     // Keyboard Navigation
+    // Remove existing listener if any (safety check)
+    if (currentKeydownHandler) {
+        window.removeEventListener('keydown', currentKeydownHandler);
+    }
+
     currentKeydownHandler = (e) => {
         if (!viewerContainer.classList.contains('gallery-mode')) return;
         if (e.key === 'ArrowLeft') navigateImage(-1);
