@@ -136,8 +136,16 @@ export let appData = storedData ? JSON.parse(storedData) : {
 
 // Helper to save to LocalStorage
 function saveToLocal() {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData));
-    console.log("Datos guardados localmente");
+    try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData));
+        console.log("Datos guardados localmente");
+    } catch (e) {
+        console.error("Critical: LocalStorage Quota Exceeded or Error", e);
+        // Only alert if critical
+        if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+            // alert("⚠️ Almacenamiento local lleno. Usando modo memoria."); // Optional: silent fail to not annoy
+        }
+    }
 }
 
 // --- PROMOTION LOGIC (FILING STAGING) ---
@@ -146,18 +154,37 @@ export const getPromotions = () => {
 };
 
 export const addPromotion = async (imageFile) => {
-    // 1. Convert to Base64 (Local only for now, real app would upload)
-    const reader = new FileReader();
-    const base64Promise = new Promise((resolve) => {
-        reader.onload = e => resolve(e.target.result);
-        reader.readAsDataURL(imageFile);
-    });
-    const url = await base64Promise;
+    let finalUrl = null;
+
+    // 1. Try Firebase Upload
+    if (storage) {
+        try {
+            console.log("Iniciando subida a Firebase Storage...");
+            const fileName = `promo_${Date.now()}_${imageFile.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+            const storageRef = storage.ref().child('promotions/' + fileName);
+            const snapshot = await storageRef.put(imageFile);
+            finalUrl = await snapshot.ref.getDownloadURL();
+            console.log("Promoción subida exitosamente:", finalUrl);
+        } catch (e) {
+            console.error("Error subiendo a Firebase, usando fallback local:", e);
+        }
+    }
+
+    // 2. Fallback to Local Base64 if no URL yet (Offline or Error)
+    if (!finalUrl) {
+        console.warn("Usando almacenamiento local (Base64). Cuidado con el espacio.");
+        const reader = new FileReader();
+        const base64Promise = new Promise((resolve) => {
+            reader.onload = e => resolve(e.target.result);
+            reader.readAsDataURL(imageFile);
+        });
+        finalUrl = await base64Promise;
+    }
 
     const newId = `promo-${Date.now()}`;
     const newPromo = {
         id: newId,
-        url: url,
+        url: finalUrl,
         name: imageFile.name,
         dateAdded: new Date().toISOString().split('T')[0],
         status: 'analyzing', // analyzing, ready
