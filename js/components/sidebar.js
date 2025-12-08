@@ -1,94 +1,98 @@
+```javascript
 import { appData } from '../store.js';
 
-export function renderSidebar() {
-    const sidebar = document.getElementById('sidebar');
+import { AuthService } from '../services/auth.js';
 
-    const html = `
-        <div class="sidebar-header">
-            <div class="logo-area">
-                <img src="assets/logo.jpg" alt="Logo" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover;">
-                <span class="app-title" style="color: var(--accent); text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);">Decrevi Advocatus</span>
+export function initSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const user = AuthService.getCurrentUser();
+
+    if (!user) return; // Should be handled by router, but safety check
+
+    const sidebarHtml = `
+    < div class="sidebar-header" >
+            <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
+                <img src="assets/logo.jpg" alt="Logo" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--accent);">
+                <span class="app-title">Decrevi</span>
             </div>
-            <button id="sidebar-collapse" class="btn-icon-sm" style="margin-left: auto; color: var(--text-muted);">
-                <i class="ph ph-arrows-in-line-horizontal"></i>
+            <button id="sidebar-collapse" class="btn-icon-sm ml-auto text-muted hover:text-white">
+                <i class="ph ph-caret-left chevron"></i>
             </button>
-        </div>
-        
-        <nav class="sidebar-nav">
-            <a href="#dashboard" class="nav-item active">
+        </div >
+
+        <nav class="sidebar-nav custom-scrollbar">
+            <div class="nav-item active" onclick="window.navigateTo('#dashboard')">
                 <i class="ph ph-squares-four"></i>
                 <span>Dashboard</span>
-            </a>
-            <a href="#calendar" class="nav-item">
+            </div>
+            
+            <div class="nav-item" onclick="window.navigateTo('#calendar')">
                 <i class="ph ph-calendar"></i>
                 <span>Calendario</span>
-            </a>
+            </div>
+
+            <div class="nav-section-title">Expedientes</div>
             
-            <div class="nav-section-title">EXPEDIENTES</div>
-            
-            ${appData.states.map(state => `
-                <div class="state-group">
-                    <div class="nav-item state-header" onclick="this.classList.toggle('expanded')">
-                        <i class="ph ph-map-pin"></i>
-                        <span>${state.name}</span>
-                        <i class="ph ph-caret-down chevron"></i>
+            <!-- State Folders (Hardcoded for MVP) -->
+            <div class="state-group">
+                <div class="nav-item state-header" onclick="this.classList.toggle('expanded')">
+                    <i class="ph ph-map-pin"></i>
+                    <span>Ciudad de México</span>
+                    <i class="ph ph-caret-down chevron"></i>
+                </div>
+                <div class="state-children">
+                    <div class="nav-item" onclick="window.navigateTo('#folder/cdmx-fam')">
+                        <span>Familiar</span>
                     </div>
-                    <div class="state-children">
-                        ${state.subjects.map(subject => `
-                            <div class="subject-group">
-                                <div class="nav-item subject-header" onclick="this.nextElementSibling.classList.toggle('hidden')">
-                                    <i class="ph ph-folder-open"></i>
-                                    <span>${subject.name}</span>
-                                </div>
-                                <div class="subject-children hidden">
-                                    ${subject.cases.map(caseId => {
-        const caseData = appData.cases[caseId];
-        return caseData ? `
-                                            <a href="#case/${caseId}" class="nav-item case-link">
-                                                <i class="ph ph-file-text"></i>
-                                                <span>${caseData.expediente}</span>
-                                            </a>
-                                        ` : '';
-    }).join('')}
-                                     <div class="nav-item add-case" onclick="window.openCaseModal('${subject.id}')">
-                                        <i class="ph ph-plus-circle"></i>
-                                        <span>Nuevo Asunto</span>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
+                    <div class="nav-item" onclick="window.navigateTo('#folder/cdmx-civ')">
+                        <span>Civil</span>
                     </div>
                 </div>
-            `).join('')}
+            </div>
+
+            <div class="state-group">
+                <div class="nav-item state-header" onclick="this.classList.toggle('expanded')">
+                    <i class="ph ph-map-pin"></i>
+                    <span>Estado de México</span>
+                    <i class="ph ph-caret-down chevron"></i>
+                </div>
+                <div class="state-children">
+                    <div class="nav-item" onclick="window.navigateTo('#folder/edomex-fam')">
+                        <span>Familiar</span>
+                    </div>
+                </div>
+            </div>
+
+             <div class="state-group">
+                <div class="nav-item state-header" onclick="this.classList.toggle('expanded')">
+                    <i class="ph ph-map-pin"></i>
+                    <span>Querétaro</span>
+                    <i class="ph ph-caret-down chevron"></i>
+                </div>
+                <div class="state-children">
+                    <div class="nav-item" onclick="window.navigateTo('#folder/qro-fam')">
+                        <span>Familiar</span>
+                    </div>
+                </div>
+            </div>
+
         </nav>
-        
+
         <div class="sidebar-footer">
             <div class="user-profile">
-                <div class="avatar">DA</div>
+                <div class="avatar">${user.initials}</div>
                 <div class="user-info">
-                    <span class="name">Diego Amador</span>
-                    <span class="role">Abogado</span>
+                    <span class="name">${user.name}</span>
+                    <span class="text-xs text-muted capitalize">${user.role === 'admin' ? 'Administrador' : 'Abogado'}</span>
                 </div>
-                <div id="firebase-status-indicator" class="status-indicator-sidebar" title="Estado de conexión"></div>
+                <div class="status-indicator-sidebar connected" title="Conectado"></div>
+                <button class="btn-icon-sm ml-2 text-danger" id="btn-logout" title="Cerrar Sesión">
+                    <i class="ph ph-sign-out"></i>
+                </button>
             </div>
         </div>
-    `;
+`;
 
-    sidebar.innerHTML = html;
-
-    // Sidebar Collapse Logic
-    // Sidebar Collapse Logic
-    const collapseBtn = sidebar.querySelector('#sidebar-collapse');
-    const logoArea = sidebar.querySelector('.logo-area');
-
-    const toggleSidebar = () => {
-        if (window.innerWidth < 1024) {
-            // Mobile: Close sidebar (since it's already open if we can click the logo inside)
-            // Actually, if we are inside the sidebar, clicking logo usually does nothing or goes home.
-            // But user asked to open/close. 
-            // If sidebar is open (mobile), clicking logo closes it.
-            sidebar.classList.remove('open');
-            document.getElementById('sidebar-backdrop').classList.remove('visible');
         } else {
             // Desktop: Collapse/Expand
             sidebar.classList.toggle('collapsed');

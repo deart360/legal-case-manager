@@ -1,4 +1,5 @@
 import { appData, getAllEvents } from '../store.js';
+import { AuthService } from '../services/auth.js';
 
 let currentDate = new Date();
 let timelineMode = 'today'; // 'today' or 'upcoming'
@@ -17,11 +18,13 @@ export function createDashboardView() {
 
 function renderFullDashboard(container) {
     const events = getAllEvents();
+    const user = AuthService.getCurrentUser();
+    const firstName = user ? user.name.split(' ')[0] : 'Usuario';
 
     const header = `
         <div class="dash-header mb-6">
             <div>
-                <h1 class="h2">Panel de Control</h1>
+                <h1 class="h2">Hola, ${firstName}</h1>
                 <p class="text-muted">Resumen de actividad y términos</p>
             </div>
             <div class="date-display">
@@ -29,6 +32,12 @@ function renderFullDashboard(container) {
             </div>
         </div>
     `;
+    // const { AuthService } = require('../services/auth.js'); // Dynamic import workaround or assume global if bundled, but better to import at top. 
+    // Actually, we can't require inside function in standard ES modules without bundler. 
+    // We should import at top.
+
+    // Let's fix the import first.
+
 
     const dashboardHtml = `
         <div class="dash-grid">
@@ -127,12 +136,18 @@ function renderFullDashboard(container) {
                     </div>
                     <div class="report-summary-content">
                         <p class="text-sm text-muted mb-4">
-                            Esta semana se han atendido <strong class="text-white">12 acuerdos</strong> y <strong class="text-white">3 términos</strong>. 
-                            La carga de trabajo ha aumentado un 15% respecto a la semana anterior.
+                            Resumen de actividad reciente y predicciones.
                         </p>
-                        <button class="btn-primary w-full" id="btn-generate-infographic">
-                            <i class="ph ph-presentation-chart"></i> Ver Infografía Detallada
-                        </button>
+                        <div class="flex flex-col gap-2">
+                            <button class="btn-primary w-full" id="btn-my-report">
+                                <i class="ph ph-user"></i> Mi Reporte
+                            </button>
+                            ${user && user.role === 'admin' ? `
+                            <button class="btn-secondary w-full" id="btn-general-report">
+                                <i class="ph ph-users"></i> Reporte General (Admin)
+                            </button>
+                            ` : ''}
+                        </div>
                     </div>
                 </div>
 

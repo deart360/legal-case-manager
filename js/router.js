@@ -41,8 +41,29 @@ function handleRoute() {
         });
     };
 
+    // Auth Guard
+    const { AuthService } = await import('./services/auth.js');
+
+    if (hash === '#login') {
+        if (AuthService.isAuthenticated()) {
+            window.location.hash = '#dashboard';
+            return;
+        }
+        loadView(import(`./views/login_view.js?v=${v}`));
+        // Hide sidebar for login
+        document.body.classList.add('login-mode');
+        return;
+    }
+
+    if (!AuthService.isAuthenticated()) {
+        window.location.hash = '#login';
+        return;
+    }
+
+    // Remove login mode class if present
+    document.body.classList.remove('login-mode');
+
     // Simple routing logic
-    const v = Date.now(); // Cache buster
     if (hash === '#dashboard') {
         loadView(import(`./views/dashboard.js?v=${v}`));
     } else if (hash.startsWith('#folder')) {

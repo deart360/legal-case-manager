@@ -14,6 +14,16 @@
     z-index: 50;
 }
 
+body.login-mode #sidebar,
+body.login-mode .menu-toggle,
+body.login-mode .mobile-brand {
+    display: none !important;
+}
+
+body.login-mode #main-content {
+    margin-left: 0 !important;
+}
+
 /* ... existing code ... */
 
 .nav-item.active {
