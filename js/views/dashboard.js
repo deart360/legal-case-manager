@@ -282,6 +282,21 @@ function renderFullDashboard(container) {
                 </div>
             </div>
         </div>
+        <!-- Terms Modal -->
+        <div id="terms-modal" class="modal hidden">
+            <div class="modal-content glass-card p-6 animate-scale-in" style="max-width: 600px; width: 95%; max-height: 85vh; display: flex; flex-direction: column;">
+                <div class="modal-header mb-4 flex justify-between items-center border-b border-glass pb-4">
+                    <div>
+                        <h3 class="h3 text-danger"><i class="ph-fill ph-warning-circle"></i> Términos y Vencimientos</h3>
+                        <p class="text-sm text-muted">Lista completa de términos judiciales</p>
+                    </div>
+                    <button class="btn-icon-sm" id="close-terms-modal"><i class="ph ph-x"></i></button>
+                </div>
+                <div class="modal-body flex-1 overflow-y-auto custom-scrollbar" id="modal-terms-list">
+                    <!-- Dynamic Content -->
+                </div>
+            </div>
+        </div>
     `;
 
     container.innerHTML = header + dashboardHtml;
@@ -294,6 +309,27 @@ function renderFullDashboard(container) {
     // Bind Events
     bindDashboardEvents(container, events);
     bindQuickTaskEvents(container);
+
+    // Bind Terms Modal Events
+    const termsHeader = container.querySelector('.urgent-widget .card-header');
+    const termsModal = container.querySelector('#terms-modal');
+    const closeTermsBtn = container.querySelector('#close-terms-modal');
+
+    if (termsHeader && termsModal) {
+        termsHeader.style.cursor = 'pointer';
+        termsHeader.title = 'Clic para expandir';
+        termsHeader.onclick = () => {
+            termsModal.classList.remove('hidden');
+        };
+
+        if (closeTermsBtn) {
+            closeTermsBtn.onclick = () => termsModal.classList.add('hidden');
+        }
+
+        termsModal.onclick = (e) => {
+            if (e.target === termsModal) termsModal.classList.add('hidden');
+        };
+    }
 }
 
 function bindQuickTaskEvents(container) {
@@ -388,52 +424,92 @@ function bindQuickTaskEvents(container) {
 
 function updateUrgentTerms(container, events) {
     const listContainer = container.querySelector('#urgent-terms-list');
+    const modalListContainer = container.querySelector('#modal-terms-list'); // For the modal
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const startRange = new Date(today);
-    startRange.setDate(today.getDate() - 7); // Previous week
+    // Filter for ALL urgent tasks or deadlines (not just weekly range for the modal/full view)
+    // But for the widget, we might still want to limit, or just show top 5.
+    // Let's get all future or recent past (overdue) terms.
 
-    const endRange = new Date(today);
-    endRange.setDate(today.getDate() + 7); // Next week
-
-    // Filter for urgent tasks or deadlines within the range
     const urgentEvents = events.filter(e => {
-        const eDate = new Date(e.date + 'T00:00:00');
-        return (e.urgent || e.type === 'deadline') && eDate >= startRange && eDate <= endRange;
+        return (e.urgent || e.type === 'deadline');
     }).sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    if (urgentEvents.length === 0) {
-        listContainer.innerHTML = '<div class="text-muted text-sm text-center">No hay términos próximos.</div>';
+    // Render Widget (Top 5 or so)
+    renderTermsList(listContainer, urgentEvents.slice(0, 10), false);
+
+    // Render Modal (All)
+    if (modalListContainer) {
+        renderTermsList(modalListContainer, urgentEvents, true);
+    }
+}
+
+function renderTermsList(container, events, isModal) {
+    if (!container) return;
+
+    if (events.length === 0) {
+        container.innerHTML = '<div class="text-muted text-sm text-center">No hay términos pendientes.</div>';
         return;
     }
 
-    listContainer.innerHTML = urgentEvents.map(e => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    container.innerHTML = events.map(e => {
         const eDate = new Date(e.date + 'T00:00:00');
         const diffTime = eDate - today;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         let daysLabel = 'días';
-        let daysClass = '';
+        let termClass = '';
+        let daysDisplay = Math.abs(diffDays);
 
-        if (diffDays === 0) { daysLabel = 'HOY'; daysClass = 'text-danger'; }
-        else if (diffDays === 1) { daysLabel = 'día'; }
-        else if (diffDays < 0) { daysLabel = 'días (Vencido)'; daysClass = 'text-muted'; }
+        // Color Coding Logic
+        if (diffDays < 0) {
+            // Overdue
+            termClass = 'term-overdue';
+            daysLabel = `VENCIDO (${daysDisplay} días)`;
+        } else if (diffDays === 0) {
+            // Today
+            termClass = 'term-today';
+            daysLabel = 'HOY';
+            daysDisplay = 'HOY';
+        } else if (diffDays === 1) {
+            // 1 Day (Wine Red)
+            termClass = 'term-1-day';
+            daysLabel = 'día';
+        } else if (diffDays === 2) {
+            // 2 Days (Strong Orange)
+            termClass = 'term-2-days';
+        } else if (diffDays === 3) {
+            // 3 Days (Yellow)
+            termClass = 'term-3-days';
+        } else {
+            // Standard
+            termClass = 'term-standard';
+        }
 
         // Clean title for display
         const title = e.title.split('(')[0].trim();
         const sub = e.title.match(/\(([^)]+)\)/)?.[1] || 'Pendiente';
 
+        let clickAction = '';
+        if (e.caseId) {
+            clickAction = `onclick="window.navigateTo('#case/${e.caseId}')"`;
+        }
+
         return `
-            <div class="term-item">
+            <div class="term-item ${termClass}" ${clickAction} style="cursor: pointer;">
                 <div class="term-info">
                     <span class="case-ref">${sub}</span>
                     <span class="term-desc">${title}</span>
-                    <span class="text-xs text-muted">${eDate.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}</span>
+                    <span class="text-xs opacity-80">${eDate.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}</span>
                 </div>
-                <div class="countdown ${diffDays <= 3 && diffDays >= 0 ? 'bg-red-900/20 border-red-500/30' : ''}">
-                    <span class="days ${daysClass}">${Math.abs(diffDays)}</span>
-                    <span class="label">${daysLabel}</span>
+                <div class="term-status">
+                    <span class="days-count">${daysDisplay}</span>
+                    <span class="days-label">${daysLabel}</span>
                 </div>
             </div>
         `;

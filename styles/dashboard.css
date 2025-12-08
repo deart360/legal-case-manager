@@ -335,40 +335,145 @@ body {
     gap: 1rem;
 }
 
+/* Urgent Terms Widget Styles */
 .term-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem;
-    background: rgba(0, 0, 0, 0.2);
+    padding: 0.75rem 1rem;
     border-radius: var(--radius-md);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    transition: all 0.2s;
+    margin-bottom: 0.5rem;
+}
+
+.term-item:hover {
+    transform: translateX(2px);
 }
 
 .term-info {
     display: flex;
     flex-direction: column;
+    gap: 0.1rem;
 }
 
 .case-ref {
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: var(--text-main);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.8;
 }
 
 .term-desc {
-    font-size: 0.8rem;
-    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.9rem;
 }
 
-.countdown {
-    text-align: center;
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-main);
-    padding: 0.5rem 0.75rem;
-    border-radius: var(--radius-md);
+.term-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     min-width: 60px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+}
+
+.days-count {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.days-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    opacity: 0.9;
+}
+
+/* --- Color Coding Rules --- */
+
+/* 3 Days: Yellow */
+.term-3-days {
+    background: rgba(250, 204, 21, 0.15);
+    border-color: rgba(250, 204, 21, 0.4);
+    color: #fef08a;
+    /* Light yellow text */
+}
+
+.term-3-days .days-count {
+    color: #facc15;
+}
+
+/* 2 Days: Strong Orange */
+.term-2-days {
+    background: rgba(249, 115, 22, 0.2);
+    border-color: rgba(249, 115, 22, 0.5);
+    color: #fdba74;
+    /* Light orange text */
+}
+
+.term-2-days .days-count {
+    color: #f97316;
+}
+
+/* 1 Day: Wine Red */
+.term-1-day {
+    background: rgba(136, 19, 55, 0.3);
+    /* Rose-900/30 */
+    border-color: rgba(159, 18, 57, 0.6);
+    color: #fda4af;
+    /* Rose-300 */
+}
+
+.term-1-day .days-count {
+    color: #fb7185;
+}
+
+/* Today: Bright Red (Distinct) */
+.term-today {
+    background: rgba(220, 38, 38, 0.25);
+    /* Red-600/25 */
+    border: 1px solid rgba(220, 38, 38, 0.8);
+    color: white;
+    box-shadow: 0 0 15px rgba(220, 38, 38, 0.2);
+}
+
+.term-today .term-desc {
+    font-size: 1rem;
+    /* Larger */
+    font-weight: 800;
+    /* Bolder */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.term-today .days-count {
+    color: #fca5a5;
+    font-size: 1.4rem;
+}
+
+/* Overdue: Black Bg, White Text */
+.term-overdue {
+    background: #000000;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+.term-overdue .term-desc {
+    color: white;
+}
+
+.term-overdue .days-label {
+    color: #ef4444;
+    /* Red label for "VENCIDO" */
+    font-weight: 700;
+}
+
+/* Standard */
+.term-standard {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
 }
 
 /* AI Report */
