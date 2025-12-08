@@ -172,8 +172,12 @@ async function syncFromFirebase() {
     }
 }
 
-// Initial sync attempt
-syncFromFirebase();
+// Export initStore for app.js to wait on
+export async function initStore() {
+    console.log("initStore: Starting...");
+    await syncFromFirebase();
+    console.log("initStore: Completed");
+}
 
 // --- Getters ---
 
