@@ -1,30 +1,135 @@
 /**
  * AI Analysis Service
- * Simulates advanced legal document understanding using heuristics and probabilistic models.
- * In a real-world scenario, this would connect to the Gemini API.
+ * Connects to Google's Gemini 1.5 Pro API for advanced legal document analysis.
  */
+
+const API_KEY_STORAGE = 'gemini_api_key';
 
 export const AIAnalysisService = {
 
     /**
-     * Analyzes a legal document (image/pdf) to extract metadata.
+     * Analyzes a legal document (image/pdf) using Gemini API.
      * @param {File} file - The file object to analyze.
      * @returns {Promise<Object>} - The analysis result.
      */
     async analyzeDocument(file) {
-        return new Promise((resolve) => {
-            // Simulate network/processing delay (1.5 - 3 seconds)
-            const delay = Math.random() * 1500 + 1500;
+        // 1. Get API Key
+        let apiKey = localStorage.getItem(API_KEY_STORAGE);
 
-            setTimeout(() => {
-                const result = this._generateSimulatedAnalysis(file.name);
-                resolve(result);
-            }, delay);
+        if (!apiKey) {
+            apiKey = prompt("🔑 Para usar la IA Real, ingresa tu Google AI Studio API Key:\n(Se guardará en tu navegador de forma segura)");
+            if (apiKey) {
+                localStorage.setItem(API_KEY_STORAGE, apiKey.trim());
+            } else {
+                // User cancelled or empty, fallback to simulation or error
+                console.warn("API Key no proporcionada. Usando simulación.");
+                return this._generateSimulatedAnalysis(file.name);
+            }
+        }
+
+        try {
+            // 2. Prepare Data (Base64)
+            const base64Data = await this._fileToBase64(file);
+            const mimeType = file.type || 'image/jpeg'; // Default if missing 
+
+            // 3. Construct Prompt
+            const promptText = `
+                Actúa como un abogado experto en leyes de México. 🇲🇽
+                Analiza la imagen adjunta de un expediente legal y extrae la siguiente información en formato JSON estricto:
+
+                1. "summary": Un resumen conciso de qué trata el documento (máx 20 palabras).
+                2. "type": El tipo de actuación (ej. Auto, Sentencia, Promoción, Oficio).
+                3. "days": Número de días hábiles para el vencimiento de término (0 si no aplica).
+                4. "deadline": Fecha estimada de vencimiento si hoy es ${new Date().toLocaleDateString()} (calcula días hábiles). String legible.
+                5. "legalBasis": El artículo o fundamento legal aplicable (ej. "Art. 137 CPCDF").
+                6. "nextAction": La acción recomendada más lógica (ej. "Presentar escrito", "Esperar acuerdo").
+
+                Formato de respuesta JSON puro sin markdown:
+                {
+                  "summary": "...",
+                  "type": "...",
+                  "days": 0,
+                  "deadline": "...",
+                  "legalBasis": "...",
+                  "nextAction": "..."
+                }
+            `;
+
+            // 4. Update UI to show "Thinking..." if possible via callback, irrelevant here as async.
+
+            // 5. Call API
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            { text: promptText },
+                            {
+                                inline_data: {
+                                    mime_type: mimeType,
+                                    data: base64Data
+                                }
+                            }
+                        ]
+                    }],
+                    generationConfig: {
+                        response_mime_type: "application/json"
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(`API Error: ${errData.error?.message || response.statusText}`);
+            }
+
+            const data = await response.json();
+            const textResponse = data.candidates[0].content.parts[0].text;
+
+            // Parse JSON
+            let cleanJson = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+            const result = JSON.parse(cleanJson);
+
+            // Add confidence metadata
+            result.confidence = "Real AI";
+            return result;
+
+        } catch (error) {
+            console.error("Gemini API Error:", error);
+
+            if (error.message.includes('API Key') || error.message.includes('403')) {
+                localStorage.removeItem(API_KEY_STORAGE); // Clear invalid key
+                alert("Tu API Key parece inválida o expiró. Inténtalo de nuevo.");
+            } else {
+                alert("Error conectando con Gemini: " + error.message + "\n\nUsando modo simulación temporalmente.");
+            }
+
+            return this._generateSimulatedAnalysis(file.name);
+        }
+    },
+
+    /**
+     * Helper to convert File to Base64 (strip header)
+     */
+    _fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                const result = reader.result;
+                // Remove "data:image/jpeg;base64," prefix
+                const base64 = result.split(',')[1];
+                resolve(base64);
+            };
+            reader.onerror = error => reject(error);
         });
     },
 
     /**
-     * Generates a plausible analysis based on heuristics.
+     * Generates a plausible analysis based on heuristics (Fallback).
      */
     _generateSimulatedAnalysis(filename) {
         const lowerName = filename.toLowerCase();
