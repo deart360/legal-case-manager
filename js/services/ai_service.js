@@ -122,16 +122,23 @@ export const AIAnalysisService = {
         }
 
         try {
-            // Helper function to simulate progress
+            // Helper function to simulate progress (Asymptotic)
             let progress = 0;
             let progressInterval;
+
             if (onProgress) {
-                onProgress(5); // Start
+                onProgress(1); // Start
                 progressInterval = setInterval(() => {
-                    progress += Math.floor(Math.random() * 10) + 5; // +5-15%
-                    if (progress > 90) progress = 90; // Cap at 90%
-                    onProgress(progress);
-                }, 500);
+                    // Slow down as we get closer to 90%
+                    let increment = 0;
+                    if (progress < 50) increment = Math.random() * 5 + 5; // Fast initially
+                    else if (progress < 80) increment = Math.random() * 2 + 1; // Medium
+                    else if (progress < 95) increment = 0.5; // Very slow crawl at end
+
+                    progress += increment;
+                    if (progress > 95) progress = 95; // Cap at 95%
+                    onProgress(Math.floor(progress));
+                }, 800);
             }
 
             // Dynamically resolve model to avoid 404s
@@ -142,49 +149,64 @@ export const AIAnalysisService = {
                 parts.push({ inline_data: inlineData });
             }
 
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: parts }],
-                    generationConfig: { response_mime_type: expectJson ? "application/json" : "text/plain" }
-                })
-            });
+            // Timeout Controller (45s limit)
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 45000);
 
-            // Cleanup Progress
-            if (progressInterval) clearInterval(progressInterval);
-            if (onProgress) onProgress(100);
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: parts }],
+                        generationConfig: { response_mime_type: expectJson ? "application/json" : "text/plain" }
+                    }),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId); // Clear timeout on success
 
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(`Gemini API Error (${modelName}): ${errData.error?.message || response.statusText}`);
-            }
+                // Cleanup Progress
+                if (progressInterval) clearInterval(progressInterval);
+                if (onProgress) onProgress(100);
 
-            const data = await response.json();
-
-            // Check for empty response or safety blocks
-            if (!data.candidates || data.candidates.length === 0) {
-                console.warn("Gemini Response Empty:", data);
-                if (data.promptFeedback && data.promptFeedback.blockReason) {
-                    throw new Error(`Gemini Safety Block: ${data.promptFeedback.blockReason}`);
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(`Gemini API Error (${modelName}): ${errData.error?.message || response.statusText}`);
                 }
-                throw new Error("Gemini returned no candidates (Empty Response).");
+
+                const data = await response.json();
+
+                // Check for empty response or safety blocks
+                if (!data.candidates || data.candidates.length === 0) {
+                    console.warn("Gemini Response Empty:", data);
+                    if (data.promptFeedback && data.promptFeedback.blockReason) {
+                        throw new Error(`Gemini Safety Block: ${data.promptFeedback.blockReason}`);
+                    }
+                    throw new Error("Gemini returned no candidates (Empty Response).");
+                }
+
+                const textResponse = data.candidates[0].content.parts[0].text;
+
+                if (expectJson) {
+                    const cleanJson = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+                    return JSON.parse(cleanJson);
+                }
+                return textResponse;
+
+            } catch (error) {
+                console.error("Error in _callGemini:", error);
+
+                if (error.name === 'AbortError') {
+                    // Timeout specific handling
+                    if (expectJson && !inlineData) return { description: "Error: Tiempo de espera agotado (45s)", date: new Date().toISOString().split('T')[0], type: "pendiente" };
+                    throw new Error("El modelo tardó demasiado en responder (Timeout 45s). Intente de nuevo.");
+                }
+
+                if (expectJson && !inlineData) return { description: "Error IA", date: new Date().toISOString().split('T')[0], type: "pendiente" };
+                throw error;
             }
-
-            const textResponse = data.candidates[0].content.parts[0].text;
-
-            if (expectJson) {
-                const cleanJson = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-                return JSON.parse(cleanJson);
-            }
-            return textResponse;
-
-        } catch (error) {
-            console.error("Error in _callGemini:", error);
-            if (expectJson && !inlineData) return { description: "Error IA", date: new Date().toISOString().split('T')[0], type: "pendiente" };
-            throw error;
         }
-    },
+        },
 
     /**
      * Helper: Resolve the best available model for this key.
