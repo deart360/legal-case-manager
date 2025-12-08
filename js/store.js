@@ -612,3 +612,63 @@ export async function deleteImageFromCase(caseId, imgId) {
 
     return true;
 }
+
+export async function deleteImages(caseId, imageIds) {
+    const c = appData.cases[caseId];
+    if (!c || !c.images) return false;
+
+    // Filter out deleted images
+    const originalLength = c.images.length;
+    c.images = c.images.filter(img => !imageIds.includes(img.id));
+
+    if (c.images.length === originalLength) return false; // Nothing deleted
+
+    saveToLocal();
+
+    // Update Firebase
+    if (db) {
+        try {
+            await db.collection('cases').doc(caseId).update({
+                images: c.images
+            });
+        } catch (e) {
+            console.error("Error eliminando imágenes de Firebase:", e);
+        }
+    }
+    return true;
+}
+
+export async function reorderImages(caseId, newOrderIds) {
+    const c = appData.cases[caseId];
+    if (!c || !c.images) return false;
+
+    // Create a map for quick lookup
+    const imgMap = new Map(c.images.map(img => [img.id, img]));
+
+    // Reconstruct array based on new order
+    const newImages = [];
+    newOrderIds.forEach(id => {
+        if (imgMap.has(id)) {
+            newImages.push(imgMap.get(id));
+            imgMap.delete(id);
+        }
+    });
+
+    // Append any remaining images (safety fallback)
+    imgMap.forEach(img => newImages.push(img));
+
+    c.images = newImages;
+    saveToLocal();
+
+    // Update Firebase
+    if (db) {
+        try {
+            await db.collection('cases').doc(caseId).update({
+                images: c.images
+            });
+        } catch (e) {
+            console.error("Error reordenando imágenes en Firebase:", e);
+        }
+    }
+    return true;
+}
