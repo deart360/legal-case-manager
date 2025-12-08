@@ -217,6 +217,8 @@
 .doc-info {
     padding: 1rem;
     border-bottom: 1px solid var(--glass-border);
+    display: none;
+    /* Forced hidden per user request */
 }
 
 .doc-type {
@@ -242,6 +244,8 @@
     gap: 0.5rem;
     align-items: center;
     color: var(--text-muted);
+    display: none;
+    /* Forced hidden per user request */
 }
 
 /* Buttons */

@@ -91,14 +91,7 @@ export function createCaseView(caseId) {
                             </div>
                             `}
                         </div>
-                        <div class="doc-info">
-                            <span class="doc-type">${img.type}</span>
-                            ${img.deadline ? `<span class="doc-status urgent"><i class="ph-fill ph-clock"></i> Vence: ${img.deadline}</span>` : ''}
-                        </div>
-                        <div class="doc-ai-summary">
-                            <i class="ph-fill ph-sparkle text-accent"></i>
-                            <span class="text-xs text-muted truncate">${img.nextAction}</span>
-                        </div>
+                        <!-- Details removed for cleaner gallery -->
                     </div>
                 `).join('')}
                 

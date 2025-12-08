@@ -31,7 +31,7 @@ function renderContent(modal) {
     if (!img) return;
 
     modal.innerHTML = `
-        <div class="viewer-container">
+        <div class="viewer-container" oncontextmenu="return false;">
             <!-- Mobile Top Bar (Overlay) -->
             <div class="mobile-top-bar">
                  <button id="close-viewer" class="btn-icon transparent"><i class="ph ph-arrow-left"></i></button>
@@ -56,6 +56,11 @@ function renderContent(modal) {
                 <button id="btn-download" class="action-btn">
                     <i class="ph ph-download-simple"></i>
                     <span>Descargar</span>
+                </button>
+                <div class="divider-v"></div>
+                <button id="btn-date" class="action-btn">
+                    <i class="ph ph-calendar-blank"></i>
+                    <span>Fecha</span>
                 </button>
                 <div class="divider-v"></div>
                 <button id="btn-info" class="action-btn">
@@ -178,6 +183,17 @@ function bindEvents(modal) {
         };
     }
 
+    const btnDate = document.getElementById('btn-date');
+    if (btnDate) {
+        btnDate.onclick = async () => {
+            const { getCase } = await import('../store.js');
+            const c = getCase(currentCaseId);
+            const img = c.images.find(i => i.id === currentImageId);
+            const dateStr = img?.date || 'Fecha desconocida';
+            alert(`📅 Fecha de anexo: ${dateStr}`);
+        };
+    }
+
     const btnInfo = document.getElementById('btn-info');
     const bottomSheet = document.getElementById('ai-bottom-sheet');
     if (btnInfo && bottomSheet) {
@@ -235,79 +251,44 @@ function bindEvents(modal) {
         updateTransform();
     };
 
-    // Gallery Mode Toggle
-    const btnGallery = document.getElementById('btn-gallery-mode');
-    const viewerContainer = modal.querySelector('.viewer-container');
-
-    if (btnGallery) {
-        btnGallery.onclick = () => {
-            viewerContainer.classList.toggle('gallery-mode');
-            const isGallery = viewerContainer.classList.contains('gallery-mode');
-            btnGallery.innerHTML = isGallery ? '<i class="ph-fill ph-corners-in"></i>' : '<i class="ph-fill ph-corners-out"></i>';
-
-            if (isGallery) {
-                // Reset zoom for gallery mode swipe
-                zoomLevel = 1;
-                translateX = 0;
-                translateY = 0;
-                updateTransform();
-            }
-        };
-    }
+    // Gallery Mode Toggle (Removed per user request)
 
     // Keyboard Navigation
-    // Remove existing listener if any (safety check)
     if (currentKeydownHandler) {
         window.removeEventListener('keydown', currentKeydownHandler);
     }
 
+    // Simplified keyboard navigation (just escape to close)
     currentKeydownHandler = (e) => {
-        if (!viewerContainer.classList.contains('gallery-mode')) return;
-        if (e.key === 'ArrowLeft') navigateImage(-1);
-        if (e.key === 'ArrowRight') navigateImage(1);
         if (e.key === 'Escape') {
-            viewerContainer.classList.remove('gallery-mode');
-            const btn = document.getElementById('btn-gallery-mode');
-            if (btn) btn.innerHTML = '<i class="ph-fill ph-corners-out"></i>';
+            document.getElementById('close-viewer').click();
         }
     };
     window.addEventListener('keydown', currentKeydownHandler);
-
-    // On-screen Navigation Buttons (for Desktop)
-    const navOverlay = document.createElement('div');
-    navOverlay.className = 'gallery-nav-overlay';
-    navOverlay.innerHTML = `
-        < button class="gallery-nav-btn prev" > <i class="ph ph-caret-left"></i></button >
-            <button class="gallery-nav-btn next"><i class="ph ph-caret-right"></i></button>
-    `;
-    viewerContainer.appendChild(navOverlay);
-
-    navOverlay.querySelector('.prev').onclick = (e) => { e.stopPropagation(); navigateImage(-1); };
-    navOverlay.querySelector('.next').onclick = (e) => { e.stopPropagation(); navigateImage(1); };
 
     // Swipe Navigation (Simple implementation)
     let touchStartX = 0;
     let touchEndX = 0;
 
-    imgWrapper.addEventListener('touchstart', e => {
-        touchStartX = e.changedTouches[0].screenX;
-    });
+    // imgWrapper is already defined at the top of bindEvents
+    if (imgWrapper) {
+        imgWrapper.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
 
-    imgWrapper.addEventListener('touchend', e => {
-        touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-    });
+        imgWrapper.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+    }
 
     function handleSwipe() {
-        if (!viewerContainer.classList.contains('gallery-mode')) return;
-
         const swipeThreshold = 50;
+        // Always allow swipe navigation if we are just viewing
         if (touchEndX < touchStartX - swipeThreshold) {
-            // Swipe Left -> Next Image
             navigateImage(1);
         }
         if (touchEndX > touchStartX + swipeThreshold) {
-            // Swipe Right -> Previous Image
             navigateImage(-1);
         }
     }
