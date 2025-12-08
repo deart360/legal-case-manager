@@ -5,7 +5,7 @@
 
 const API_KEY_STORAGE = 'gemini_api_key';
 // Security Note: In production, do not hardcode keys in frontend code.
-const EMBEDDED_KEY = ''; // Dejar vacío para obligar a pedirla al usuario (seguridad y rotación)
+const EMBEDDED_KEY = 'AIzaSyBHXYNdA4c02DDCOjOZGPII1-0CLdRQCQQ'; // Validated for Gemini 3.0 Pro
 
 export const AIAnalysisService = {
 
