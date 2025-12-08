@@ -136,18 +136,16 @@ function renderFullDashboard(container) {
                 </div>
 
                 <!-- Promotions Widget (NEW) -->
-                <div class="card promotions-widget">
-                    <div class="card-header flex justify-between items-center">
+                <div class="card promotions-widget flex flex-col h-full" style="min-height: 300px;">
+                    <div class="card-header flex justify-between items-center shrink-0">
                         <h3 class="h3"><i class="ph-fill ph-files text-accent"></i> Promociones</h3>
                          <button class="btn-primary small" onclick="document.getElementById('promo-input-dash').click()">
                             <i class="ph ph-camera"></i> Capturar
                         </button>
                         <input type="file" id="promo-input-dash" accept="image/*" capture="environment" class="hidden">
                     </div>
-                    <div class="promo-status p-4 text-center">
-                        <p class="text-3xl font-bold text-white mb-1" id="promo-count">0</p>
-                        <p class="text-xs text-muted">Pendientes de archivar</p>
-                        <a href="#promotions" class="text-sm text-accent hover:underline mt-2 inline-block">Ver Galería <i class="ph ph-arrow-right"></i></a>
+                    <div id="promotions-list" class="promo-list flex-1 overflow-y-auto mt-2">
+                        <!-- Dynamic List Content -->
                     </div>
                 </div>
 
@@ -707,23 +705,65 @@ function bindDashboardEvents(container, events) {
     }
     // Promotions Logic
     const promoInput = container.querySelector('#promo-input-dash');
-    const promoCount = container.querySelector('#promo-count');
+    const promoListEl = container.querySelector('#promotions-list');
 
-    // Helper to update count
-    const updatePromoCount = async () => {
+    // Helper to update List
+    const renderPromotionsWidget = async () => {
+        if (!promoListEl) return;
+
         try {
             const { getPromotions } = await import('../store.js');
             const list = getPromotions() || [];
-            const count = list.length;
-            if (promoCount && count !== undefined) promoCount.innerText = count;
+
+            promoListEl.innerHTML = '';
+
+            if (list.length === 0) {
+                promoListEl.innerHTML = `
+                    <div class="text-center p-6 opacity-50">
+                        <i class="ph ph-files text-4xl mb-2"></i>
+                        <p class="text-sm">No hay promociones pendientes.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.forEach(p => {
+                const isAnalysing = p.status === 'analyzing';
+                const isError = p.status === 'error';
+                const statusClass = isAnalysing ? 'status-analyzing' : (isError ? 'status-error' : 'status-ready');
+                const statusText = isAnalysing ? 'Analizando...' : (isError ? 'Error (Reintentar)' : 'Listo para Anexar');
+
+                const item = document.createElement('div');
+                item.className = `promo-item ${statusClass}`;
+                item.onclick = () => window.navigateTo('#promotions'); // Go to gallery on click
+
+                item.innerHTML = `
+                    <div class="promo-icon-box">
+                        ${p.url ? `<img src="${p.url}" class="promo-thumb" alt="preview">` : '<i class="ph ph-file-image text-cyan-400"></i>'}
+                    </div>
+                    <div class="promo-info">
+                        <div class="flex justify-between items-start">
+                            <span class="promo-name" title="${p.name}">${p.aiAnalysis?.concept || p.name}</span>
+                            ${p.aiAnalysis?.filingDate ? `<span class="promo-date text-xs text-accent">${p.aiAnalysis.filingDate}</span>` : ''}
+                        </div>
+                        <div class="promo-meta">
+                            <span class="promo-status-badge">${statusText}</span>
+                            ${p.aiAnalysis?.court ? `<span class="truncate border-l border-white/10 pl-2 ml-1" style="max-width: 100px;">${p.aiAnalysis.court}</span>` : ''}
+                        </div>
+                    </div>
+                    <i class="ph ph-caret-right text-muted text-xs ml-2"></i>
+                `;
+                promoListEl.appendChild(item);
+            });
+
         } catch (e) {
-            console.error("Error updating promo count:", e);
+            console.error("Error rendering promotions widget:", e);
         }
     };
 
-    // Initial count
-    updatePromoCount();
-    window.addEventListener('promotions-updated', updatePromoCount);
+    // Initial render
+    renderPromotionsWidget();
+    window.addEventListener('promotions-updated', renderPromotionsWidget);
 
     if (promoInput) {
         promoInput.onchange = async (e) => {
@@ -731,18 +771,14 @@ function bindDashboardEvents(container, events) {
             if (!file) return;
 
             const { addPromotion } = await import('../store.js');
-            // Optimistic feedback
-            if (promoCount) promoCount.innerText = '...';
 
+            // Optimistic UI? Logic handles it via event
             try {
                 await addPromotion(file);
-                // Count will update via event, but we can force it too
-                // Notification?
-                // alert('Promoción capturada. Analizando...');
             } catch (err) {
                 console.error(err);
                 alert("Error subiendo promoción: " + err.message);
-                updatePromoCount();
+                renderPromotionsWidget();
             }
         };
     }

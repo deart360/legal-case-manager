@@ -940,6 +940,9 @@ body {
     box-shadow: 0 4px 20px rgba(8, 145, 178, 0.1);
     position: relative;
     overflow: hidden;
+    height: 100%;
+    /* Fill space like urgent widget */
+    min-height: 250px;
 }
 
 .promotions-widget::after {
@@ -949,10 +952,131 @@ body {
     left: 0;
     width: 4px;
     height: 100%;
-    background: #22d3ee;
-    /* Cyan */
+    background: #06b6d4;
+    /* Cyan 500 */
+    box-shadow: 0 0 10px #06b6d4;
 }
 
-.promotions-widget .h3 {
+.promo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-right: 0.5rem;
+    /* Space for scrollbar */
+}
+
+.promo-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(6, 182, 212, 0.05);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.promo-item:hover {
+    background: rgba(6, 182, 212, 0.1);
+    transform: translateX(2px);
+    border-color: rgba(6, 182, 212, 0.4);
+}
+
+.promo-icon-box {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(6, 182, 212, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-right: 0.75rem;
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    overflow: hidden;
+}
+
+.promo-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.promo-info {
+    flex: 1;
+    min-width: 0;
+    /* Enable truncation */
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.promo-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.promo-meta {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.promo-status-badge {
+    position: relative;
+    padding-left: 10px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.promo-status-badge::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.status-analyzing .promo-status-badge {
+    color: #facc15;
+}
+
+.status-analyzing .promo-status-badge::before {
+    background: #facc15;
+    box-shadow: 0 0 5px #facc15;
+    animation: pulse 1.5s infinite;
+}
+
+.status-ready .promo-status-badge {
     color: #22d3ee;
+}
+
+.status-ready .promo-status-badge::before {
+    background: #22d3ee;
+    box-shadow: 0 0 5px #22d3ee;
+}
+
+.status-error .promo-status-badge {
+    color: #f87171;
+}
+
+.status-error .promo-status-badge::before {
+    background: #f87171;
+}
+
+.promo-date {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1px 4px;
+    border-radius: 4px;
 }
