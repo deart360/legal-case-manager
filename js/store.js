@@ -503,73 +503,74 @@ export async function addImageToCase(caseId, fileObj, onProgress) {
                             console.error("Firebase Storage Error:", error.code, error.message);
                             reject(error);
                         },
-                        clearTimeout(timeoutId);
-                    clearTimeout(stallCheckId);
-                    resolve();
-                }
-                );
-            });
+                        () => {
+                            clearTimeout(timeoutId);
+                            clearTimeout(stallCheckId);
+                            resolve();
+                        }
+                    );
+                });
 
-            fileUrl = await fileRef.getDownloadURL();
-            console.log("Archivo subido a Firebase Storage:", fileUrl);
-        } catch (e) {
-            console.error("Error subiendo archivo a Firebase:", e);
-            // Fallback to local URL if upload fails
-            alert("Aviso: " + e.message + "\n\nLa imagen se guardó en tu teléfono, pero no se pudo sincronizar con la nube.");
+                fileUrl = await fileRef.getDownloadURL();
+                console.log("Archivo subido a Firebase Storage:", fileUrl);
+            } catch (e) {
+                console.error("Error subiendo archivo a Firebase:", e);
+                // Fallback to local URL if upload fails
+                alert("Aviso: " + e.message + "\n\nLa imagen se guardó en tu teléfono, pero no se pudo sincronizar con la nube.");
+            }
+        } else {
+            console.warn("Storage no disponible, usando URL local");
         }
-    } else {
-        console.warn("Storage no disponible, usando URL local");
-    }
 
-    const newImg = {
-        id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        url: fileUrl,
-        type: type,
-        summary: name,
-        deadline: null,
-        nextAction: 'Esperando revisión',
-        date: new Date().toISOString().split('T')[0]
-    };
+        const newImg = {
+            id: `img-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            url: fileUrl,
+            type: type,
+            summary: name,
+            deadline: null,
+            nextAction: 'Esperando revisión',
+            date: new Date().toISOString().split('T')[0]
+        };
 
-    c.images.push(newImg);
-    c.lastUpdate = new Date().toISOString().split('T')[0];
-    saveToLocal();
+        c.images.push(newImg);
+        c.lastUpdate = new Date().toISOString().split('T')[0];
+        saveToLocal();
 
-    // Update Case in Firebase
-    if (db) {
-        try {
-            await db.collection('cases').doc(caseId).update({
-                images: firebase.firestore.FieldValue.arrayUnion(newImg),
-                lastUpdate: c.lastUpdate
-            });
-            // alert("Store: Base de datos actualizada."); // Removed Debug
-        } catch (e) {
-            console.error("Error actualizando caso en Firebase:", e);
+        // Update Case in Firebase
+        if (db) {
+            try {
+                await db.collection('cases').doc(caseId).update({
+                    images: firebase.firestore.FieldValue.arrayUnion(newImg),
+                    lastUpdate: c.lastUpdate
+                });
+                // alert("Store: Base de datos actualizada."); // Removed Debug
+            } catch (e) {
+                console.error("Error actualizando caso en Firebase:", e);
 
-            // If document doesn't exist (e.g. mock case), create it
-            if (e.code === 'not-found' || e.message.includes('No document to update')) {
-                try {
-                    console.log("Caso no existe en nube, creando copia completa...");
-                    await db.collection('cases').doc(caseId).set(c);
-                    // alert("Aviso: Se creó el expediente en la nube para sincronización.");
-                } catch (createErr) {
-                    console.error("Error creando caso en Firebase:", createErr);
-                    alert("Error guardando datos en nube: " + createErr.message);
+                // If document doesn't exist (e.g. mock case), create it
+                if (e.code === 'not-found' || e.message.includes('No document to update')) {
+                    try {
+                        console.log("Caso no existe en nube, creando copia completa...");
+                        await db.collection('cases').doc(caseId).set(c);
+                        // alert("Aviso: Se creó el expediente en la nube para sincronización.");
+                    } catch (createErr) {
+                        console.error("Error creando caso en Firebase:", createErr);
+                        alert("Error guardando datos en nube: " + createErr.message);
+                    }
+                } else {
+                    alert("Error guardando datos: " + e.message);
                 }
-            } else {
-                alert("Error guardando datos: " + e.message);
             }
         }
+
+        // Trigger Mock AI Analysis
+        mockAnalyzeImage(caseId, newImg.id);
+
+        return newImg;
+    } else {
+        alert("Error crítico: No se encontró el caso en memoria local.");
     }
-
-    // Trigger Mock AI Analysis
-    mockAnalyzeImage(caseId, newImg.id);
-
-    return newImg;
-} else {
-    alert("Error crítico: No se encontró el caso en memoria local.");
-}
-return null;
+    return null;
 }
 
 // Mock AI Analysis Service
