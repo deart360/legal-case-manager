@@ -136,165 +136,165 @@ export function createCaseView(caseId) {
             };
         }
 
-    }
 
-    // Bind events to cards (Context Menu & Interaction)
-    const cards = container.querySelectorAll('.doc-card');
-    cards.forEach(card => {
-        const id = card.getAttribute('data-id');
 
-        // Click Handler (Mode dependent)
-        card.onclick = (e) => {
-            e.stopPropagation();
-            if (isSelectionMode) {
-                if (id) window.toggleSelection(id);
-            } else {
-                window.openImage(caseId, id);
-            }
-        };
+        // Bind events to cards (Context Menu & Interaction)
+        const cards = container.querySelectorAll('.doc-card');
+        cards.forEach(card => {
+            const id = card.getAttribute('data-id');
 
-        // Long Press Handler (Mobile)
-        let pressTimer;
-        const startPress = (e) => {
-            pressTimer = setTimeout(() => {
-                const x = e.touches ? e.touches[0].clientX : e.clientX;
-                const y = e.touches ? e.touches[0].clientY : e.clientY;
-                showContextMenu(x, y, id, c);
-            }, 500);
-        };
-
-        const cancelPress = () => {
-            clearTimeout(pressTimer);
-        };
-
-        // Touch Events
-        card.addEventListener('touchstart', startPress, { passive: true });
-        card.addEventListener('touchend', cancelPress);
-        card.addEventListener('touchmove', cancelPress);
-
-        // Context Menu (Desktop Right Click)
-        card.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            const x = e.clientX;
-            const y = e.clientY;
-            showContextMenu(x, y, id, c);
-        });
-    });
-
-    // Selection Specific Actions
-    if (isSelectionMode) {
-        // Select All
-        const btnSelectAll = container.querySelector('#btn-select-all');
-        if (btnSelectAll) {
-            btnSelectAll.onclick = () => {
-                if (selectedImages.size === c.images.length) {
-                    selectedImages.clear();
+            // Click Handler (Mode dependent)
+            card.onclick = (e) => {
+                e.stopPropagation();
+                if (isSelectionMode) {
+                    if (id) window.toggleSelection(id);
                 } else {
-                    c.images.forEach(img => selectedImages.add(img.id));
-                }
-                render();
-            };
-        }
-
-        // Delete Selection
-        const btnDelete = container.querySelector('#btn-delete-selection');
-        if (btnDelete) {
-            btnDelete.onclick = async () => {
-                if (confirm(`¿Estás seguro de eliminar ${selectedImages.size} documentos?`)) {
-                    await deleteImages(caseId, Array.from(selectedImages));
-                    isSelectionMode = false;
-                    selectedImages.clear();
-                    render();
+                    window.openImage(caseId, id);
                 }
             };
-        }
 
-        // Share Selection
-        const btnShare = container.querySelector('#btn-share-selection');
-        if (btnShare) {
-            btnShare.onclick = () => {
-                showShareModal(Array.from(selectedImages), c);
+            // Long Press Handler (Mobile)
+            let pressTimer;
+            const startPress = (e) => {
+                pressTimer = setTimeout(() => {
+                    const x = e.touches ? e.touches[0].clientX : e.clientX;
+                    const y = e.touches ? e.touches[0].clientY : e.clientY;
+                    showContextMenu(x, y, id, c);
+                }, 500);
             };
-        }
 
-        // Download Selection
-        const btnDownload = container.querySelector('#btn-download-selection');
-        if (btnDownload) {
-            btnDownload.onclick = () => {
-                showDownloadModal(Array.from(selectedImages), c);
+            const cancelPress = () => {
+                clearTimeout(pressTimer);
             };
-        }
-    }
 
-    // Upload Handlers (Only if not selection mode)
-    if (!isSelectionMode) {
-        const triggerUpload = () => fileInput.click();
-        if (uploadBtn) uploadBtn.onclick = triggerUpload;
-        if (uploadCard) uploadCard.onclick = triggerUpload;
+            // Touch Events
+            card.addEventListener('touchstart', startPress, { passive: true });
+            card.addEventListener('touchend', cancelPress);
+            card.addEventListener('touchmove', cancelPress);
 
-        fileInput.onchange = async (e) => {
-            const files = Array.from(e.target.files);
-            if (files.length === 0) return;
+            // Context Menu (Desktop Right Click)
+            card.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                const x = e.clientX;
+                const y = e.clientY;
+                showContextMenu(x, y, id, c);
+            });
+        });
 
-            // UI Feedback
-            const originalText = uploadBtn.innerHTML;
-            uploadBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Subiendo...';
-            uploadBtn.disabled = true;
-
-            // Show Progress Bar
-            if (progressContainer) progressContainer.classList.remove('hidden');
-
-            let newCount = 0;
-            const pdfLib = window.pdfjsLib;
-
-            for (const [index, file] of files.entries()) {
-                try {
-                    if (files.length > 1) {
-                        progressText.textContent = `Archivo ${index + 1}/${files.length}`;
-                        progressBar.style.width = '0%';
-                    }
-
-                    const onProgress = (percent) => {
-                        if (progressBar) progressBar.style.width = `${percent}%`;
-                        if (progressText) progressText.textContent = `${Math.round(percent)}%`;
-                    };
-
-                    if (file.type === 'application/pdf') {
-                        if (!pdfLib) throw new Error("Librería PDF no cargada");
-                        progressText.textContent = "Procesando PDF...";
-                        await processPdfFile(caseId, file, pdfLib, onProgress);
-                        newCount++;
+        // Selection Specific Actions
+        if (isSelectionMode) {
+            // Select All
+            const btnSelectAll = container.querySelector('#btn-select-all');
+            if (btnSelectAll) {
+                btnSelectAll.onclick = () => {
+                    if (selectedImages.size === c.images.length) {
+                        selectedImages.clear();
                     } else {
-                        const result = await addImageToCase(caseId, file, onProgress);
-                        if (result) newCount++;
+                        c.images.forEach(img => selectedImages.add(img.id));
                     }
-                } catch (err) {
-                    console.error("Error en archivo " + file.name, err);
-                    alert("Error procesando " + file.name + ": " + err.message);
-                }
+                    render();
+                };
             }
 
-            uploadBtn.innerHTML = originalText;
-            uploadBtn.disabled = false;
-            if (progressContainer) progressContainer.classList.add('hidden');
+            // Delete Selection
+            const btnDelete = container.querySelector('#btn-delete-selection');
+            if (btnDelete) {
+                btnDelete.onclick = async () => {
+                    if (confirm(`¿Estás seguro de eliminar ${selectedImages.size} documentos?`)) {
+                        await deleteImages(caseId, Array.from(selectedImages));
+                        isSelectionMode = false;
+                        selectedImages.clear();
+                        render();
+                    }
+                };
+            }
 
-            if (newCount > 0) render();
-        };
-    }
-};
+            // Share Selection
+            const btnShare = container.querySelector('#btn-share-selection');
+            if (btnShare) {
+                btnShare.onclick = () => {
+                    showShareModal(Array.from(selectedImages), c);
+                };
+            }
 
-// Listen for AI updates
-const aiUpdateHandler = (e) => {
-    if (e.detail.caseId === caseId) {
-        render();
-    }
-};
-window.addEventListener('case-updated', aiUpdateHandler);
+            // Download Selection
+            const btnDownload = container.querySelector('#btn-download-selection');
+            if (btnDownload) {
+                btnDownload.onclick = () => {
+                    showDownloadModal(Array.from(selectedImages), c);
+                };
+            }
+        }
 
-// Initial render
-render();
+        // Upload Handlers (Only if not selection mode)
+        if (!isSelectionMode) {
+            const triggerUpload = () => fileInput.click();
+            if (uploadBtn) uploadBtn.onclick = triggerUpload;
+            if (uploadCard) uploadCard.onclick = triggerUpload;
 
-return container;
+            fileInput.onchange = async (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+
+                // UI Feedback
+                const originalText = uploadBtn.innerHTML;
+                uploadBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Subiendo...';
+                uploadBtn.disabled = true;
+
+                // Show Progress Bar
+                if (progressContainer) progressContainer.classList.remove('hidden');
+
+                let newCount = 0;
+                const pdfLib = window.pdfjsLib;
+
+                for (const [index, file] of files.entries()) {
+                    try {
+                        if (files.length > 1) {
+                            progressText.textContent = `Archivo ${index + 1}/${files.length}`;
+                            progressBar.style.width = '0%';
+                        }
+
+                        const onProgress = (percent) => {
+                            if (progressBar) progressBar.style.width = `${percent}%`;
+                            if (progressText) progressText.textContent = `${Math.round(percent)}%`;
+                        };
+
+                        if (file.type === 'application/pdf') {
+                            if (!pdfLib) throw new Error("Librería PDF no cargada");
+                            progressText.textContent = "Procesando PDF...";
+                            await processPdfFile(caseId, file, pdfLib, onProgress);
+                            newCount++;
+                        } else {
+                            const result = await addImageToCase(caseId, file, onProgress);
+                            if (result) newCount++;
+                        }
+                    } catch (err) {
+                        console.error("Error en archivo " + file.name, err);
+                        alert("Error procesando " + file.name + ": " + err.message);
+                    }
+                }
+
+                uploadBtn.innerHTML = originalText;
+                uploadBtn.disabled = false;
+                if (progressContainer) progressContainer.classList.add('hidden');
+
+                if (newCount > 0) render();
+            };
+        }
+    };
+
+    // Listen for AI updates
+    const aiUpdateHandler = (e) => {
+        if (e.detail.caseId === caseId) {
+            render();
+        }
+    };
+    window.addEventListener('case-updated', aiUpdateHandler);
+
+    // Initial render
+    render();
+
+    return container;
 }
 
 function showContextMenu(x, y, imgId, c) {
