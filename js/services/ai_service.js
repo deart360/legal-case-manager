@@ -110,12 +110,15 @@ export const AIAnalysisService = {
         }
 
         try {
+            // Dynamically resolve model to avoid 404s
+            const modelName = await this._resolveModel(apiKey);
+
             const parts = [{ text: prompt }];
             if (inlineData) {
                 parts.push({ inline_data: inlineData });
             }
 
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-001:generateContent?key=${apiKey}`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -126,7 +129,7 @@ export const AIAnalysisService = {
 
             if (!response.ok) {
                 const errData = await response.json();
-                throw new Error(`Gemini API Error: ${errData.error?.message || response.statusText}`);
+                throw new Error(`Gemini API Error (${modelName}): ${errData.error?.message || response.statusText}`);
             }
 
             const data = await response.json();
@@ -140,11 +143,50 @@ export const AIAnalysisService = {
 
         } catch (error) {
             console.error("Error in _callGemini:", error);
-            // Specific fallback for parseTaskIntent if it fails
-            if (expectJson && !inlineData) { // This condition typically applies to parseTaskIntent
-                return { description: "Error IA", date: new Date().toISOString().split('T')[0], type: "pendiente", urgent: false };
+            if (expectJson && !inlineData) return { description: "Error IA", date: new Date().toISOString().split('T')[0], type: "pendiente" };
+            throw error;
+        }
+    },
+
+    /**
+     * Helper: Resolve the best available model for this key.
+     */
+    async _resolveModel(apiKey) {
+        // Cache model to avoid repeated list calls
+        if (window._geminiModelCache) return window._geminiModelCache;
+
+        try {
+            const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+            if (!listRes.ok) return 'models/gemini-1.5-flash'; // Fallback if list fails
+
+            const data = await listRes.json();
+            const models = data.models || [];
+
+            // Priority List
+            const candidates = [
+                'models/gemini-1.5-flash',
+                'models/gemini-1.5-flash-001',
+                'models/gemini-1.5-pro',
+                'models/gemini-1.5-pro-001',
+                'models/gemini-pro' // Last resort (legacy)
+            ];
+
+            // Find first candidate that exists in user's model list
+            let bestModel = candidates.find(c => models.some(m => m.name === c));
+
+            // If none of the specific ones, pick ANY gemini model that generates content
+            if (!bestModel) {
+                const anyGemini = models.find(m => m.name.includes('gemini') && m.supportedGenerationMethods.includes('generateContent'));
+                if (anyGemini) bestModel = anyGemini.name;
             }
-            throw error; // Re-throw for analyzeDocument to catch and use its own fallback
+
+            window._geminiModelCache = bestModel || 'models/gemini-1.5-flash';
+            console.log("Selected Gemini Model:", window._geminiModelCache);
+            return window._geminiModelCache;
+
+        } catch (e) {
+            console.warn("Could not list models, defaulting to flash:", e);
+            return 'models/gemini-1.5-flash';
         }
     },
 
