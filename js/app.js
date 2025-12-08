@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const errorMsg = `Error Global:\n${msg}\n\nEn: ${url}:${lineNo}`;
             console.error(errorMsg, error);
-            // alert(errorMsg); // Disable alert for production/mobile to avoid annoyance
+            alert(errorMsg); // Re-enabled for debugging
             return false;
         };
 

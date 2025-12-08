@@ -38,6 +38,7 @@ function handleRoute() {
             }
         }).catch(err => {
             console.error("Error loading view:", err);
+            alert("Error cargando vista: " + err.message);
             if (requestId === currentRequestId) {
                 viewContainer.innerHTML = '<div class="p-6"><h2>Error cargando la vista</h2><p>' + err.message + '</p></div>';
             }
