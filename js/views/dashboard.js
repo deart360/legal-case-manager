@@ -49,8 +49,11 @@ function renderFullDashboard(container) {
                 
                 <!-- Quick Add Task Widget -->
                 <div class="card quick-task-card">
-                    <div class="card-header">
+                    <div class="card-header flex justify-between items-center">
                         <h3 class="h3"><i class="ph-fill ph-plus-circle text-accent"></i> Tarea Rápida</h3>
+                        <button class="btn-text-sm" onclick="window.navigateTo('#tasks')">
+                            <i class="ph ph-list-checks"></i> Ver Todas
+                        </button>
                     </div>
                     <form id="quick-task-form" class="flex flex-col gap-3">
                         <div class="form-group">

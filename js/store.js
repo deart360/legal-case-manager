@@ -212,10 +212,12 @@ export function getAllEvents() {
         if (c.tasks) {
             c.tasks.forEach(t => {
                 events.push({
+                    id: t.id,
                     title: `${t.title} (${c.juzgado})`,
                     date: t.date,
                     type: 'task',
                     urgent: t.urgent,
+                    completed: t.completed,
                     caseId: c.id
                 });
             });

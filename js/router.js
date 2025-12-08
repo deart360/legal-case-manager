@@ -30,6 +30,8 @@ function handleRoute() {
                 viewContainer.appendChild(module.createCaseView(caseId));
             } else if (hash === '#calendar') {
                 viewContainer.appendChild(module.createCalendarView());
+            } else if (hash === '#tasks') {
+                viewContainer.appendChild(module.createTasksView());
             }
         }).catch(err => {
             console.error("Error loading view:", err);
