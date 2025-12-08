@@ -1,6 +1,5 @@
 import { appData, getAllEvents } from '../store.js';
 import { AuthService } from '../services/auth.js';
-import { getAllEvents } from '../store.js';
 
 let currentDate = new Date();
 let timelineMode = 'today'; // 'today' or 'upcoming'
