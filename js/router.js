@@ -42,14 +42,17 @@ function handleRoute() {
     };
 
     // Simple routing logic
+    const v = Date.now(); // Cache buster
     if (hash === '#dashboard') {
-        loadView(import('./views/dashboard.js'));
+        loadView(import(`./views/dashboard.js?v=${v}`));
     } else if (hash.startsWith('#folder')) {
-        loadView(import('./views/folder_view.js'));
+        loadView(import(`./views/folder_view.js?v=${v}`));
     } else if (hash.startsWith('#case')) {
-        loadView(import('./views/case_view.js'));
+        loadView(import(`./views/case_view.js?v=${v}`));
     } else if (hash === '#calendar') {
-        loadView(import('./views/calendar_view.js'));
+        loadView(import(`./views/calendar_view.js?v=${v}`));
+    } else if (hash === '#tasks') {
+        loadView(import(`./views/tasks_view.js?v=${v}`));
     } else {
         // 404
         viewContainer.innerHTML = '<h2>404 - Not Found</h2>';

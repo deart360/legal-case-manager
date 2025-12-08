@@ -6,6 +6,8 @@ let timelineMode = 'today'; // 'today' or 'upcoming'
 export function createDashboardView() {
     const container = document.createElement('div');
     container.className = 'dashboard-view p-6';
+    console.log('Dashboard View Loaded - v3-Column-Layout');
+    // alert('Dashboard Updated: 3 Columns'); // Temporary debug
 
     // Initial Render
     renderFullDashboard(container);
@@ -30,11 +32,9 @@ function renderFullDashboard(container) {
 
     const dashboardHtml = `
         <div class="dash-grid">
-            <!-- Left Column: Calendar & Timeline -->
-            <div class="left-col flex flex-col gap-4">
-                
-                <!-- Timeline -->
-                <div class="card timeline-card">
+            <!-- Column 1: Agenda (Timeline) -->
+            <div class="dash-col col-agenda">
+                <div class="card timeline-card h-full flex flex-col">
                     <div class="card-header">
                         <h3 class="h3">Agenda</h3>
                         <div class="segmented-control">
@@ -42,23 +42,39 @@ function renderFullDashboard(container) {
                             <button class="segment-btn ${timelineMode === 'upcoming' ? 'active' : ''}" id="btn-upcoming">Semanal</button>
                         </div>
                     </div>
-                    <div class="timeline-list" id="timeline-container">
+                    <div class="timeline-list flex-1 overflow-y-auto" id="timeline-container">
                         <!-- Content rendered by JS -->
                     </div>
                 </div>
+            </div>
+
+            <!-- Column 2: Términos (Urgent Terms) -->
+            <div class="dash-col col-terms">
+                <div class="card urgent-widget h-full flex flex-col">
+                    <div class="card-header">
+                        <h3 class="h3 text-danger"><i class="ph-fill ph-warning-circle"></i> Términos</h3>
+                    </div>
+                    <div class="urgent-list flex-1 overflow-y-auto" id="urgent-terms-list">
+                         <!-- Dynamic Content -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 3: Misc (Quick Task + Report) -->
+            <div class="dash-col col-misc flex flex-col gap-4">
                 
                 <!-- Quick Add Task Widget -->
-                <div class="card quick-task-card">
+                <div class="card quick-task-card quick-task-widget">
                     <div class="card-header flex justify-between items-center">
                         <h3 class="h3"><i class="ph-fill ph-plus-circle text-accent"></i> Tarea Rápida</h3>
                         <button class="btn-text-sm" onclick="window.navigateTo('#tasks')">
                             <i class="ph ph-list-checks"></i> Ver Todas
                         </button>
                     </div>
-                    <form id="quick-task-form" class="flex flex-col gap-3">
+                    <form id="quick-task-form" class="quick-task-form">
                         <div class="form-group">
                             <label class="text-xs text-muted uppercase font-bold">Ubicación</label>
-                            <select id="qt-state" class="form-input bg-glass border-glass text-sm">
+                            <select id="qt-state" class="form-input text-sm">
                                 <option value="">Selecciona Estado...</option>
                                 ${appData.states.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
                             </select>
@@ -66,21 +82,21 @@ function renderFullDashboard(container) {
                         
                         <div class="form-group">
                             <label class="text-xs text-muted uppercase font-bold">Materia</label>
-                            <select id="qt-subject" class="form-input bg-glass border-glass text-sm" disabled>
+                            <select id="qt-subject" class="form-input text-sm" disabled>
                                 <option value="">Selecciona Materia...</option>
                             </select>
                         </div>
 
                         <div class="form-group">
                             <label class="text-xs text-muted uppercase font-bold">Expediente</label>
-                            <select id="qt-case" class="form-input bg-glass border-glass text-sm" disabled>
+                            <select id="qt-case" class="form-input text-sm" disabled>
                                 <option value="">Selecciona Expediente...</option>
                             </select>
                         </div>
 
                         <div class="form-group">
                             <label class="text-xs text-muted uppercase font-bold">Tipo de Pendiente</label>
-                            <select id="qt-type" class="form-input bg-glass border-glass text-sm">
+                            <select id="qt-type" class="form-input text-sm">
                                 <option value="pendiente">Pendiente General</option>
                                 <option value="termino">Término (Urgente)</option>
                                 <option value="revision">Revisión</option>
@@ -90,33 +106,18 @@ function renderFullDashboard(container) {
 
                         <div class="form-group">
                             <label class="text-xs text-muted uppercase font-bold">Descripción</label>
-                            <textarea id="qt-desc" class="form-input bg-glass border-glass text-sm" rows="2" placeholder="Detalles de la tarea..."></textarea>
+                            <textarea id="qt-desc" class="form-input text-sm" rows="2" placeholder="Detalles de la tarea..."></textarea>
                         </div>
 
                         <div class="form-group">
                             <label class="text-xs text-muted uppercase font-bold">Fecha Vencimiento</label>
-                            <input type="date" id="qt-date" class="form-input bg-glass border-glass text-sm" required>
+                            <input type="date" id="qt-date" class="form-input text-sm" required>
                         </div>
 
                         <button type="submit" class="btn-primary w-full mt-2">
                             <i class="ph ph-check"></i> Agregar Tarea
                         </button>
                     </form>
-                </div>
-
-            </div>
-
-            <!-- Right Column: Widgets -->
-            <div class="right-col flex flex-col gap-4">
-                
-                <!-- Urgent Terms Widget -->
-                <div class="card urgent-widget">
-                    <div class="card-header">
-                        <h3 class="h3 text-danger"><i class="ph-fill ph-warning-circle"></i> Términos</h3>
-                    </div>
-                    <div class="urgent-list" id="urgent-terms-list">
-                         <!-- Dynamic Content -->
-                    </div>
                 </div>
 
                 <!-- AI Weekly Report -->

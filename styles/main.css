@@ -125,7 +125,6 @@ body {
   /* Fallback */
   height: 100dvh;
   /* Dynamic Viewport Height */
-  overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
