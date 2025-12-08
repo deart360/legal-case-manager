@@ -174,16 +174,13 @@ export const AIAnalysisService = {
             const data = await listRes.json();
             const models = data.models || [];
 
-            // Priority List
+            // Priority List - Updated based on actual API capabilities
             const candidates = [
-                'models/gemini-1.5-flash',
-                'models/gemini-1.5-flash-001',
-                'models/gemini-1.5-pro',
-                'models/gemini-1.5-pro-001',
-                'models/gemini-pro' // Last resort (legacy)
+                'models/gemini-3-pro-preview',   // CONFIRMED AVAILABLE
+                'models/gemini-3.0-pro',         // Future alias
+                'models/gemini-1.5-pro-002',     // Stable High Reasoning
+                'models/gemini-1.5-pro'          // Standard
             ];
-
-            // Find first candidate that exists in user's model list
             let bestModel = candidates.find(c => models.some(m => m.name === c));
 
             // If none of the specific ones, pick ANY gemini model that generates content
