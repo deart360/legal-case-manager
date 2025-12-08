@@ -11,6 +11,7 @@ function handleRoute() {
     const hash = window.location.hash || '#dashboard';
     const viewContainer = document.getElementById('view-container');
     const requestId = ++currentRequestId;
+    const v = Date.now(); // Cache busting for dynamic imports
 
     console.log('Navigating to:', hash, 'ReqID:', requestId);
 
