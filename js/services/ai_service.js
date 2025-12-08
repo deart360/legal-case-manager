@@ -18,24 +18,36 @@ export const AIAnalysisService = {
         const base64Data = await this._fileToBase64(file);
         const mimeType = file.type || 'image/jpeg';
 
+        // "System" style prompt for high-reasoning models
         const promptText = `
-            Actúa como un abogado experto en leyes de México. 🇲🇽
-            Analiza la imagen adjunta de un expediente legal y extrae la siguiente información en formato JSON estricto:
+            SYSTEM INSTRUCTION:
+            Eres un Abogado Experto Senior en leyes de México. Tu prioridad absoluta es la PRECISIÓN FACTUAL.
+            Analizas documentos legales para un despacho. El riesgo de alucinación es inaceptable.
+            
+            TAREA:
+            Analiza la imagen adjunta. Identifica fechas fatales y términos legales.
+            
+            REGLAS DE RAZONAMIENTO:
+            1. Si el documento menciona una excepción a la fecha (ej. "días hábiles salvo..."), aplícala.
+            2. Si NO hay fecha de vencimiento explícita o deducible con 100% de certeza, devuelve "days": 0 y "deadline": "N/A". NO INVENTES FECHAS.
+            3. Analiza el contenido completo para encontrar cláusulas trampa.
 
-            1. "summary": Un resumen conciso de qué trata el documento (máx 20 palabras).
-            2. "type": El tipo de actuación (ej. Auto, Sentencia, Promoción, Oficio).
-            3. "days": Número de días hábiles para el vencimiento de término (0 si no aplica).
-            4. "deadline": Fecha estimada de vencimiento si hoy es ${new Date().toLocaleDateString()} (calcula días hábiles). String legible.
-            5. "legalBasis": El artículo o fundamento legal aplicable (ej. "Art. 137 CPCDF" o "Art. 1079 Código Comercio").
-            6. "nextAction": La acción recomendada más lógica.
+            EXTRACCIÓN (JSON STRICTO):
+            Retorna UNICAMENTE un objeto JSON con:
+            1. "summary": Resumen ejecutivo (máx 30 palabras).
+            2. "type": Tipo de actuación preciso (ej. "Auto de Radicación", "Sentencia Interlocutoria").
+            3. "days": Entero. Días hábiles para el término. 0 si no aplica.
+            4. "deadline": String. Fecha exacta calculada o "N/A".
+            5. "legalBasis": Fundamento legal citado o aplicable (ej. "Art. 137 CPCDF").
+            6. "nextAction": Acción procesal recomendada.
 
-            JSON puro:
+            JSON:
             { "summary": "...", "type": "...", "days": 0, "deadline": "...", "legalBasis": "...", "nextAction": "..." }
         `;
 
         try {
             const result = await this._callGemini(promptText, { mime_type: mimeType, data: base64Data });
-            result.confidence = "Real AI"; // Add confidence metadata
+            result.confidence = "Gemini 3.0 Pro (High Reasoning)";
             return result;
         } catch (error) {
             console.error("Gemini API Error in analyzeDocument:", error);
