@@ -31,23 +31,22 @@ function renderContent(modal) {
     if (!img) return;
 
     modal.innerHTML = `
-    modal.innerHTML = `
-        < div class="viewer-container" >
-            < !--Mobile Top Bar(Overlay)-- >
+        <div class="viewer-container">
+            <!-- Mobile Top Bar (Overlay) -->
             <div class="mobile-top-bar">
                  <button id="close-viewer" class="btn-icon transparent"><i class="ph ph-arrow-left"></i></button>
                  <span class="file-title text-sm truncate">${img.name}</span>
                  <div class="spacer"></div> <!-- Balance layout -->
             </div>
 
-            <!--Main Image Area-- >
+            <!-- Main Image Area -->
             <div class="viewer-main">
                 <div class="image-wrapper" id="image-wrapper">
                     <img src="${img.url}" id="active-image" alt="Documento" draggable="false">
                 </div>
             </div>
 
-            <!--Floating Bottom Bar(Mobile)-- >
+            <!-- Floating Bottom Bar (Mobile) -->
             <div class="mobile-bottom-bar">
                 <button id="btn-share" class="action-btn">
                     <i class="ph ph-share-network"></i>
@@ -65,7 +64,7 @@ function renderContent(modal) {
                 </button>
             </div>
 
-            <!--Bottom Sheet(AI Info) - Hidden by default -->
+            <!-- Bottom Sheet (AI Info) - Hidden by default -->
             <div class="bottom-sheet" id="ai-bottom-sheet">
                 <div class="sheet-drag-handle"></div>
                 <div class="sheet-content">
@@ -118,15 +117,14 @@ function renderContent(modal) {
                 </div>
             </div>
             
-            <!--Desktop Only Toolbar(Legacy / Fallback)-- >
-        <div class="desktop-toolbar hidden md:flex">
-            <button id="zoom-out" class="btn-icon"><i class="ph ph-minus"></i></button>
-            <span id="zoom-level" class="mx-2 text-white">100%</span>
-            <button id="zoom-in" class="btn-icon"><i class="ph ph-plus"></i></button>
+            <!-- Desktop Only Toolbar (Legacy/Fallback) -->
+            <div class="desktop-toolbar hidden md:flex">
+                 <button id="zoom-out" class="btn-icon"><i class="ph ph-minus"></i></button>
+                 <span id="zoom-level" class="mx-2 text-white">100%</span>
+                 <button id="zoom-in" class="btn-icon"><i class="ph ph-plus"></i></button>
+            </div>
         </div>
-        </div >
-        `;
-
+    `;
 }
 
 function bindEvents(modal) {
@@ -173,7 +171,7 @@ function bindEvents(modal) {
         btnDownload.onclick = () => {
             const a = document.createElement('a');
             a.href = activeImg.src;
-            a.download = `documento_${ currentImageId }.jpg`;
+            a.download = `documento_${currentImageId}.jpg`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -188,7 +186,7 @@ function bindEvents(modal) {
             // Toggle icon visual state if needed
             btnInfo.classList.toggle('active-btn');
         };
-        
+
         // Close sheet when clicking handle
         const handle = bottomSheet.querySelector('.sheet-drag-handle');
         if (handle) {
@@ -198,8 +196,8 @@ function bindEvents(modal) {
 
     // Zoom
     const updateTransform = () => {
-        activeImg.style.transform = `translate(${ translateX }px, ${ translateY }px) scale(${ zoomLevel })`;
-        document.getElementById('zoom-level').innerText = `${ Math.round(zoomLevel * 100) }% `;
+        activeImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${zoomLevel})`;
+        document.getElementById('zoom-level').innerText = `${Math.round(zoomLevel * 100)}% `;
     };
 
     document.getElementById('zoom-in').onclick = () => { zoomLevel += 0.2; updateTransform(); };
@@ -341,7 +339,7 @@ function bindEvents(modal) {
                     const fileToAnalyze = new File([blob], img.name, { type: blob.type });
 
                     const result = await AIAnalysisService.analyzeDocument(fileToAnalyze, (percent) => {
-                        btnRegen.innerHTML = `< i class="ph ph-scan" ></i > Analizando... ${ percent }% `;
+                        btnRegen.innerHTML = `< i class="ph ph-scan" ></i > Analizando... ${percent}% `;
                     });
 
                     // Update Store
