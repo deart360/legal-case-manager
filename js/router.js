@@ -1,3 +1,5 @@
+import { AuthService } from './services/auth.js';
+
 let currentRequestId = 0;
 
 export function initRouter() {
@@ -42,8 +44,6 @@ function handleRoute() {
     };
 
     // Auth Guard
-    const { AuthService } = await import('./services/auth.js');
-
     if (hash === '#login') {
         if (AuthService.isAuthenticated()) {
             window.location.hash = '#dashboard';
