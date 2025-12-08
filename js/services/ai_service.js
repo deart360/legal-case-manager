@@ -15,101 +15,136 @@ export const AIAnalysisService = {
      * @returns {Promise<Object>} - The analysis result.
      */
     async analyzeDocument(file) {
-        // 1. Get API Key (Local Storage -> Embedded Key -> Prompt)
-        let apiKey = localStorage.getItem(API_KEY_STORAGE) || EMBEDDED_KEY;
+        const base64Data = await this._fileToBase64(file);
+        const mimeType = file.type || 'image/jpeg';
 
-        if (!apiKey) {
-            apiKey = prompt("🔑 Para usar la IA Real, ingresa tu Google AI Studio API Key:\n(Se guardará en tu navegador de forma segura)");
-            if (apiKey) {
-                localStorage.setItem(API_KEY_STORAGE, apiKey.trim());
-            } else {
-                // User cancelled or empty, fallback to simulation or error
-                console.warn("API Key no proporcionada. Usando simulación.");
-                return this._generateSimulatedAnalysis(file.name);
-            }
-        }
+        const promptText = `
+            Actúa como un abogado experto en leyes de México. 🇲🇽
+            Analiza la imagen adjunta de un expediente legal y extrae la siguiente información en formato JSON estricto:
+
+            1. "summary": Un resumen conciso de qué trata el documento (máx 20 palabras).
+            2. "type": El tipo de actuación (ej. Auto, Sentencia, Promoción, Oficio).
+            3. "days": Número de días hábiles para el vencimiento de término (0 si no aplica).
+            4. "deadline": Fecha estimada de vencimiento si hoy es ${new Date().toLocaleDateString()} (calcula días hábiles). String legible.
+            5. "legalBasis": El artículo o fundamento legal aplicable (ej. "Art. 137 CPCDF" o "Art. 1079 Código Comercio").
+            6. "nextAction": La acción recomendada más lógica.
+
+            JSON puro:
+            { "summary": "...", "type": "...", "days": 0, "deadline": "...", "legalBasis": "...", "nextAction": "..." }
+        `;
 
         try {
-            // 2. Prepare Data (Base64)
-            const base64Data = await this._fileToBase64(file);
-            const mimeType = file.type || 'image/jpeg'; // Default if missing 
-
-            // 3. Construct Prompt
-            const promptText = `
-                Actúa como un abogado experto en leyes de México. 🇲🇽
-                Analiza la imagen adjunta de un expediente legal y extrae la siguiente información en formato JSON estricto:
-
-                1. "summary": Un resumen conciso de qué trata el documento (máx 20 palabras).
-                2. "type": El tipo de actuación (ej. Auto, Sentencia, Promoción, Oficio).
-                3. "days": Número de días hábiles para el vencimiento de término (0 si no aplica).
-                4. "deadline": Fecha estimada de vencimiento si hoy es ${new Date().toLocaleDateString()} (calcula días hábiles). String legible.
-                5. "legalBasis": El artículo o fundamento legal aplicable (ej. "Art. 137 CPCDF").
-                6. "nextAction": La acción recomendada más lógica (ej. "Presentar escrito", "Esperar acuerdo").
-
-                Formato de respuesta JSON puro sin markdown:
-                {
-                  "summary": "...",
-                  "type": "...",
-                  "days": 0,
-                  "deadline": "...",
-                  "legalBasis": "...",
-                  "nextAction": "..."
-                }
-            `;
-
-            // 4. Update UI to show "Thinking..." if possible via callback, irrelevant here as async.
-
-            // 5. Call API
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [
-                            { text: promptText },
-                            {
-                                inline_data: {
-                                    mime_type: mimeType,
-                                    data: base64Data
-                                }
-                            }
-                        ]
-                    }],
-                    generationConfig: {
-                        response_mime_type: "application/json"
-                    }
-                })
-            });
-
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(`API Error: ${errData.error?.message || response.statusText}`);
-            }
-
-            const data = await response.json();
-            const textResponse = data.candidates[0].content.parts[0].text;
-
-            // Parse JSON
-            let cleanJson = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-            const result = JSON.parse(cleanJson);
-
-            // Add confidence metadata
-            result.confidence = "Real AI";
+            const result = await this._callGemini(promptText, { mime_type: mimeType, data: base64Data });
+            result.confidence = "Real AI"; // Add confidence metadata
             return result;
-
         } catch (error) {
-            console.error("Gemini API Error:", error);
-
+            console.error("Gemini API Error in analyzeDocument:", error);
             if (error.message.includes('API Key') || error.message.includes('403')) {
                 localStorage.removeItem(API_KEY_STORAGE); // Clear invalid key
                 alert("Tu API Key parece inválida o expiró. Inténtalo de nuevo.");
             } else {
                 alert("Error conectando con Gemini: " + error.message + "\n\nUsando modo simulación temporalmente.");
             }
-
             return this._generateSimulatedAnalysis(file.name);
+        }
+    },
+
+    /**
+     * Generates a weekly performance report.
+     */
+    async generateWeeklyReport(data) {
+        const promptText = `
+            Actúa como socio fundador de un despacho de abogados. 👨‍⚖️
+            Analiza este JSON de actividad semanal:
+            ${JSON.stringify(data)}
+
+            Escribe un "Resumen Ejecutivo" de 3 párrafos cortos (HTML format, sin markdown code blocks):
+            1. <strong>Logros</strong>: Qué se completó.
+            2. <strong>Riesgos</strong>: Qué urge (términos vencidos o próximos).
+            3. <strong>Estrategia</strong>: Recomendación para la próxima semana.
+
+            Usa un tono profesional, motivador y directo. Usa etiquetas <strong> para resaltar datos clave.
+            No saludes, ve directo al grano.
+        `;
+
+        // Text-only call
+        return this._callGemini(promptText, null, false); // false = return raw text, not JSON
+    },
+
+    /**
+     * Parses natural language task into structured data.
+     */
+    async parseTaskIntent(text) {
+        const promptText = `
+            Eres un asistente legal eficiente. Convierte esta instrucción en una tarea estructurada JSON.
+            Hoy es: ${new Date().toISOString().split('T')[0]} (${new Date().toLocaleDateString('es-MX', { weekday: 'long' })}).
+
+            Instrucción: "${text}"
+
+            Reglas:
+            - type: "termino" (si menciona plazos fatales, audiencias, vencimientos), "revision" (si es estudiar), "pendiente" (general).
+            - date: Formato YYYY-MM-DD. Si dice "mañana", calcula la fecha. Si no dice, usa hoy.
+            - urgent: true si menciona "urgente", "para ayer", "termino", "fatal".
+            - description: Limpia la instrucción para que sea un título formal.
+
+            JSON puro:
+            { "type": "...", "date": "...", "urgent": true/false, "description": "..." }
+        `;
+
+        return this._callGemini(promptText);
+    },
+
+    /**
+     * Private Helper: Call Gemini API
+     */
+    async _callGemini(prompt, inlineData = null, expectJson = true) {
+        let apiKey = localStorage.getItem(API_KEY_STORAGE) || EMBEDDED_KEY;
+
+        if (!apiKey) {
+            apiKey = prompt("🔑 Ingresa tu Google AI Studio API Key:");
+            if (apiKey) {
+                localStorage.setItem(API_KEY_STORAGE, apiKey.trim());
+            } else {
+                throw new Error("API Key requerida");
+            }
+        }
+
+        try {
+            const parts = [{ text: prompt }];
+            if (inlineData) {
+                parts.push({ inline_data: inlineData });
+            }
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: parts }],
+                    generationConfig: { response_mime_type: expectJson ? "application/json" : "text/plain" }
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(`Gemini API Error: ${errData.error?.message || response.statusText}`);
+            }
+
+            const data = await response.json();
+            const textResponse = data.candidates[0].content.parts[0].text;
+
+            if (expectJson) {
+                const cleanJson = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+                return JSON.parse(cleanJson);
+            }
+            return textResponse;
+
+        } catch (error) {
+            console.error("Error in _callGemini:", error);
+            // Specific fallback for parseTaskIntent if it fails
+            if (expectJson && !inlineData) { // This condition typically applies to parseTaskIntent
+                return { description: "Error IA", date: new Date().toISOString().split('T')[0], type: "pendiente", urgent: false };
+            }
+            throw error; // Re-throw for analyzeDocument to catch and use its own fallback
         }
     },
 

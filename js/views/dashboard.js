@@ -113,9 +113,14 @@ function renderFullDashboard(container) {
                             </select>
                         </div>
 
-                        <div class="form-group">
-                            <label class="text-xs text-muted uppercase font-bold">Descripción</label>
-                            <textarea id="qt-desc" class="form-input text-sm" rows="2" placeholder="Detalles de la tarea..."></textarea>
+                        <div class="form-group relative">
+                            <label class="text-xs text-muted uppercase font-bold flex justify-between">
+                                Descripción
+                                <button type="button" id="btn-ai-task" class="text-accent hover:text-white transition-colors text-xs flex items-center gap-1">
+                                    <i class="ph-fill ph-magic-wand"></i> Autocompletar con IA
+                                </button>
+                            </label>
+                            <textarea id="qt-desc" class="form-input text-sm" rows="2" placeholder="Ej: 'Revisar expediente mercantil mañana urgente'"></textarea>
                         </div>
 
                         <div class="form-group">
@@ -617,6 +622,45 @@ function bindDashboardEvents(container, events) {
     const btnToday = container.querySelector('#btn-today');
     const btnUpcoming = container.querySelector('#btn-upcoming');
 
+    // AI Quick Task Listener
+    const btnAiTask = container.querySelector('#btn-ai-task');
+    const inputDesc = container.querySelector('#qt-desc');
+    const inputDate = container.querySelector('#qt-date');
+    const inputType = container.querySelector('#qt-type');
+
+    if (btnAiTask && inputDesc) {
+        btnAiTask.onclick = async (e) => {
+            e.preventDefault();
+            const text = inputDesc.value.trim();
+            if (!text) {
+                alert("Escribe algo en la descripción primero (ej. 'Audiencia mañana urgente').");
+                return;
+            }
+
+            const originalIcon = btnAiTask.innerHTML;
+            btnAiTask.innerHTML = '<i class="ph ph-spinner animate-spin"></i> ...';
+
+            try {
+                const { AIAnalysisService } = await import('../services/ai_service.js');
+                const result = await AIAnalysisService.parseTaskIntent(text);
+
+                // Autofill
+                if (result.description) inputDesc.value = result.description;
+                if (result.date) inputDate.value = result.date;
+                if (result.type) inputType.value = result.type;
+
+                // Visual feedback
+                btnAiTask.innerHTML = '<i class="ph-fill ph-check text-green-500"></i> Listo';
+                setTimeout(() => btnAiTask.innerHTML = originalIcon, 2000);
+
+            } catch (err) {
+                console.error(err);
+                alert("Error IA: " + err.message);
+                btnAiTask.innerHTML = originalIcon;
+            }
+        };
+    }
+
     if (btnToday && btnUpcoming) {
         btnToday.onclick = () => {
             timelineMode = 'today';
@@ -684,92 +728,67 @@ function generateReport(container, type) {
     }
 
     // Metrics
-    let completedCount = 0;
-    let urgentPending = 0;
-    let nearDeadline = 0;
+    const completedTasks = relevantTasks.filter(e => e.completed && (!type || type === 'general' || (e.completedBy && e.completedBy.uid === user.uid)));
+    const urgentPending = relevantTasks.filter(e => !e.completed && e.urgent).length;
+    const completedCount = completedTasks.length;
 
-    // We need to iterate over cases directly for image uploads (docs) as getAllEvents might abstract them.
-    // Let's import appData for deeper access if needed, or stick to getAllEvents.
-    // getAllEvents includes tasks and deadlines.
-    // Let's rely on events for task stats.
-
-    const eventsThisWeek = relevantTasks.filter(e => {
-        const d = new Date(e.date);
-        return d <= today && d >= lastWeek; // Past week stats? Or upcoming?
-        // Usually reports are "What happened". Let's do "Activity Last 7 Days".
-    });
-
-    // Actually, users want to see what they DID.
-    // Let's count "Completed Tasks" in the last 7 days.
-    const completedTasks = relevantTasks.filter(e => {
-        if (!e.completed) return false;
-        // Check date of completion? We don't track completion date explicitly in event object, 
-        // but we can assume 'date' is due date. Store.js doesn't track 'completedAt'.
-        // Limitation: We will count ALL completed tasks for now as a proxy, or just those with due date in range.
-        return true;
-    });
-
-    if (type === 'user') {
-        // Strict filter for user report
-        completedCount = completedTasks.filter(e => e.completedBy && e.completedBy.uid === user.uid).length;
-    } else {
-        completedCount = completedTasks.length;
-    }
-
-    // Pending Urgent (Snapshot)
-    urgentPending = relevantTasks.filter(e => !e.completed && e.urgent).length;
-
-    // HTML Construction
-    const html = `
-        <div class="report-content p-6">
-            <div class="text-center mb-6">
-                <i class="ph-duotone ph-chart-polar text-5xl text-accent mb-2"></i>
-                <h2 class="h2 text-gradient">${title}</h2>
-                <p class="text-sm text-muted">${lastWeek.toLocaleDateString()} - ${today.toLocaleDateString()}</p>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="stat-card glass-panel p-4 rounded-xl text-center">
-                    <div class="text-3xl font-bold text-accent">${completedCount}</div>
-                    <div class="text-xs text-muted uppercase">Tareas Completadas</div>
-                </div>
-                <div class="stat-card glass-panel p-4 rounded-xl text-center">
-                    <div class="text-3xl font-bold text-red-400">${urgentPending}</div>
-                    <div class="text-xs text-muted uppercase">Urgentes Pendientes</div>
-                </div>
-            </div>
-
-            <div class="mb-6">
-                <h3 class="h3 text-sm border-b border-glass pb-2 mb-3">Desglose de Actividad</h3>
-                <ul class="space-y-2 text-sm text-muted">
-                    <li><i class="ph-fill ph-check-circle text-green-500 mr-2"></i> Rendimiento semanal: <strong>${Math.floor(Math.random() * 20 + 80)}%</strong></li>
-                    <li><i class="ph-fill ph-clock text-orange-400 mr-2"></i> Tiempo prom. respuesta: <strong>2.5 hrs</strong></li>
-                </ul>
-            </div>
-
-             <div class="bg-glass p-4 rounded-xl border border-glass">
-                <p class="text-xs italic text-center opacity-70">
-                    "La constancia es la clave del éxito legal."
-                </p>
-            </div>
-            
-            <button class="btn-primary w-full mt-6" onclick="document.getElementById('infographic-modal').classList.add('hidden')">
-                Entendido
-            </button>
-        </div>
-    `;
-
-    // Inject
-    const contentContainer = modal.querySelector('.modal-body') || modal; // Fallback
-    // We expect a container. The modal HTML in bindEvents had .infographic-container
-    // Let's clear and inject.
-
-    // Quick fix: The modal structure in HTML string earlier was:
-    // <div id="infographic-modal" ...> <div class="infographic-container ...">
-    // We should replace content of infographic-container
+    // Show Loading State
     const containerInner = modal.querySelector('.infographic-container');
     if (containerInner) {
-        containerInner.innerHTML = html;
+        containerInner.innerHTML = `
+            <div class="h-full flex flex-col items-center justify-center text-center p-8">
+                <i class="ph ph-sparkle text-5xl text-accent animate-pulse mb-4"></i>
+                <h3 class="h3 mb-2">Generando Informe Inteligente...</h3>
+                <p class="text-muted">Gemini está analizando ${relevantTasks.length} actividades para redactar tu resumen ejecutivo.</p>
+            </div>
+         `;
         modal.classList.remove('hidden');
     }
+
+    // Call AI
+    import('../services/ai_service.js').then(async module => {
+        try {
+            const aiReportHtml = await module.AIAnalysisService.generateWeeklyReport({
+                user: user.name,
+                role: type,
+                stats: { completed: completedCount, urgent_pending: urgentPending, total_monitored: relevantTasks.length },
+                tasks_sample: relevantTasks.slice(0, 15).map(t => ({ title: t.title, status: t.completed ? 'Done' : 'Pending', urgent: t.urgent }))
+            });
+
+            // Render Final Report
+            const html = `
+                <div class="report-content p-6 h-full overflow-y-auto">
+                    <div class="text-center mb-6">
+                        <i class="ph-duotone ph-chart-polar text-5xl text-accent mb-2"></i>
+                        <h2 class="h2 text-gradient">${title}</h2>
+                        <p class="text-sm text-muted">${lastWeek.toLocaleDateString()} - ${today.toLocaleDateString()}</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="stat-card glass-panel p-4 rounded-xl text-center">
+                            <div class="text-3xl font-bold text-accent">${completedCount}</div>
+                            <div class="text-xs text-muted uppercase">Tareas Completadas</div>
+                        </div>
+                         <div class="stat-card glass-panel p-4 rounded-xl text-center">
+                            <div class="text-3xl font-bold text-red-400">${urgentPending}</div>
+                            <div class="text-xs text-muted uppercase">Urgentes Pendientes</div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-xl border border-glass mb-6 prose prose-invert max-w-none text-sm">
+                        ${aiReportHtml}
+                    </div>
+                    
+                    <button class="btn-primary w-full mt-2" onclick="document.getElementById('infographic-modal').classList.add('hidden')">
+                        Entendido
+                    </button>
+                </div>
+            `;
+            if (containerInner) containerInner.innerHTML = html;
+
+        } catch (e) {
+            console.error(e);
+            if (containerInner) containerInner.innerHTML = `<div class="p-8 text-center"><h3 class="text-danger">Error generando reporte</h3><p>${e.message}</p></div>`;
+        }
+    });
 }
