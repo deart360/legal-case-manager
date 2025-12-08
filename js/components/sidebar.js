@@ -1,6 +1,4 @@
-```javascript
 import { appData } from '../store.js';
-
 import { AuthService } from '../services/auth.js';
 
 export function initSidebar() {
@@ -10,7 +8,7 @@ export function initSidebar() {
     if (!user) return; // Should be handled by router, but safety check
 
     const sidebarHtml = `
-    < div class="sidebar-header" >
+        <div class="sidebar-header">
             <div class="logo-area" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
                 <img src="assets/logo.jpg" alt="Logo" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--accent);">
                 <span class="app-title">Decrevi</span>
@@ -18,7 +16,7 @@ export function initSidebar() {
             <button id="sidebar-collapse" class="btn-icon-sm ml-auto text-muted hover:text-white">
                 <i class="ph ph-caret-left chevron"></i>
             </button>
-        </div >
+        </div>
 
         <nav class="sidebar-nav custom-scrollbar">
             <div class="nav-item active" onclick="window.navigateTo('#dashboard')">
@@ -91,31 +89,26 @@ export function initSidebar() {
                 </button>
             </div>
         </div>
-`;
+    `;
 
-        } else {
-            // Desktop: Collapse/Expand
-            sidebar.classList.toggle('collapsed');
-            const icon = collapseBtn.querySelector('i');
-            if (sidebar.classList.contains('collapsed')) {
-                icon.classList.replace('ph-arrows-in-line-horizontal', 'ph-arrows-out-line-horizontal');
-            } else {
-                icon.classList.replace('ph-arrows-out-line-horizontal', 'ph-arrows-in-line-horizontal');
-            }
-        }
-    };
+    sidebar.innerHTML = sidebarHtml;
 
+    // Collapse Logic
+    const collapseBtn = document.getElementById('sidebar-collapse');
     if (collapseBtn) {
-        collapseBtn.onclick = toggleSidebar;
+        collapseBtn.onclick = (e) => {
+            e.stopPropagation();
+            sidebar.classList.toggle('collapsed');
+        };
     }
 
-    if (logoArea) {
-        logoArea.style.cursor = 'pointer';
-        logoArea.onclick = toggleSidebar;
+    // Logout Logic
+    const logoutBtn = document.getElementById('btn-logout');
+    if (logoutBtn) {
+        logoutBtn.onclick = () => {
+            if (confirm('¿Cerrar sesión?')) {
+                AuthService.logout();
+            }
+        };
     }
-
-    // Check connection status after rendering
-    import('../firebase_config.js').then(fb => {
-        if (fb.checkConnection) fb.checkConnection();
-    });
 }
