@@ -2,7 +2,6 @@
  * Main Application Entry Point
  */
 import { initRouter } from './router.js';
-alert("DEBUG: App.js parsing...");
 import { initSidebar } from './components/sidebar.js';
 import { initResponsive } from './responsive.js';
 import { appData } from './store.js';

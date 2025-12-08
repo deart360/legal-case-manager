@@ -1,5 +1,4 @@
 import { db, storage } from './firebase_config.js';
-alert("DEBUG: Store.js parsing...");
 import { AuthService } from './services/auth.js';
 
 // Helper to get dates relative to today
