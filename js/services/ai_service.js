@@ -214,6 +214,52 @@ export const AIAnalysisService = {
         }
     },
 
+    async analyzePromotion(file, onProgress) {
+        const base64Data = await this._fileToBase64(file);
+        const mimeType = file.type || 'image/jpeg';
+
+        // "Asymptotic" progress simulation
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += (95 - progress) * 0.1;
+            if (onProgress) onProgress(Math.floor(progress));
+        }, 800);
+
+        try {
+            const prompt = `
+            Actúa como un Secretario Judicial experto. Analiza este sello de recepción (acuse de recibo) de una promoción legal o escrito.
+            
+            Extrae la siguiente información con la mayor precisión posible:
+            1. "filingDate": La fecha exacta de presentación (formato YYYY-MM-DD). Si tiene hora, ignórala.
+            2. "court": El juzgado o autoridad ante quien se presentó (ej. "Juzgado 12 Civil", "Oficialía de Partes Común").
+            3. "caseNumber": El número de expediente al que va dirigido (ej. "1234/2023").
+            4. "concept": Breve descripción del tipo de escrito (ej. "Contestación de Demanda", "Solicitud de Copias", "Ofrecimiento de Pruebas").
+
+            Responde ÚNICAMENTE con un objeto JSON válido.
+            Formato:
+            {
+                "filingDate": "YYYY-MM-DD", // null si no es legible
+                "court": "Texto", // "Desconocido" si no es legible
+                "caseNumber": "Texto", // "Desconocido" si no es legible
+                "concept": "Texto"
+            }
+            `;
+
+            // Use the standard generation method
+            const result = await this._callGemini(prompt, { mime_type: mimeType, data: base64Data }, true, onProgress);
+
+            clearInterval(interval);
+            if (onProgress) onProgress(100);
+
+            return result;
+
+        } catch (error) {
+            clearInterval(interval);
+            console.error("AI Promotion Analysis Error:", error);
+            throw error;
+        }
+    },
+
     /**
      * Helper: Resolve the best available model for this key.
      */

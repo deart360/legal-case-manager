@@ -43,6 +43,7 @@ function renderFullDashboard(container) {
         <div class="dash-grid">
             <!-- Column 1: Agenda (Timeline) -->
             <div class="dash-col col-agenda">
+
                 <div class="card timeline-card h-full flex flex-col">
                     <div class="card-header">
                         <h3 class="h3">Agenda</h3>
@@ -132,6 +133,22 @@ function renderFullDashboard(container) {
                             <i class="ph ph-check"></i> Agregar Tarea
                         </button>
                     </form>
+                </div>
+
+                <!-- Promotions Widget (NEW) -->
+                <div class="card promotions-widget">
+                    <div class="card-header flex justify-between items-center">
+                        <h3 class="h3"><i class="ph-fill ph-files text-accent"></i> Promociones</h3>
+                         <button class="btn-primary small" onclick="document.getElementById('promo-input-dash').click()">
+                            <i class="ph ph-camera"></i> Capturar
+                        </button>
+                        <input type="file" id="promo-input-dash" accept="image/*" capture="environment" class="hidden">
+                    </div>
+                    <div class="promo-status p-4 text-center">
+                        <p class="text-3xl font-bold text-white mb-1" id="promo-count">0</p>
+                        <p class="text-xs text-muted">Pendientes de archivar</p>
+                        <a href="#promotions" class="text-sm text-accent hover:underline mt-2 inline-block">Ver Galería <i class="ph ph-arrow-right"></i></a>
+                    </div>
                 </div>
 
                 <!-- AI Weekly Report -->
@@ -687,6 +704,47 @@ function bindDashboardEvents(container, events) {
     }
     if (btnGeneralReport) {
         btnGeneralReport.onclick = () => generateReport(container, 'general');
+    }
+    // Promotions Logic
+    const promoInput = container.querySelector('#promo-input-dash');
+    const promoCount = container.querySelector('#promo-count');
+
+    // Helper to update count
+    const updatePromoCount = async () => {
+        try {
+            const { getPromotions } = await import('../store.js');
+            const list = getPromotions() || [];
+            const count = list.length;
+            if (promoCount && count !== undefined) promoCount.innerText = count;
+        } catch (e) {
+            console.error("Error updating promo count:", e);
+        }
+    };
+
+    // Initial count
+    updatePromoCount();
+    window.addEventListener('promotions-updated', updatePromoCount);
+
+    if (promoInput) {
+        promoInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const { addPromotion } = await import('../store.js');
+            // Optimistic feedback
+            if (promoCount) promoCount.innerText = '...';
+
+            try {
+                await addPromotion(file);
+                // Count will update via event, but we can force it too
+                // Notification?
+                // alert('Promoción capturada. Analizando...');
+            } catch (err) {
+                console.error(err);
+                alert("Error subiendo promoción: " + err.message);
+                updatePromoCount();
+            }
+        };
     }
 }
 

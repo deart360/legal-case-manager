@@ -45,6 +45,8 @@ export let appData = storedData ? JSON.parse(storedData) : {
             ]
         }
     ],
+    // State to hold pending promotions (filings)
+    promotions: [],
     cases: {
         'exp-001': {
             id: 'exp-001',
@@ -137,6 +139,122 @@ function saveToLocal() {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData));
     console.log("Datos guardados localmente");
 }
+
+// --- Promotions Logic (Staging Area) ---
+
+export const getPromotions = () => {
+    return appData.promotions || [];
+};
+
+export const addPromotion = async (imageFile) => {
+    // 1. Convert to Base64 (Local only for now, real app would upload)
+    const reader = new FileReader();
+    const base64Promise = new Promise((resolve) => {
+        reader.onload = e => resolve(e.target.result);
+        reader.readAsDataURL(imageFile);
+    });
+    const url = await base64Promise;
+
+    const newId = `promo-${Date.now()}`;
+    const newPromo = {
+        id: newId,
+        url: url,
+        name: imageFile.name,
+        dateAdded: new Date().toISOString().split('T')[0],
+        status: 'analyzing', // analyzing, ready
+        aiAnalysis: null
+    };
+
+    appData.promotions = appData.promotions || [];
+    appData.promotions.unshift(newPromo); // Add to top
+    saveToLocal(); // Save initial state
+
+    // 2. Trigger AI Analysis (Async)
+    AIAnalysisService.analyzePromotion(imageFile, (progress) => {
+        // Optional: Update progress in store if needed
+    }).then(analysis => {
+        // Update promo with result
+        const promoIndex = appData.promotions.findIndex(p => p.id === newId);
+        if (promoIndex !== -1) {
+            appData.promotions[promoIndex].aiAnalysis = analysis;
+            appData.promotions[promoIndex].status = 'ready';
+
+            // 3. Auto-Create Calendar Event if date found
+            if (analysis && analysis.filingDate) {
+                const filingDate = analysis.filingDate; // YYYY-MM-DD
+                const eventTitle = `📜 Promoción: ${analysis.concept || 'Escrito presentado'}`;
+                const eventDesc = `Juzgado: ${analysis.court || 'N/A'}\nExp: ${analysis.caseNumber || 'N/A'}`;
+
+                // Add to calendar events
+                // Format: YYYY-MM-DD: [{ title, type, completed }]
+                if (!appData.calendarEvents) appData.calendarEvents = {};
+                if (!appData.calendarEvents[filingDate]) appData.calendarEvents[filingDate] = [];
+
+                appData.calendarEvents[filingDate].push({
+                    id: `evt-${Date.now()}`,
+                    title: eventTitle,
+                    description: eventDesc,
+                    type: 'promotion', // customized type
+                    completed: false
+                });
+            }
+
+            saveToLocal();
+            // Trigger UI refresh if needed (e.g., via custom event)
+            window.dispatchEvent(new CustomEvent('promotions-updated'));
+        }
+    }).catch(err => {
+        console.error("Promo analysis failed", err);
+        const promoIndex = appData.promotions.findIndex(p => p.id === newId);
+        if (promoIndex !== -1) {
+            appData.promotions[promoIndex].status = 'error';
+            saveToLocal();
+            window.dispatchEvent(new CustomEvent('promotions-updated'));
+        }
+    });
+
+    return newPromo;
+};
+
+export const deletePromotion = (promoId) => {
+    if (!appData.promotions) return;
+    appData.promotions = appData.promotions.filter(p => p.id !== promoId);
+    saveToLocal();
+};
+
+export const movePromotionToCase = (promoId, caseId) => {
+    const promoIndex = appData.promotions.findIndex(p => p.id === promoId);
+    if (promoIndex === -1) return;
+
+    const promo = appData.promotions[promoIndex];
+
+    // Create new image object for the case
+    const newImage = {
+        id: promoId, // Keep ID or gen new? Keep ID is fine
+        url: promo.url,
+        name: promo.name || 'Promoción.jpg',
+        date: promo.aiAnalysis?.filingDate || new Date().toISOString().split('T')[0],
+        type: 'Promoción',
+        // Map AI analysis to standard image metadata
+        summary: `Promoción presentada ante ${promo.aiAnalysis?.court || 'Juzgado'}`,
+        nextAction: 'Dar seguimiento al acuerdo',
+        aiAnalysis: {
+            ...promo.aiAnalysis,
+            summary: `Promoción presentada. Concepto: ${promo.aiAnalysis?.concept}`,
+            type: 'Promoción',
+            nextAction: 'Esperar acuerdo'
+        }
+    };
+
+    // Add to case
+    const c = getCase(caseId);
+    if (c) {
+        c.images.push(newImage);
+        // Remove from promotions
+        appData.promotions.splice(promoIndex, 1);
+        saveToLocal();
+    }
+};
 
 // --- Firebase Sync Logic ---
 // In a real app, we would listen to onSnapshot here and update appData.

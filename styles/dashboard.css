@@ -932,3 +932,27 @@ body {
         border-radius: 0;
     }
 }
+
+/* Promotions Widget */
+.promotions-widget {
+    background: linear-gradient(135deg, rgba(8, 145, 178, 0.15) 0%, rgba(22, 78, 99, 0.1) 100%);
+    border: 1px solid rgba(34, 211, 238, 0.3);
+    box-shadow: 0 4px 20px rgba(8, 145, 178, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.promotions-widget::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: #22d3ee;
+    /* Cyan */
+}
+
+.promotions-widget .h3 {
+    color: #22d3ee;
+}

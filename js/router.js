@@ -78,6 +78,8 @@ function handleRoute() {
         loadView(import(`./views/calendar_view.js?v=${v}`));
     } else if (hash === '#tasks') {
         loadView(import(`./views/tasks_view.js?v=${v}`));
+    } else if (hash === '#promotions') {
+        loadView(import(`./views/promotions_view.js?v=${v}`));
     } else {
         // 404
         viewContainer.innerHTML = '<h2>404 - Not Found</h2>';
