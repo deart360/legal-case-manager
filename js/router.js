@@ -28,6 +28,8 @@ function handleRoute() {
             } else if (hash.startsWith('#case')) {
                 const caseId = hash.split('/')[1];
                 viewContainer.appendChild(module.createCaseView(caseId));
+            } else if (hash === '#calendar') {
+                viewContainer.appendChild(module.createCalendarView());
             }
         }).catch(err => {
             console.error("Error loading view:", err);

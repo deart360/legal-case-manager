@@ -5,6 +5,7 @@ let currentImageId = null;
 let zoomLevel = 1;
 let isDragging = false;
 let startX, startY, translateX = 0, translateY = 0;
+let currentKeydownHandler = null;
 
 export function showImageViewer(caseId, imgId) {
     const modal = document.getElementById('image-viewer-modal');
