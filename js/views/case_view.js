@@ -177,15 +177,19 @@ export function createCaseView(caseId) {
                     clearTimeout(pressTimer);
                 };
 
-                // Touch Events
+                // Touch Events (Long Press for Mobile)
                 card.addEventListener('touchstart', startPress, { passive: true });
                 card.addEventListener('touchend', cancelPress);
                 card.addEventListener('touchmove', cancelPress);
 
-                // Mouse Events
-                card.addEventListener('mousedown', startPress);
-                card.addEventListener('mouseup', cancelPress);
-                card.addEventListener('mouseleave', cancelPress);
+                // Mouse Events (Right Click for Desktop)
+                card.addEventListener('contextmenu', (e) => {
+                    e.preventDefault(); // Prevent default browser menu
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX;
+                    const y = e.clientY;
+                    showContextMenu(x, y, id, c);
+                });
             });
 
 
