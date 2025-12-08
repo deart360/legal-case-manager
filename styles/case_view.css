@@ -142,6 +142,22 @@
     gap: 1.5rem;
 }
 
+/* Mobile: Single column or 2 column depending on width */
+@media (max-width: 640px) {
+    .documents-grid {
+        grid-template-columns: repeat(2, 1fr);
+        /* 2 columns on mobile */
+        gap: 0.8rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .documents-grid {
+        grid-template-columns: 1fr;
+        /* 1 column on very small screens */
+    }
+}
+
 .doc-card {
     background: var(--glass-panel);
     border-radius: var(--radius-md);

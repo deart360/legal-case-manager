@@ -31,70 +31,102 @@ function renderContent(modal) {
     if (!img) return;
 
     modal.innerHTML = `
-        <div class="viewer-container">
-            <!-- Main Image Area -->
+    modal.innerHTML = `
+        < div class="viewer-container" >
+            < !--Mobile Top Bar(Overlay)-- >
+            <div class="mobile-top-bar">
+                 <button id="close-viewer" class="btn-icon transparent"><i class="ph ph-arrow-left"></i></button>
+                 <span class="file-title text-sm truncate">${img.name}</span>
+                 <div class="spacer"></div> <!-- Balance layout -->
+            </div>
+
+            <!--Main Image Area-- >
             <div class="viewer-main">
-                <div class="viewer-toolbar">
-                    <button id="close-viewer" class="btn-icon"><i class="ph ph-x"></i></button>
-                    <div class="zoom-controls">
-                        <button id="btn-gallery-mode" class="btn-icon" title="Modo Galería"><i class="ph-fill ph-corners-out"></i></button>
-                        <div class="divider-v"></div>
-                        <button id="zoom-out" class="btn-icon"><i class="ph ph-minus"></i></button>
-                        <span id="zoom-level">100%</span>
-                        <button id="zoom-in" class="btn-icon"><i class="ph ph-plus"></i></button>
-                    </div>
-                </div>
-                
                 <div class="image-wrapper" id="image-wrapper">
                     <img src="${img.url}" id="active-image" alt="Documento" draggable="false">
                 </div>
             </div>
 
-            <!-- AI Sidebar -->
-            <div class="viewer-sidebar">
-                <div class="sidebar-section">
-                    <h3 class="h3 mb-2">Análisis AI</h3>
-                    <div class="ai-card">
-                        <div class="ai-header">
-                            <i class="ph-fill ph-sparkle text-accent"></i>
-                            <span class="font-bold">Resumen Inteligente</span>
+            <!--Floating Bottom Bar(Mobile)-- >
+            <div class="mobile-bottom-bar">
+                <button id="btn-share" class="action-btn">
+                    <i class="ph ph-share-network"></i>
+                    <span>Compartir</span>
+                </button>
+                <div class="divider-v"></div>
+                <button id="btn-download" class="action-btn">
+                    <i class="ph ph-download-simple"></i>
+                    <span>Descargar</span>
+                </button>
+                <div class="divider-v"></div>
+                <button id="btn-info" class="action-btn">
+                    <i class="ph ph-info"></i>
+                    <span>Detalles IA</span>
+                </button>
+            </div>
+
+            <!--Bottom Sheet(AI Info) - Hidden by default -->
+            <div class="bottom-sheet" id="ai-bottom-sheet">
+                <div class="sheet-drag-handle"></div>
+                <div class="sheet-content">
+                    <!-- Progress Bar (if regenerating) -->
+                    <div id="ai-progress-container" class="hidden mb-4">
+                         <div class="w-full bg-glass rounded-full h-1 overflow-hidden">
+                            <div id="re-analysis-progress" class="bg-accent h-1 transition-all duration-300" style="width: 0%"></div>
+                         </div>
+                         <p class="text-xs text-center mt-1 text-accent">Haciendo magia...</p>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="h3 !mb-0">Análisis Gemini</h3>
+                             <!-- Re-analyze mini button -->
+                             <button id="btn-regenerate-ai" class="text-xs text-accent hover:underline flex items-center gap-1">
+                                <i class="ph-fill ph-arrows-clockwise"></i> Actualizar
+                             </button>
                         </div>
-                        <p class="text-sm mt-2">${img.aiAnalysis?.summary || img.summary}</p>
-                        ${img.aiAnalysis?.legalBasis ? `<p class="text-xs text-muted mt-2 border-t border-glass pt-2">Fundamento: ${img.aiAnalysis.legalBasis}</p>` : ''}
+                        
+                         <div class="ai-card compact">
+                            <p class="text-sm font-medium text-white">${img.aiAnalysis?.summary || img.summary || "Sin análisis previo."}</p>
+                            ${img.aiAnalysis?.legalBasis ? `<p class="text-xs text-muted mt-2 border-t border-glass pt-2">⚖️ ${img.aiAnalysis.legalBasis}</p>` : ''}
+                        </div>
                     </div>
-                </div>
 
-                <div class="sidebar-section">
-                    <h3 class="h3 mb-2">Detalles Procesales</h3>
-                    <div class="detail-row">
-                        <span class="label">Tipo</span>
-                        <span class="value">${img.aiAnalysis?.type || img.type}</span>
+                    <div class="grid grid-cols-2 gap-4 my-4">
+                        <div class="detail-box">
+                            <span class="label text-xs uppercase tracking-wider text-muted">Tipo</span>
+                            <span class="value font-bold text-white">${img.aiAnalysis?.type || img.type || "N/A"}</span>
+                        </div>
+                        <div class="detail-box">
+                            <span class="label text-xs uppercase tracking-wider text-muted">Vence</span>
+                            <span class="value font-bold ${img.aiAnalysis?.days > 0 ? 'text-danger' : 'text-success'}">
+                                ${img.aiAnalysis?.deadline || img.deadline || 'N/A'}
+                            </span>
+                        </div>
                     </div>
-                    <div class="detail-row">
-                        <span class="label">Vencimiento</span>
-                        <span class="value ${img.aiAnalysis?.days > 0 ? 'text-danger' : ''}">
-                            ${img.aiAnalysis?.deadline || img.deadline || 'N/A'}
-                        </span>
-                    </div>
-                </div>
 
-                <div class="sidebar-section">
-                    <h3 class="h3 mb-2">Próxima Actuación</h3>
-                    <div class="next-action-card">
-                        <i class="ph ph-arrow-right"></i>
-                        <p>${img.aiAnalysis?.nextAction || img.nextAction}</p>
+                    <div class="sidebar-section">
+                        <h3 class="h3 mb-2">Sugerencia de Actuación</h3>
+                        <div class="next-action-card">
+                            <i class="ph-fill ph-lightbulb text-yellow-400 text-xl"></i>
+                            <div>
+                                <p class="text-sm font-medium text-white">${img.aiAnalysis?.nextAction || img.nextAction || "Sin sugerencia disponible."}</p>
+                                <p class="text-xs text-muted mt-1">Sugerencia basada en análisis procesal.</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="sidebar-footer-actions gap-2 flex flex-col">
-                     <button class="btn-primary w-full">Generar Escrito</button>
-                     <button class="btn-secondary w-full text-xs" id="btn-regenerate-ai">
-                        <i class="ph-fill ph-arrows-clockwise"></i> Re-analizar con Gemini
-                     </button>
                 </div>
             </div>
+            
+            <!--Desktop Only Toolbar(Legacy / Fallback)-- >
+        <div class="desktop-toolbar hidden md:flex">
+            <button id="zoom-out" class="btn-icon"><i class="ph ph-minus"></i></button>
+            <span id="zoom-level" class="mx-2 text-white">100%</span>
+            <button id="zoom-in" class="btn-icon"><i class="ph ph-plus"></i></button>
         </div>
-    `;
+        </div >
+        `;
+
 }
 
 function bindEvents(modal) {
@@ -115,10 +147,59 @@ function bindEvents(modal) {
         modal.classList.add('hidden');
     };
 
+    // Mobile Actions
+    const btnShare = document.getElementById('btn-share');
+    if (btnShare) {
+        btnShare.onclick = async () => {
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: activeImg.alt,
+                        text: 'Expediente Legal',
+                        url: activeImg.src
+                    });
+                } catch (err) {
+                    console.error("Share failed:", err);
+                }
+            } else {
+                navigator.clipboard.writeText(activeImg.src);
+                alert("Enlace copiado al portapapeles");
+            }
+        };
+    }
+
+    const btnDownload = document.getElementById('btn-download');
+    if (btnDownload) {
+        btnDownload.onclick = () => {
+            const a = document.createElement('a');
+            a.href = activeImg.src;
+            a.download = `documento_${ currentImageId }.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        };
+    }
+
+    const btnInfo = document.getElementById('btn-info');
+    const bottomSheet = document.getElementById('ai-bottom-sheet');
+    if (btnInfo && bottomSheet) {
+        btnInfo.onclick = () => {
+            bottomSheet.classList.toggle('active');
+            // Toggle icon visual state if needed
+            btnInfo.classList.toggle('active-btn');
+        };
+        
+        // Close sheet when clicking handle
+        const handle = bottomSheet.querySelector('.sheet-drag-handle');
+        if (handle) {
+            handle.onclick = () => bottomSheet.classList.remove('active');
+        }
+    }
+
     // Zoom
     const updateTransform = () => {
-        activeImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${zoomLevel})`;
-        document.getElementById('zoom-level').innerText = `${Math.round(zoomLevel * 100)}%`;
+        activeImg.style.transform = `translate(${ translateX }px, ${ translateY }px) scale(${ zoomLevel })`;
+        document.getElementById('zoom-level').innerText = `${ Math.round(zoomLevel * 100) }% `;
     };
 
     document.getElementById('zoom-in').onclick = () => { zoomLevel += 0.2; updateTransform(); };
@@ -198,8 +279,8 @@ function bindEvents(modal) {
     const navOverlay = document.createElement('div');
     navOverlay.className = 'gallery-nav-overlay';
     navOverlay.innerHTML = `
-        <button class="gallery-nav-btn prev"><i class="ph ph-caret-left"></i></button>
-        <button class="gallery-nav-btn next"><i class="ph ph-caret-right"></i></button>
+        < button class="gallery-nav-btn prev" > <i class="ph ph-caret-left"></i></button >
+            <button class="gallery-nav-btn next"><i class="ph ph-caret-right"></i></button>
     `;
     viewerContainer.appendChild(navOverlay);
 
@@ -260,7 +341,7 @@ function bindEvents(modal) {
                     const fileToAnalyze = new File([blob], img.name, { type: blob.type });
 
                     const result = await AIAnalysisService.analyzeDocument(fileToAnalyze, (percent) => {
-                        btnRegen.innerHTML = `<i class="ph ph-scan"></i> Analizando... ${percent}%`;
+                        btnRegen.innerHTML = `< i class="ph ph-scan" ></i > Analizando... ${ percent }% `;
                     });
 
                     // Update Store
