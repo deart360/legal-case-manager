@@ -8,10 +8,21 @@ window.onerror = function (msg, url, lineNo, columnNo, error) {
 
     const errorMsg = `Error Crítico (Loader):\n${msg}\n\nEn: ${url}:${lineNo}`;
     console.error(errorMsg, error);
-    alert(errorMsg); // Always alert on critical failures
+
+    // Write directly to document to be visible even if UI fails
+    const errDiv = document.createElement('div');
+    errDiv.style.position = 'fixed';
+    errDiv.style.top = '0';
+    errDiv.style.left = '0';
+    errDiv.style.width = '100%';
+    errDiv.style.background = 'red';
+    errDiv.style.color = 'white';
+    errDiv.style.padding = '20px';
+    errDiv.style.zIndex = '999999';
+    errDiv.innerText = errorMsg;
+    document.body.appendChild(errDiv);
+
     return false;
 };
 
-window.addEventListener('unhandledrejection', function (event) {
-    alert("Error Asíncrono (Promesa):\n" + event.reason);
-});
+console.log("Error Handler Loaded");
