@@ -25,4 +25,4 @@ window.onerror = function (msg, url, lineNo, columnNo, error) {
     return false;
 };
 
-console.log("Error Handler Loaded");
+console.log("Error Handler Loaded v22");

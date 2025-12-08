@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Listen for hash changes to re-render sidebar (simple reactivity)
     window.addEventListener('hashchange', () => {
-        renderSidebar();
+        initSidebar();
     });
 });
 
