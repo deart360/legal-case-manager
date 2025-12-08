@@ -25,6 +25,8 @@ function handleRoute() {
 
             if (hash === '#dashboard') {
                 viewContainer.appendChild(module.createDashboardView());
+            } else if (hash === '#login') {
+                viewContainer.appendChild(module.createLoginView());
             } else if (hash.startsWith('#folder')) {
                 const folderId = hash.split('/')[1];
                 viewContainer.appendChild(module.createFolderView(folderId));

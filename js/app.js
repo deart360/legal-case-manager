@@ -7,11 +7,18 @@ import { initResponsive } from './responsive.js';
 import { appData } from './store.js';
 import { showImageViewer } from './views/image_viewer.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('Legal App Initializing...');
     initResponsive();
 
     try {
+        // Initialize Store (must wait for this to resolve if you want data ready)
+        // Note: auth check doesn't need store, but app structure does.
+        await appData.initStore ? appData.initStore() : Promise.resolve();
+        // Wait, initStore is exported from store.js, not appData.
+        const { initStore } = await import('./store.js');
+        await initStore();
+
         // Initialize Core layout
         initSidebar();
 
