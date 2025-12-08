@@ -220,17 +220,18 @@ export function getAllEvents() {
                 });
             });
         }
-        // Images (Attachments)
-        if (c.images) {
+        // Images (Attachments) - Grouped by Date
+        if (c.images && c.images.length > 0) {
+            const imagesByDate = {};
+
             c.images.forEach(img => {
-                events.push({
-                    title: `Expediente Revisado: ${img.type} - ${c.juzgado}`,
-                    date: img.date || c.lastUpdate,
-                    type: 'attachment',
-                    caseId: c.id,
-                    imgId: img.id
-                });
-                // Deadlines from images
+                const date = img.date || c.lastUpdate;
+                if (!imagesByDate[date]) {
+                    imagesByDate[date] = [];
+                }
+                imagesByDate[date].push(img);
+
+                // Deadlines are still individual events as they are critical
                 if (img.deadline) {
                     events.push({
                         title: `Vence: ${img.type} (${c.expediente})`,
@@ -239,6 +240,34 @@ export function getAllEvents() {
                         urgent: true,
                         caseId: c.id,
                         imgId: img.id
+                    });
+                }
+            });
+
+            // Create grouped events
+            Object.keys(imagesByDate).forEach(date => {
+                const imgs = imagesByDate[date];
+                if (imgs.length === 1) {
+                    // Single image: Show details
+                    const img = imgs[0];
+                    events.push({
+                        title: `Expediente Revisado: ${img.type} - ${c.juzgado}`,
+                        date: date,
+                        type: 'attachment',
+                        caseId: c.id,
+                        imgId: img.id
+                    });
+                } else {
+                    // Multiple images: Group them
+                    events.push({
+                        title: `📂 ${imgs.length} Nuevos Documentos (${c.expediente})`,
+                        date: date,
+                        type: 'attachment',
+                        caseId: c.id,
+                        // Link to the first image or just the case. 
+                        // Linking to case is safer for "view all", but linking to first image opens viewer.
+                        // Let's link to case view for now so they can see the list.
+                        caseId: c.id
                     });
                 }
             });
