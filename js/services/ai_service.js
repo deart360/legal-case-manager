@@ -4,6 +4,8 @@
  */
 
 const API_KEY_STORAGE = 'gemini_api_key';
+// Security Note: In production, do not hardcode keys in frontend code.
+const EMBEDDED_KEY = 'AIzaSyBHXYNdA4c02DDCOjOZGPII1-0CLdRQCQQ';
 
 export const AIAnalysisService = {
 
@@ -13,8 +15,8 @@ export const AIAnalysisService = {
      * @returns {Promise<Object>} - The analysis result.
      */
     async analyzeDocument(file) {
-        // 1. Get API Key
-        let apiKey = localStorage.getItem(API_KEY_STORAGE);
+        // 1. Get API Key (Local Storage -> Embedded Key -> Prompt)
+        let apiKey = localStorage.getItem(API_KEY_STORAGE) || EMBEDDED_KEY;
 
         if (!apiKey) {
             apiKey = prompt("🔑 Para usar la IA Real, ingresa tu Google AI Studio API Key:\n(Se guardará en tu navegador de forma segura)");
