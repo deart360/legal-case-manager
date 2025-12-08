@@ -109,7 +109,7 @@ export const AIAnalysisService = {
     /**
      * Private Helper: Call Gemini API
      */
-    async _callGemini(prompt, inlineData = null, expectJson = true) {
+    async _callGemini(promptText, inlineData = null, expectJson = true) {
         let apiKey = localStorage.getItem(API_KEY_STORAGE) || EMBEDDED_KEY;
 
         if (!apiKey) {
@@ -125,7 +125,7 @@ export const AIAnalysisService = {
             // Dynamically resolve model to avoid 404s
             const modelName = await this._resolveModel(apiKey);
 
-            const parts = [{ text: prompt }];
+            const parts = [{ text: promptText }];
             if (inlineData) {
                 parts.push({ inline_data: inlineData });
             }
