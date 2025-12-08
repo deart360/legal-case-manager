@@ -136,7 +136,15 @@ export function createCaseView(caseId) {
             };
         }
 
-
+        // Expose toggleSelection to window for inline onclicks
+        window.toggleSelection = (id) => {
+            if (selectedImages.has(id)) {
+                selectedImages.delete(id);
+            } else {
+                selectedImages.add(id);
+            }
+            render();
+        };
 
         // Bind events to cards (Context Menu & Interaction)
         const cards = container.querySelectorAll('.doc-card');
