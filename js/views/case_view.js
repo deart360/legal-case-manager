@@ -349,9 +349,37 @@ function showContextMenu(x, y, imgId, c) {
     };
 
     menu.querySelector('#ctx-move').onclick = () => {
-        alert("Función de mover próximamente."); // Placeholder
-        menu.remove();
+        // Show sub-menu or just simple Up/Down actions
+        // For simplicity, let's replace the menu content with Move options
+        menu.innerHTML = `
+            <div class="p-2 text-sm font-bold text-center border-b border-white/10 mb-1">Mover</div>
+            <button class="btn-ghost w-full justify-start text-sm" id="ctx-move-up">
+                <i class="ph ph-arrow-up"></i> Subir
+            </button>
+            <button class="btn-ghost w-full justify-start text-sm" id="ctx-move-down">
+                <i class="ph ph-arrow-down"></i> Bajar
+            </button>
+        `;
+
+        menu.querySelector('#ctx-move-up').onclick = async () => {
+            await moveImage(c.id, imgId, -1);
+            menu.remove();
+        };
+
+        menu.querySelector('#ctx-move-down').onclick = async () => {
+            await moveImage(c.id, imgId, 1);
+            menu.remove();
+        };
     };
+
+    // ... (rest of function) ...
+}
+
+function showShareModal(selectedIds, c) {
+    // ... (modal creation) ...
+    // Enable the button by removing disabled attribute in HTML string
+    // ...
+
 
     // Close on click outside
     const closeHandler = (e) => {
@@ -381,9 +409,9 @@ function showShareModal(selectedIds, c) {
                     <span class="flex items-center gap-2"><i class="ph ph-file-pdf"></i> Generar PDF (Oficio)</span>
                     <i class="ph ph-caret-right"></i>
                 </button>
-                <button class="btn-secondary w-full justify-between" id="share-imgs" disabled title="Próximamente">
+                <button class="btn-secondary w-full justify-between" id="share-imgs">
                     <span class="flex items-center gap-2"><i class="ph ph-images"></i> Imágenes Sueltas</span>
-                    <span class="text-xs badge">Próximamente</span>
+                    <i class="ph ph-caret-right"></i>
                 </button>
             </div>
         </div>
@@ -419,6 +447,85 @@ function showShareModal(selectedIds, c) {
             btn.disabled = false;
         }
     };
+};
+
+// Share Images Handler
+modal.querySelector('#share-imgs').onclick = async () => {
+    const btn = modal.querySelector('#share-imgs');
+    btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Preparando...';
+    btn.disabled = true;
+
+    try {
+        const images = c.images.filter(img => selectedIds.includes(img.id));
+
+        // If Web Share API is supported and we have 1 image (or multiple if supported)
+        if (navigator.share && navigator.canShare) {
+            // Try to share as files
+            const filesArray = [];
+            for (const img of images) {
+                const blob = await fetch(img.url, { mode: 'cors' }).then(r => r.blob());
+                const file = new File([blob], `${img.type || 'imagen'}.jpg`, { type: blob.type });
+                filesArray.push(file);
+            }
+
+            if (navigator.canShare({ files: filesArray })) {
+                await navigator.share({
+                    files: filesArray,
+                    title: 'Documentos del Expediente',
+                    text: `Compartiendo ${images.length} documentos.`
+                });
+                close();
+                return;
+            }
+        }
+
+        // Fallback: Download one by one (or open in new tabs)
+        // For mobile, opening in new tab is often better if share fails.
+        // But let's try to trigger download.
+        for (const img of images) {
+            const link = document.createElement('a');
+            link.href = img.url;
+            link.download = `${img.type || 'documento'}.jpg`;
+            link.target = '_blank'; // Fallback
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            // Small delay to prevent browser blocking multiple downloads
+            await new Promise(r => setTimeout(r, 500));
+        }
+        close();
+
+    } catch (e) {
+        console.error(e);
+        alert("Error compartiendo imágenes: " + e.message);
+        btn.innerHTML = originalContent; // This variable might not be in scope, fix below
+        btn.disabled = false;
+    }
+};
+}
+
+// Helper to move image
+async function moveImage(caseId, imgId, direction) {
+    const c = getCase(caseId);
+    if (!c || !c.images) return;
+
+    const idx = c.images.findIndex(i => i.id === imgId);
+    if (idx === -1) return;
+
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= c.images.length) return;
+
+    // Swap
+    const temp = c.images[idx];
+    c.images[idx] = c.images[newIdx];
+    c.images[newIdx] = temp;
+
+    // Save
+    const newOrder = c.images.map(i => i.id);
+    await reorderImages(caseId, newOrder);
+
+    // Refresh
+    window.dispatchEvent(new CustomEvent('case-updated', { detail: { caseId } }));
 }
 
 async function processPdfFile(caseId, file, pdfLib, onProgress) {

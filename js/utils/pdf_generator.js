@@ -15,7 +15,18 @@ export async function generateLegalPdf(images, filename = 'documento.pdf') {
 
         // Load image
         let image;
-        const imgBytes = await fetch(imgData.url).then(res => res.arrayBuffer());
+        let imgBytes;
+        try {
+            // Try fetching with CORS
+            const res = await fetch(imgData.url, { mode: 'cors', cache: 'no-cache' });
+            if (!res.ok) throw new Error(`Failed to fetch ${imgData.url}`);
+            imgBytes = await res.arrayBuffer();
+        } catch (fetchErr) {
+            console.error("Error fetching image for PDF:", fetchErr);
+            // Fallback: If it's a local blob, it might have expired, or if it's a cross-origin issue.
+            // We can't easily fix CORS from here without proxy, but we can alert the user.
+            throw new Error(`No se pudo descargar la imagen (${imgData.type}). Posible error de permisos (CORS) o conexión.`);
+        }
 
         // Determine type (png/jpg)
         // Simple check based on URL or try/catch
