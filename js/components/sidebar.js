@@ -77,9 +77,20 @@ export function renderSidebar() {
     sidebar.innerHTML = html;
 
     // Sidebar Collapse Logic
+    // Sidebar Collapse Logic
     const collapseBtn = sidebar.querySelector('#sidebar-collapse');
-    if (collapseBtn) {
-        collapseBtn.onclick = () => {
+    const logoArea = sidebar.querySelector('.logo-area');
+
+    const toggleSidebar = () => {
+        if (window.innerWidth < 1024) {
+            // Mobile: Close sidebar (since it's already open if we can click the logo inside)
+            // Actually, if we are inside the sidebar, clicking logo usually does nothing or goes home.
+            // But user asked to open/close. 
+            // If sidebar is open (mobile), clicking logo closes it.
+            sidebar.classList.remove('open');
+            document.getElementById('sidebar-backdrop').classList.remove('visible');
+        } else {
+            // Desktop: Collapse/Expand
             sidebar.classList.toggle('collapsed');
             const icon = collapseBtn.querySelector('i');
             if (sidebar.classList.contains('collapsed')) {
@@ -87,7 +98,16 @@ export function renderSidebar() {
             } else {
                 icon.classList.replace('ph-arrows-out-line-horizontal', 'ph-arrows-in-line-horizontal');
             }
-        };
+        }
+    };
+
+    if (collapseBtn) {
+        collapseBtn.onclick = toggleSidebar;
+    }
+
+    if (logoArea) {
+        logoArea.style.cursor = 'pointer';
+        logoArea.onclick = toggleSidebar;
     }
 
     // Check connection status after rendering
