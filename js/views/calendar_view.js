@@ -1,6 +1,7 @@
 import { getAllEvents } from '../store.js';
 
 let currentDate = new Date();
+let selectedDate = new Date(); // Track selected date for modal navigation
 
 export function createCalendarView() {
     const container = document.createElement('div');
@@ -28,8 +29,27 @@ export function createCalendarView() {
             <div class="cal-header grid grid-cols-7 mb-2 text-center text-muted font-bold uppercase text-sm">
                 <span>Domingo</span><span>Lunes</span><span>Martes</span><span>Miércoles</span><span>Jueves</span><span>Viernes</span><span>Sábado</span>
             </div>
-            <div class="cal-body grid grid-cols-7 flex-1 gap-1 overflow-y-auto" id="calendar-grid">
+            <div class="cal-body" id="calendar-grid">
                 <!-- Content rendered by JS -->
+            </div>
+        </div>
+
+        <!-- Day Detail Modal -->
+        <div id="day-detail-modal" class="modal hidden">
+            <div class="modal-content glass-card day-modal-content animate-scale-in">
+                <div class="day-modal-header">
+                    <h3 class="h3" id="modal-date-title">Detalles del Día</h3>
+                    <button class="btn-icon-sm" id="close-day-modal"><i class="ph ph-x"></i></button>
+                </div>
+                
+                <div class="day-events-list custom-scrollbar" id="modal-events-list">
+                    <!-- Events go here -->
+                </div>
+
+                <div class="day-modal-nav">
+                    <button class="btn-secondary" id="modal-prev-day"><i class="ph ph-caret-left"></i> Anterior</button>
+                    <button class="btn-secondary" id="modal-next-day">Siguiente <i class="ph ph-caret-right"></i></button>
+                </div>
             </div>
         </div>
     `;
@@ -61,7 +81,7 @@ function updateCalendar(container, events) {
 
     // Empty cells
     for (let i = 0; i < startDayOfWeek; i++) {
-        html += `<div class="cal-day empty" style="background: rgba(0,0,0,0.2); border-radius: 8px;"></div>`;
+        html += `<div class="cal-day empty"></div>`;
     }
 
     // Days
@@ -72,33 +92,29 @@ function updateCalendar(container, events) {
         const dayEvents = events.filter(e => e.date === dateStr);
         const isToday = dateStr === todayStr;
 
-        const dayClass = isToday ? 'bg-accent-low border-accent' : 'bg-glass';
-        const dayStyle = isToday ? 'background: rgba(212, 175, 55, 0.1); border-color: var(--accent);' : '';
-        const numClass = isToday ? 'text-accent' : 'text-muted';
+        const dayClass = isToday ? 'today' : '';
+
+        // Show max 3 events, then "+X more"
+        const maxEvents = 3;
+        const visibleEvents = dayEvents.slice(0, maxEvents);
+        const moreCount = dayEvents.length - maxEvents;
 
         html += `
-            <div class="cal-day ${dayClass}" style="${dayStyle} border: 1px solid var(--glass-border); border-radius: 8px; padding: 0.5rem; min-height: 100px; display: flex; flex-direction: column; gap: 0.25rem; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='${isToday ? 'rgba(212, 175, 55, 0.1)' : ''}'">
-                <span class="day-number font-bold ${numClass} mb-1" style="font-weight: 700;">${day}</span>
-                <div class="day-events flex flex-col gap-1 overflow-y-auto custom-scrollbar" style="display: flex; flex-direction: column; gap: 4px; overflow-y: auto;">
-                    ${dayEvents.map(e => {
-            let clickAction = '';
-            if (e.imgId) {
-                clickAction = `onclick="event.stopPropagation(); window.openImage('${e.caseId}', '${e.imgId}')"`;
-            } else if (e.caseId) {
-                clickAction = `onclick="event.stopPropagation(); window.navigateTo('#case/${e.caseId}')"`;
-            }
-
-            const eventStyle = e.urgent
-                ? 'border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.1); color: #fca5a5;'
-                : 'border: 1px solid rgba(212, 175, 55, 0.3); background: rgba(212, 175, 55, 0.1); color: #fcd34d;';
-
+            <div class="cal-day ${dayClass}" onclick="window.openDayModal('${dateStr}')">
+                <span class="day-number">${day}</span>
+                <div class="day-events">
+                    ${visibleEvents.map(e => {
+            const isUrgent = e.urgent || e.type === 'deadline';
+            const style = isUrgent
+                ? 'background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-color: rgba(239, 68, 68, 0.3);'
+                : '';
             return `
-                        <div class="cal-event text-xs p-1 rounded border-l-2 cursor-pointer truncate"
-                            style="${eventStyle} font-size: 0.75rem; padding: 2px 4px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-                            title="${e.title}" ${clickAction}>
-                            ${e.type === 'deadline' ? '⚠️ ' : ''}${e.title}
-                        </div>
-                    `}).join('')}
+                            <div class="cal-event" style="${style}">
+                                ${e.type === 'deadline' ? '⚠️ ' : ''}${e.title}
+                            </div>
+                        `;
+        }).join('')}
+                    ${moreCount > 0 ? `<div class="cal-event more-events">+${moreCount} más</div>` : ''}
                 </div>
             </div>
         `;
@@ -122,4 +138,90 @@ function bindEvents(container, events) {
         currentDate = new Date();
         updateCalendar(container, events);
     };
+
+    // Modal Logic
+    const modal = container.querySelector('#day-detail-modal');
+    const closeBtn = container.querySelector('#close-day-modal');
+    const prevBtn = container.querySelector('#modal-prev-day');
+    const nextBtn = container.querySelector('#modal-next-day');
+
+    const closeModal = () => modal.classList.add('hidden');
+
+    if (closeBtn) closeBtn.onclick = closeModal;
+    if (modal) {
+        modal.onclick = (e) => {
+            if (e.target === modal) closeModal();
+        };
+    }
+
+    if (prevBtn) {
+        prevBtn.onclick = () => {
+            selectedDate.setDate(selectedDate.getDate() - 1);
+            renderDayModalContent(container, selectedDate, events);
+        };
+    }
+
+    if (nextBtn) {
+        nextBtn.onclick = () => {
+            selectedDate.setDate(selectedDate.getDate() + 1);
+            renderDayModalContent(container, selectedDate, events);
+        };
+    }
+
+    // Expose open function globally
+    window.openDayModal = (dateStr) => {
+        // Parse date correctly (avoid timezone issues with simple split)
+        const [y, m, d] = dateStr.split('-').map(Number);
+        selectedDate = new Date(y, m - 1, d);
+
+        renderDayModalContent(container, selectedDate, events);
+        modal.classList.remove('hidden');
+    };
+}
+
+function renderDayModalContent(container, date, allEvents) {
+    const title = container.querySelector('#modal-date-title');
+    const list = container.querySelector('#modal-events-list');
+
+    // Update Title
+    title.innerText = date.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    title.style.textTransform = 'capitalize';
+
+    // Filter Events
+    const dateStr = date.toISOString().split('T')[0];
+    const events = allEvents.filter(e => e.date === dateStr);
+
+    if (events.length === 0) {
+        list.innerHTML = '<div class="text-center text-muted p-8">No hay eventos para este día.</div>';
+        return;
+    }
+
+    list.innerHTML = events.map(e => {
+        let icon = '<i class="ph ph-calendar-blank"></i>';
+        if (e.type === 'deadline') icon = '<i class="ph-fill ph-warning-circle text-danger"></i>';
+        if (e.type === 'attachment') icon = '<i class="ph ph-file-text"></i>';
+
+        const isUrgent = e.urgent || e.type === 'deadline';
+
+        let actionBtn = '';
+        if (e.caseId) {
+            actionBtn = `<button class="btn-text-sm mt-2" onclick="window.navigateTo('#case/${e.caseId}')">Ver Expediente</button>`;
+        }
+
+        return `
+            <div class="day-event-item ${isUrgent ? 'urgent' : ''}">
+                <div class="day-event-icon">
+                    ${icon}
+                </div>
+                <div class="day-event-info">
+                    <div class="day-event-title">${e.title}</div>
+                    <div class="day-event-meta">
+                        ${e.type === 'deadline' ? '<span class="text-danger font-bold">VENCIMIENTO</span> • ' : ''}
+                        ${e.caseId ? `Expediente: ${e.caseId}` : 'Evento General'}
+                    </div>
+                    ${actionBtn}
+                </div>
+            </div>
+        `;
+    }).join('');
 }

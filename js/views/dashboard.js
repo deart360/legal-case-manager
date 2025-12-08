@@ -84,7 +84,7 @@ function renderFullDashboard(container) {
                                 <option value="pendiente">Pendiente General</option>
                                 <option value="termino">Término (Urgente)</option>
                                 <option value="revision">Revisión</option>
-                                <option value="turnar">Turnar a Sentencia</option>
+                                <option value="turnar">Turnar</option>
                             </select>
                         </div>
 
@@ -355,7 +355,7 @@ function bindQuickTaskEvents(container) {
         // Customize title based on type
         if (type === 'termino') title = 'VENCIMIENTO DE TÉRMINO';
         else if (type === 'revision') title = 'Revisión de Acuerdos';
-        else if (type === 'turnar') title = 'Turnar a Sentencia';
+        else if (type === 'turnar') title = 'Turnar';
         else title = 'Pendiente General';
 
         // Append description if provided
