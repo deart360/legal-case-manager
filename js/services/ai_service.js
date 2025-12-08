@@ -66,21 +66,33 @@ export const AIAnalysisService = {
      */
     async generateWeeklyReport(data, onProgress) {
         const promptText = `
-            Actúa como socio fundador de un despacho de abogados. 👨‍⚖️
-            Analiza este JSON de actividad semanal:
+            ACTÚA COMO: Gerente de Operaciones Legales de Alto Nivel.
+            OBJETIVO: Generar un "Reporte de Trabajo Semanal" estilo INFOGRAFÍA HTML.
+            
+            DATOS A PROCESAR:
             ${JSON.stringify(data)}
 
-            Escribe un "Resumen Ejecutivo" de 3 párrafos cortos (HTML format, sin markdown code blocks):
-            1. <strong>Logros</strong>: Qué se completó.
-            2. <strong>Riesgos</strong>: Qué urge (términos vencidos o próximos).
-            3. <strong>Estrategia</strong>: Recomendación para la próxima semana.
+            INSTRUCCIONES DE DISEÑO (HTML/TAILWIND/INLINE CSS):
+            Genera un bloque HTML limpio (sin etiquetas <html> o <body>) que visualice el trabajo duro realizado.
+            Usa un diseño de "Tarjetas de Métricas" y "Barras de Progreso".
+            
+            ESTRUCTURA VISUAL REQUERIDA:
+            1.  **Encabezado**: "Reporte de Actividad Legal" con un subtítulo motivador.
+            2.  **Grid de Métricas Clave**: 3 tarjetas grandes con números grandes (ej. "Total Gestionado", "Urgencias Resueltas", "Efectividad").
+            3.  **Desglose de Actividad (Gráfico de Barras)**:
+                -   Usa <div> con background color y width% para simular gráficas de barras horizontales.
+                -   Muestra categorias como: "Audiencias", "Acuerdos", "Trámites", "Consultas" (básate en los datos).
+            4.  **Bitácora Destacada**: Lista de 3-5 hitos más importantes de la semana (bullet points con iconos emoji).
+            5.  **Conclusión Estratégica**: 1 frase final de cierre.
 
-            Usa un tono profesional, motivador y directo. Usa etiquetas <strong> para resaltar datos clave.
-            No saludes, ve directo al grano.
+            ESTILO:
+            -   Usa colores oscuros/serios pero elegantes (Gold/Dark Green).
+            -   Usa clases de utilidad tipo Tailwind si encajan, o estilos inline seguros.
+            -   NO uses markdown blocks. Solo HTML puro renderizable.
         `;
 
-        // Text-only call
-        return this._callGemini(promptText, null, false, onProgress); // false = return raw text, not JSON
+        // Text-only call but requesting HTML format
+        return this._callGemini(promptText, null, false, onProgress);
     },
 
     /**
@@ -127,86 +139,80 @@ export const AIAnalysisService = {
             let progressInterval;
 
             if (onProgress) {
-                onProgress(1); // Start
+                // ... logic handled in previous steps, just ensuring block integrity
+                onProgress(1);
                 progressInterval = setInterval(() => {
-                    // Slow down as we get closer to 90%
                     let increment = 0;
-                    if (progress < 50) increment = Math.random() * 5 + 5; // Fast initially
-                    else if (progress < 80) increment = Math.random() * 2 + 1; // Medium
-                    else if (progress < 95) increment = 0.5; // Very slow crawl at end
+                    if (progress < 50) increment = Math.random() * 5 + 5;
+                    else if (progress < 80) increment = Math.random() * 2 + 1;
+                    else if (progress < 95) increment = 0.5;
 
                     progress += increment;
-                    if (progress > 95) progress = 95; // Cap at 95%
+                    if (progress > 95) progress = 95;
                     onProgress(Math.floor(progress));
                 }, 800);
             }
 
-            // Dynamically resolve model to avoid 404s
+            // ... rest of logic
             const modelName = await this._resolveModel(apiKey);
+            // ... fetch logic
 
+            // Re-implementing the parts hidden by the view to ensure catch block is clean
             const parts = [{ text: promptText }];
-            if (inlineData) {
-                parts.push({ inline_data: inlineData });
-            }
+            if (inlineData) parts.push({ inline_data: inlineData });
 
-            // Timeout Controller (45s limit)
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 45000);
 
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: parts }],
-                        generationConfig: { response_mime_type: expectJson ? "application/json" : "text/plain" }
-                    }),
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId); // Clear timeout on success
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${modelName}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: parts }],
+                    generationConfig: { response_mime_type: expectJson ? "application/json" : "text/plain" }
+                }),
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
 
-                // Cleanup Progress
-                if (progressInterval) clearInterval(progressInterval);
-                if (onProgress) onProgress(100);
+            // ... standard response handling
+            if (progressInterval) clearInterval(progressInterval);
+            if (onProgress) onProgress(100);
 
-                if (!response.ok) {
-                    const errData = await response.json();
-                    throw new Error(`Gemini API Error (${modelName}): ${errData.error?.message || response.statusText}`);
-                }
-
-                const data = await response.json();
-
-                // Check for empty response or safety blocks
-                if (!data.candidates || data.candidates.length === 0) {
-                    console.warn("Gemini Response Empty:", data);
-                    if (data.promptFeedback && data.promptFeedback.blockReason) {
-                        throw new Error(`Gemini Safety Block: ${data.promptFeedback.blockReason}`);
-                    }
-                    throw new Error("Gemini returned no candidates (Empty Response).");
-                }
-
-                const textResponse = data.candidates[0].content.parts[0].text;
-
-                if (expectJson) {
-                    const cleanJson = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-                    return JSON.parse(cleanJson);
-                }
-                return textResponse;
-
-            } catch (error) {
-                console.error("Error in _callGemini:", error);
-
-                if (error.name === 'AbortError') {
-                    // Timeout specific handling
-                    if (expectJson && !inlineData) return { description: "Error: Tiempo de espera agotado (45s)", date: new Date().toISOString().split('T')[0], type: "pendiente" };
-                    throw new Error("El modelo tardó demasiado en responder (Timeout 45s). Intente de nuevo.");
-                }
-
-                if (expectJson && !inlineData) return { description: "Error IA", date: new Date().toISOString().split('T')[0], type: "pendiente" };
-                throw error;
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(`Gemini API Error (${modelName}): ${errData.error?.message || response.statusText}`);
             }
+
+            const data = await response.json();
+
+            if (!data.candidates || data.candidates.length === 0) {
+                if (data.promptFeedback && data.promptFeedback.blockReason) {
+                    throw new Error(`Gemini Safety Block: ${data.promptFeedback.blockReason}`);
+                }
+                throw new Error("Gemini returned no candidates (Empty Response).");
+            }
+
+            const textResponse = data.candidates[0].content.parts[0].text;
+
+            if (expectJson) {
+                const cleanJson = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+                return JSON.parse(cleanJson);
+            }
+            return textResponse;
+
+        } catch (error) {
+            console.error("Error in _callGemini:", error);
+
+            if (error.name === 'AbortError') {
+                if (expectJson && !inlineData) return { description: "Error: Tiempo de espera agotado (45s)", date: new Date().toISOString().split('T')[0], type: "pendiente" };
+                throw new Error("El modelo tardó demasiado en responder (Timeout 45s). Intente de nuevo.");
+            }
+
+            if (expectJson && !inlineData) return { description: "Error IA", date: new Date().toISOString().split('T')[0], type: "pendiente" };
+            throw error;
         }
-        },
+    },
 
     /**
      * Helper: Resolve the best available model for this key.
