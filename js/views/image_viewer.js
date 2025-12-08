@@ -34,7 +34,10 @@ function renderContent(modal) {
         <div class="viewer-container" oncontextmenu="return false;">
             <!-- Mobile Top Bar (Overlay) -->
             <div class="mobile-top-bar">
-                 <button id="close-viewer" class="btn-icon transparent"><i class="ph ph-arrow-left"></i></button>
+                 <button id="close-viewer" class="btn-icon transparent flex items-center gap-1 px-3 py-1.5 bg-black/20 rounded-full backdrop-blur-sm hover:bg-black/40 transition-colors">
+                    <i class="ph-bold ph-arrow-left text-lg"></i>
+                    <span class="text-sm font-medium">Atrás</span>
+                 </button>
                  <span class="file-title text-sm truncate">${img.name}</span>
                  <div class="spacer"></div> <!-- Balance layout -->
             </div>
