@@ -333,35 +333,47 @@ function showContextMenu(x, y, imgId, c) {
     if (rect.right > window.innerWidth) menu.style.left = `${window.innerWidth - rect.width - 10}px`;
     if (rect.bottom > window.innerHeight) menu.style.top = `${window.innerHeight - rect.height - 10}px`;
 
+    // Close Helper
+    const closeMenu = () => {
+        menu.remove();
+        document.removeEventListener('click', handleOutsideClick);
+        document.removeEventListener('contextmenu', handleOutsideClick);
+        window.removeEventListener('scroll', handleOutsideClick, true);
+    };
+
+    const handleOutsideClick = (e) => {
+        if (!menu.contains(e.target)) {
+            closeMenu();
+        }
+    };
+
+    // Delay adding listeners to avoid immediate trigger
+    requestAnimationFrame(() => {
+        document.addEventListener('click', handleOutsideClick);
+        document.addEventListener('contextmenu', handleOutsideClick);
+        window.addEventListener('scroll', handleOutsideClick, true);
+    });
+
     // Actions
     menu.querySelector('#ctx-share').onclick = () => {
         showShareModal([imgId], c);
-        menu.remove();
+        closeMenu();
     };
 
     menu.querySelector('#ctx-download').onclick = () => {
-        // Reuse the download modal logic but for single item
         showDownloadModal([imgId], c);
-        menu.remove();
+        closeMenu();
     };
 
     menu.querySelector('#ctx-delete').onclick = async () => {
         if (confirm("¿Eliminar este documento?")) {
             await deleteImages(c.id, [imgId]);
-            // Refresh view (hacky but works for now, ideally dispatch event)
-            const view = document.querySelector('.case-view');
-            if (view) {
-                // Trigger a re-render if possible, or just reload
-                // Since we don't have easy access to 'render' here, we can dispatch a custom event
-                window.dispatchEvent(new CustomEvent('case-updated', { detail: { caseId: c.id } }));
-            }
+            window.dispatchEvent(new CustomEvent('case-updated', { detail: { caseId: c.id } }));
         }
-        menu.remove();
+        closeMenu();
     };
 
     menu.querySelector('#ctx-move').onclick = () => {
-        // Show sub-menu or just simple Up/Down actions
-        // For simplicity, let's replace the menu content with Move options
         menu.innerHTML = `
             <div class="p-2 text-xs font-bold text-center border-b border-white/10 mb-1 text-muted uppercase tracking-wider">Mover</div>
             <button class="btn-ghost w-full justify-start text-sm hover:bg-white/10 rounded-lg p-2 transition-colors text-gray-200" id="ctx-move-up">
@@ -374,12 +386,12 @@ function showContextMenu(x, y, imgId, c) {
 
         menu.querySelector('#ctx-move-up').onclick = async () => {
             await moveImage(c.id, imgId, -1);
-            menu.remove();
+            closeMenu();
         };
 
         menu.querySelector('#ctx-move-down').onclick = async () => {
             await moveImage(c.id, imgId, 1);
-            menu.remove();
+            closeMenu();
         };
     };
 
