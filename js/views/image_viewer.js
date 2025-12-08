@@ -59,7 +59,8 @@ function renderContent(modal) {
                             <i class="ph-fill ph-sparkle text-accent"></i>
                             <span class="font-bold">Resumen Inteligente</span>
                         </div>
-                        <p class="text-sm mt-2">${img.summary}</p>
+                        <p class="text-sm mt-2">${img.aiAnalysis?.summary || img.summary}</p>
+                        ${img.aiAnalysis?.legalBasis ? `<p class="text-xs text-muted mt-2 border-t border-glass pt-2">Fundamento: ${img.aiAnalysis.legalBasis}</p>` : ''}
                     </div>
                 </div>
 
@@ -67,11 +68,13 @@ function renderContent(modal) {
                     <h3 class="h3 mb-2">Detalles Procesales</h3>
                     <div class="detail-row">
                         <span class="label">Tipo</span>
-                        <span class="value">${img.type}</span>
+                        <span class="value">${img.aiAnalysis?.type || img.type}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">Vencimiento</span>
-                        <span class="value ${img.deadline ? 'text-danger' : ''}">${img.deadline || 'N/A'}</span>
+                        <span class="value ${img.aiAnalysis?.days > 0 ? 'text-danger' : ''}">
+                            ${img.aiAnalysis?.deadline || img.deadline || 'N/A'}
+                        </span>
                     </div>
                 </div>
 
@@ -79,12 +82,15 @@ function renderContent(modal) {
                     <h3 class="h3 mb-2">Próxima Actuación</h3>
                     <div class="next-action-card">
                         <i class="ph ph-arrow-right"></i>
-                        <p>${img.nextAction}</p>
+                        <p>${img.aiAnalysis?.nextAction || img.nextAction}</p>
                     </div>
                 </div>
                 
-                <div class="sidebar-footer-actions">
+                <div class="sidebar-footer-actions gap-2 flex flex-col">
                      <button class="btn-primary w-full">Generar Escrito</button>
+                     <button class="btn-secondary w-full text-xs" id="btn-regenerate-ai">
+                        <i class="ph-fill ph-arrows-clockwise"></i> Re-analizar con Gemini
+                     </button>
                 </div>
             </div>
         </div>
@@ -225,6 +231,50 @@ function bindEvents(modal) {
             // Swipe Right -> Previous Image
             navigateImage(-1);
         }
+    }
+
+    // AI Re-analysis
+    const btnRegen = document.getElementById('btn-regenerate-ai');
+    if (btnRegen) {
+        btnRegen.onclick = async () => {
+            const btnContent = btnRegen.innerHTML;
+            btnRegen.innerHTML = '<i class="ph ph-spinner animate-spin"></i> Analizando...';
+            btnRegen.disabled = true;
+
+            try {
+                const { AIAnalysisService } = await import('../services/ai_service.js');
+                const { getCase, updateCase } = await import('../store.js');
+
+                // Simulate File object from existing data needed for heuristics
+                const mockFile = { name: (activeImg.src.split('/').pop() || "Documento Desconocido") + ".jpg" };
+                // Or better, use the img name from store
+                const c = getCase(currentCaseId);
+                const img = c.images.find(i => i.id === currentImageId);
+
+                if (img) {
+                    const result = await AIAnalysisService.analyzeDocument({ name: img.name });
+
+                    // Update Store
+                    img.aiAnalysis = result;
+                    // Also update legacy fields for consistency
+                    img.summary = result.summary;
+                    img.type = result.type;
+                    img.deadline = result.deadline;
+                    img.nextAction = result.nextAction;
+
+                    await updateCase(currentCaseId, { images: c.images });
+
+                    // Re-render
+                    renderContent(modal);
+                    bindEvents(modal); // Re-bind because innerHTML replaced
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error en análisis');
+                btnRegen.innerHTML = btnContent;
+                btnRegen.disabled = false;
+            }
+        };
     }
 
     async function navigateImage(direction) {

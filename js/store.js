@@ -1,5 +1,6 @@
 import { db, storage } from './firebase_config.js';
 import { AuthService } from './services/auth.js';
+import { AIAnalysisService } from './services/ai_service.js';
 
 // Helper to get dates relative to today
 const today = new Date();
