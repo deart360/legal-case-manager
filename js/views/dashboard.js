@@ -89,6 +89,11 @@ function renderFullDashboard(container) {
                         </div>
 
                         <div class="form-group">
+                            <label class="text-xs text-muted uppercase font-bold">Descripción</label>
+                            <textarea id="qt-desc" class="form-input bg-glass border-glass text-sm" rows="2" placeholder="Detalles de la tarea..."></textarea>
+                        </div>
+
+                        <div class="form-group">
                             <label class="text-xs text-muted uppercase font-bold">Fecha Vencimiento</label>
                             <input type="date" id="qt-date" class="form-input bg-glass border-glass text-sm" required>
                         </div>
@@ -339,22 +344,30 @@ function bindQuickTaskEvents(container) {
         const caseId = caseSelect.value;
         const type = container.querySelector('#qt-type').value;
         const date = container.querySelector('#qt-date').value;
+        const desc = container.querySelector('#qt-desc').value;
 
         if (!caseId || !date) {
             alert('Por favor selecciona un expediente y una fecha.');
             return;
         }
 
+        let title = '';
+        // Customize title based on type
+        if (type === 'termino') title = 'VENCIMIENTO DE TÉRMINO';
+        else if (type === 'revision') title = 'Revisión de Acuerdos';
+        else if (type === 'turnar') title = 'Turnar a Sentencia';
+        else title = 'Pendiente General';
+
+        // Append description if provided
+        if (desc) {
+            title += `: ${desc}`;
+        }
+
         const taskData = {
-            title: `${type.toUpperCase()}: Revisar expediente`, // Generic title based on type
+            title: title,
             date: date,
             urgent: type === 'termino'
         };
-
-        // Customize title based on type
-        if (type === 'termino') taskData.title = 'VENCIMIENTO DE TÉRMINO';
-        if (type === 'revision') taskData.title = 'Revisión de Acuerdos';
-        if (type === 'turnar') taskData.title = 'Turnar a Sentencia';
 
         const { addTask } = await import('../store.js');
         await addTask(caseId, taskData);
