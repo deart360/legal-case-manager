@@ -18,6 +18,52 @@
   max-width: 100vw;
 }
 
+.gallery-nav-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: none;
+  /* Hidden by default */
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+  z-index: 50;
+}
+
+.viewer-container.gallery-mode .gallery-nav-overlay {
+  display: flex;
+}
+
+.gallery-nav-btn {
+  pointer-events: auto;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0;
+  /* Hidden until hover */
+}
+
+.viewer-container.gallery-mode:hover .gallery-nav-btn {
+  opacity: 1;
+}
+
+.gallery-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
 /* ... existing code ... */
 
 :root {

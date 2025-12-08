@@ -158,6 +158,31 @@ function bindEvents(modal) {
         };
     }
 
+    // Keyboard Navigation
+    currentKeydownHandler = (e) => {
+        if (!viewerContainer.classList.contains('gallery-mode')) return;
+        if (e.key === 'ArrowLeft') navigateImage(-1);
+        if (e.key === 'ArrowRight') navigateImage(1);
+        if (e.key === 'Escape') {
+            viewerContainer.classList.remove('gallery-mode');
+            const btn = document.getElementById('btn-gallery-mode');
+            if (btn) btn.innerHTML = '<i class="ph-fill ph-corners-out"></i>';
+        }
+    };
+    window.addEventListener('keydown', currentKeydownHandler);
+
+    // On-screen Navigation Buttons (for Desktop)
+    const navOverlay = document.createElement('div');
+    navOverlay.className = 'gallery-nav-overlay';
+    navOverlay.innerHTML = `
+        <button class="gallery-nav-btn prev"><i class="ph ph-caret-left"></i></button>
+        <button class="gallery-nav-btn next"><i class="ph ph-caret-right"></i></button>
+    `;
+    viewerContainer.appendChild(navOverlay);
+
+    navOverlay.querySelector('.prev').onclick = (e) => { e.stopPropagation(); navigateImage(-1); };
+    navOverlay.querySelector('.next').onclick = (e) => { e.stopPropagation(); navigateImage(1); };
+
     // Swipe Navigation (Simple implementation)
     let touchStartX = 0;
     let touchEndX = 0;
@@ -200,17 +225,21 @@ function bindEvents(modal) {
         const newImg = c.images[newIndex];
         currentImageId = newImg.id;
 
+        // Cleanup old listeners before re-rendering
+        cleanup();
+
         // Update View
         renderContent(modal);
-        // Re-bind events because renderContent replaces DOM
+
+        // Restore Gallery Mode
+        const newContainer = modal.querySelector('.viewer-container');
+        newContainer.classList.add('gallery-mode');
+
+        // Re-bind events
         bindEvents(modal);
 
-        // Restore Gallery Mode if active
-        if (viewerContainer.classList.contains('gallery-mode')) {
-            modal.querySelector('.viewer-container').classList.add('gallery-mode');
-            // Update button icon
-            const btn = document.getElementById('btn-gallery-mode');
-            if (btn) btn.innerHTML = '<i class="ph-fill ph-corners-in"></i>';
-        }
+        // Update button icon
+        const btn = document.getElementById('btn-gallery-mode');
+        if (btn) btn.innerHTML = '<i class="ph-fill ph-corners-in"></i>';
     }
 }

@@ -61,7 +61,7 @@ function updateCalendar(container, events) {
 
     // Empty cells
     for (let i = 0; i < startDayOfWeek; i++) {
-        html += `<div class="cal-day empty bg-black/20 rounded-lg"></div>`;
+        html += `<div class="cal-day empty" style="background: rgba(0,0,0,0.2); border-radius: 8px;"></div>`;
     }
 
     // Days
@@ -72,10 +72,14 @@ function updateCalendar(container, events) {
         const dayEvents = events.filter(e => e.date === dateStr);
         const isToday = dateStr === todayStr;
 
+        const dayClass = isToday ? 'bg-accent-low border-accent' : 'bg-glass';
+        const dayStyle = isToday ? 'background: rgba(212, 175, 55, 0.1); border-color: var(--accent);' : '';
+        const numClass = isToday ? 'text-accent' : 'text-muted';
+
         html += `
-            <div class="cal-day ${isToday ? 'bg-accent/10 border-accent' : 'bg-glass'} border border-glass rounded-lg p-2 min-h-[100px] flex flex-col gap-1 transition-colors hover:bg-glass-hover">
-                <span class="day-number font-bold ${isToday ? 'text-accent' : 'text-muted'} mb-1">${day}</span>
-                <div class="day-events flex flex-col gap-1 overflow-y-auto custom-scrollbar">
+            <div class="cal-day ${dayClass}" style="${dayStyle} border: 1px solid var(--glass-border); border-radius: 8px; padding: 0.5rem; min-height: 100px; display: flex; flex-direction: column; gap: 0.25rem; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='${isToday ? 'rgba(212, 175, 55, 0.1)' : ''}'">
+                <span class="day-number font-bold ${numClass} mb-1" style="font-weight: 700;">${day}</span>
+                <div class="day-events flex flex-col gap-1 overflow-y-auto custom-scrollbar" style="display: flex; flex-direction: column; gap: 4px; overflow-y: auto;">
                     ${dayEvents.map(e => {
             let clickAction = '';
             if (e.imgId) {
@@ -83,9 +87,14 @@ function updateCalendar(container, events) {
             } else if (e.caseId) {
                 clickAction = `onclick="event.stopPropagation(); window.navigateTo('#case/${e.caseId}')"`;
             }
+
+            const eventStyle = e.urgent
+                ? 'border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.1); color: #fca5a5;'
+                : 'border: 1px solid rgba(212, 175, 55, 0.3); background: rgba(212, 175, 55, 0.1); color: #fcd34d;';
+
             return `
-                        <div class="cal-event text-xs p-1 rounded border-l-2 cursor-pointer truncate
-                            ${e.urgent ? 'border-danger bg-danger/10 text-danger-light' : 'border-accent bg-accent/10 text-accent-light'}" 
+                        <div class="cal-event text-xs p-1 rounded border-l-2 cursor-pointer truncate"
+                            style="${eventStyle} font-size: 0.75rem; padding: 2px 4px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
                             title="${e.title}" ${clickAction}>
                             ${e.type === 'deadline' ? '⚠️ ' : ''}${e.title}
                         </div>

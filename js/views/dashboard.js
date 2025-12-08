@@ -524,24 +524,23 @@ function bindDashboardEvents(container, events) {
             updateTimeline(container, events);
         };
     }
-}
 
-// Infographic Modal
-const modal = container.querySelector('#infographic-modal');
-const btnOpen = container.querySelector('#btn-generate-infographic');
-const btnClose = container.querySelector('#close-infographic');
+    // Infographic Modal
+    const modal = container.querySelector('#infographic-modal');
+    const btnOpen = container.querySelector('#btn-generate-infographic');
+    const btnClose = container.querySelector('#close-infographic');
 
-if (btnOpen && modal && btnClose) {
-    btnOpen.onclick = () => {
-        modal.classList.remove('hidden');
-    };
+    if (btnOpen && modal && btnClose) {
+        btnOpen.onclick = () => {
+            modal.classList.remove('hidden');
+        };
 
-    btnClose.onclick = () => {
-        modal.classList.add('hidden');
-    };
+        btnClose.onclick = () => {
+            modal.classList.add('hidden');
+        };
 
-    modal.onclick = (e) => {
-        if (e.target === modal) modal.classList.add('hidden');
-    };
-}
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.classList.add('hidden');
+        };
+    }
 }
