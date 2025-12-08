@@ -28,9 +28,12 @@
 .dash-col {
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    /* Prevent spill */
+    overflow-y: auto;
+    /* Allow scrolling if content is too tall */
+    overflow-x: hidden;
     min-height: 0;
+    padding-right: 4px;
+    /* Space for scrollbar */
     /* Allow flex children to scroll */
 }
 
