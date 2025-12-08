@@ -1,8 +1,12 @@
-import { getCase, addImageToCase } from '../store.js';
+import { getCase, addImageToCase, deleteImages, reorderImages } from '../store.js';
+import { generateLegalPdf } from '../utils/pdf_generator.js';
 
 export function createCaseView(caseId) {
     const container = document.createElement('div');
     container.className = 'case-view p-6';
+
+    let isSelectionMode = false;
+    let selectedImages = new Set();
 
     // Internal render function to allow refreshing without full reload
     const render = () => {
@@ -23,6 +27,10 @@ export function createCaseView(caseId) {
                         <p class="text-muted">${c.juzgado} • Última act: ${c.lastUpdate}</p>
                     </div>
                     <div class="case-actions flex gap-2">
+                        <button class="btn-secondary ${isSelectionMode ? 'bg-accent text-white' : ''}" id="btn-manage-docs">
+                            <i class="ph ph-selection-all"></i> ${isSelectionMode ? 'Cancelar' : 'Gestionar'}
+                        </button>
+                        <div class="w-px h-6 bg-white/10 mx-2"></div>
                         <button class="btn-icon-sm bg-glass" onclick="window.openCaseModal('', '${caseId}')" title="Editar">
                             <i class="ph ph-pencil"></i>
                         </button>
@@ -32,7 +40,7 @@ export function createCaseView(caseId) {
                         <div class="w-px h-6 bg-white/10 mx-2"></div>
                         <input type="file" id="file-upload-${caseId}" class="hidden" accept="image/*,application/pdf" multiple>
                         <div class="flex flex-col items-end">
-                            <button class="btn-primary btn-upload-trigger">
+                            <button class="btn-primary btn-upload-trigger" ${isSelectionMode ? 'disabled' : ''}>
                                 <i class="ph ph-camera"></i> Anexar Fotos/PDF
                             </button>
                             <!-- Progress Bar Container -->
@@ -45,24 +53,43 @@ export function createCaseView(caseId) {
                         </div>
                     </div>
                 </div>
+                
+                <!-- Selection Action Bar -->
+                ${isSelectionMode ? `
+                <div class="selection-bar bg-glass border border-glass p-3 rounded-lg mt-4 flex justify-between items-center animate-fade-in">
+                    <span class="font-bold text-accent">${selectedImages.size} seleccionados</span>
+                    <div class="flex gap-2">
+                        <button class="btn-sm btn-secondary" id="btn-select-all"><i class="ph ph-check-square"></i> Todos</button>
+                        <button class="btn-sm btn-secondary" id="btn-share-selection" ${selectedImages.size === 0 ? 'disabled' : ''}><i class="ph ph-share-network"></i> Compartir</button>
+                        <button class="btn-sm btn-danger" id="btn-delete-selection" ${selectedImages.size === 0 ? 'disabled' : ''}><i class="ph ph-trash"></i> Eliminar</button>
+                    </div>
+                </div>
+                ` : ''}
             </div>
         `;
 
         // Image Grid
         const imagesHtml = `
-            <div class="documents-grid">
+            <div class="documents-grid" id="doc-grid">
                 ${c.images.map(img => `
-                    <div class="doc-card" onclick="event.stopPropagation(); window.openImage('${caseId}', '${img.id}')">
+                    <div class="doc-card ${selectedImages.has(img.id) ? 'selected ring-2 ring-accent' : ''}" 
+                         data-id="${img.id}"
+                         onclick="${isSelectionMode ? '' : `event.stopPropagation(); window.openImage('${caseId}', '${img.id}')`}">
                         <div class="doc-preview">
                             <img src="${img.url}" alt="${img.type}">
+                            
+                            ${isSelectionMode ? `
+                            <div class="selection-overlay absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer"
+                                 onclick="event.stopPropagation(); window.toggleSelection('${img.id}')">
+                                <div class="checkbox ${selectedImages.has(img.id) ? 'bg-accent border-accent' : 'border-white'} w-6 h-6 rounded border-2 flex items-center justify-center transition-colors">
+                                    ${selectedImages.has(img.id) ? '<i class="ph-bold ph-check text-white text-sm"></i>' : ''}
+                                </div>
+                            </div>
+                            ` : `
                             <div class="doc-overlay">
                                 <i class="ph ph-magnifying-glass-plus"></i>
                             </div>
-                            <button class="btn-icon-xs bg-glass text-danger absolute top-2 right-2" 
-                                    onclick="event.stopPropagation(); window.confirmDeleteImage('${caseId}', '${img.id}')"
-                                    title="Eliminar documento">
-                                <i class="ph ph-trash"></i>
-                            </button>
+                            `}
                         </div>
                         <div class="doc-info">
                             <span class="doc-type">${img.type}</span>
@@ -75,101 +102,148 @@ export function createCaseView(caseId) {
                     </div>
                 `).join('')}
                 
-                <!-- Upload Placeholder -->
+                <!-- Upload Placeholder (Hidden in selection mode) -->
+                ${!isSelectionMode ? `
                 <div class="doc-card upload-card">
                     <i class="ph ph-plus"></i>
                     <span>Anexar Foto</span>
                 </div>
+                ` : ''}
             </div>
         `;
 
         container.innerHTML = header + imagesHtml;
 
         // Re-attach handlers
+        bindHandlers(container, c);
+    };
+
+    const bindHandlers = (container, c) => {
         const fileInput = container.querySelector(`#file-upload-${caseId}`);
         const uploadBtn = container.querySelector('.btn-upload-trigger');
         const uploadCard = container.querySelector('.upload-card');
         const progressContainer = container.querySelector('#upload-progress-container');
         const progressBar = container.querySelector('#upload-progress-bar');
         const progressText = container.querySelector('#upload-progress-text');
+        const btnManage = container.querySelector('#btn-manage-docs');
 
-        // Bind click events programmatically to avoid ID collisions
-        const triggerUpload = () => {
-            // alert("Abriendo selector de archivos..."); // Debug trigger
-            fileInput.click();
-        };
+        // Manage Toggle
+        if (btnManage) {
+            btnManage.onclick = () => {
+                isSelectionMode = !isSelectionMode;
+                selectedImages.clear();
+                render();
+            };
+        }
 
-        if (uploadBtn) uploadBtn.onclick = triggerUpload;
-        if (uploadCard) uploadCard.onclick = triggerUpload;
+        // Selection Actions
+        if (isSelectionMode) {
+            // Toggle Selection Helper
+            window.toggleSelection = (imgId) => {
+                if (selectedImages.has(imgId)) {
+                    selectedImages.delete(imgId);
+                } else {
+                    selectedImages.add(imgId);
+                }
+                render();
+            };
 
-        fileInput.onchange = async (e) => {
-            const files = Array.from(e.target.files);
-            if (files.length === 0) return;
-
-            // UI Feedback
-            const originalText = uploadBtn.innerHTML;
-            uploadBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Subiendo...';
-            uploadBtn.disabled = true;
-
-            // Show Progress Bar
-            if (progressContainer) progressContainer.classList.remove('hidden');
-
-            let newCount = 0;
-            const pdfLib = window.pdfjsLib;
-
-            for (const [index, file] of files.entries()) {
-                try {
-                    // Update text for multiple files
-                    if (files.length > 1) {
-                        progressText.textContent = `Archivo ${index + 1}/${files.length}`;
-                        progressBar.style.width = '0%';
-                    }
-
-                    const onProgress = (percent) => {
-                        if (progressBar) progressBar.style.width = `${percent}%`;
-                        if (progressText) progressText.textContent = `${Math.round(percent)}%`;
-                    };
-
-                    if (file.type === 'application/pdf') {
-                        // Handle PDF
-                        if (!pdfLib) throw new Error("Librería PDF no cargada");
-                        progressText.textContent = "Procesando PDF...";
-                        await processPdfFile(caseId, file, pdfLib, onProgress); // Pass callback
-                        newCount++;
+            // Select All
+            const btnSelectAll = container.querySelector('#btn-select-all');
+            if (btnSelectAll) {
+                btnSelectAll.onclick = () => {
+                    if (selectedImages.size === c.images.length) {
+                        selectedImages.clear();
                     } else {
-                        // Handle Image
-                        const result = await addImageToCase(caseId, file, onProgress);
-                        if (result) {
+                        c.images.forEach(img => selectedImages.add(img.id));
+                    }
+                    render();
+                };
+            }
+
+            // Delete Selection
+            const btnDelete = container.querySelector('#btn-delete-selection');
+            if (btnDelete) {
+                btnDelete.onclick = async () => {
+                    if (confirm(`¿Estás seguro de eliminar ${selectedImages.size} documentos?`)) {
+                        await deleteImages(caseId, Array.from(selectedImages));
+                        isSelectionMode = false;
+                        selectedImages.clear();
+                        render();
+                    }
+                };
+            }
+
+            // Share Selection
+            const btnShare = container.querySelector('#btn-share-selection');
+            if (btnShare) {
+                btnShare.onclick = () => {
+                    // Show Share Modal
+                    showShareModal(Array.from(selectedImages), c);
+                };
+            }
+        }
+
+        // Upload Handlers (Only if not selection mode)
+        if (!isSelectionMode) {
+            const triggerUpload = () => fileInput.click();
+            if (uploadBtn) uploadBtn.onclick = triggerUpload;
+            if (uploadCard) uploadCard.onclick = triggerUpload;
+
+            fileInput.onchange = async (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+
+                // UI Feedback
+                const originalText = uploadBtn.innerHTML;
+                uploadBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Subiendo...';
+                uploadBtn.disabled = true;
+
+                // Show Progress Bar
+                if (progressContainer) progressContainer.classList.remove('hidden');
+
+                let newCount = 0;
+                const pdfLib = window.pdfjsLib;
+
+                for (const [index, file] of files.entries()) {
+                    try {
+                        if (files.length > 1) {
+                            progressText.textContent = `Archivo ${index + 1}/${files.length}`;
+                            progressBar.style.width = '0%';
+                        }
+
+                        const onProgress = (percent) => {
+                            if (progressBar) progressBar.style.width = `${percent}%`;
+                            if (progressText) progressText.textContent = `${Math.round(percent)}%`;
+                        };
+
+                        if (file.type === 'application/pdf') {
+                            if (!pdfLib) throw new Error("Librería PDF no cargada");
+                            progressText.textContent = "Procesando PDF...";
+                            await processPdfFile(caseId, file, pdfLib, onProgress);
                             newCount++;
                         } else {
-                            console.error("Error agregando imagen:", file.name);
+                            const result = await addImageToCase(caseId, file, onProgress);
+                            if (result) newCount++;
                         }
+                    } catch (err) {
+                        console.error("Error en archivo " + file.name, err);
+                        alert("Error procesando " + file.name + ": " + err.message);
                     }
-                } catch (err) {
-                    console.error("Error en archivo " + file.name, err);
-                    alert("Error procesando " + file.name + ": " + err.message);
                 }
-            }
 
-            // Restore UI
-            uploadBtn.innerHTML = originalText;
-            uploadBtn.disabled = false;
-            if (progressContainer) progressContainer.classList.add('hidden');
+                uploadBtn.innerHTML = originalText;
+                uploadBtn.disabled = false;
+                if (progressContainer) progressContainer.classList.add('hidden');
 
-            if (newCount > 0) {
-                // Re-render in place
-                render();
-            } else {
-                // Only alert if absolutely nothing happened
-                // alert("No se agregaron archivos. Revisa la consola.");
-            }
-        };
+                if (newCount > 0) render();
+            };
+        }
     };
 
     // Listen for AI updates
     const aiUpdateHandler = (e) => {
         if (e.detail.caseId === caseId) {
-            // alert("AI Finalizó análisis. Actualizando..."); // Optional feedback
             render();
         }
     };
@@ -178,11 +252,64 @@ export function createCaseView(caseId) {
     // Initial render
     render();
 
-    // Cleanup listener when view is removed (simple approximation)
-    // In a full framework we'd use a proper lifecycle hook.
-    // For now, we rely on the fact that the container will be removed.
-
     return container;
+}
+
+function showShareModal(selectedIds, c) {
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'modal flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="modal-content glass-card p-6 w-full max-w-md animate-scale-in">
+            <div class="modal-header mb-4 flex justify-between items-center">
+                <h3 class="h3">Compartir Documentos</h3>
+                <button class="btn-icon-sm" id="close-share"><i class="ph ph-x"></i></button>
+            </div>
+            <p class="text-muted mb-4">Has seleccionado <strong>${selectedIds.length}</strong> documentos.</p>
+            
+            <div class="flex flex-col gap-3">
+                <button class="btn-primary w-full justify-between" id="share-pdf">
+                    <span class="flex items-center gap-2"><i class="ph ph-file-pdf"></i> Generar PDF (Oficio)</span>
+                    <i class="ph ph-caret-right"></i>
+                </button>
+                <button class="btn-secondary w-full justify-between" id="share-imgs" disabled title="Próximamente">
+                    <span class="flex items-center gap-2"><i class="ph ph-images"></i> Imágenes Sueltas</span>
+                    <span class="text-xs badge">Próximamente</span>
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Close Handler
+    const close = () => {
+        modal.remove();
+    };
+    modal.querySelector('#close-share').onclick = close;
+    modal.onclick = (e) => { if (e.target === modal) close(); };
+
+    // PDF Handler
+    modal.querySelector('#share-pdf').onclick = async () => {
+        const btn = modal.querySelector('#share-pdf');
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Generando...';
+        btn.disabled = true;
+
+        try {
+            const images = c.images.filter(img => selectedIds.includes(img.id));
+            const pdfBlob = await generateLegalPdf(images);
+            const url = URL.createObjectURL(pdfBlob);
+
+            // Open in new tab
+            window.open(url, '_blank');
+            close();
+        } catch (e) {
+            console.error(e);
+            alert("Error generando PDF: " + e.message);
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        }
+    };
 }
 
 async function processPdfFile(caseId, file, pdfLib, onProgress) {
