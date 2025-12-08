@@ -150,11 +150,41 @@ export function createCaseView(caseId) {
             // Bind click events to cards for selection
             const cards = container.querySelectorAll('.doc-card');
             cards.forEach(card => {
+                const id = card.getAttribute('data-id');
+
+                // Click Handler
                 card.onclick = (e) => {
                     e.stopPropagation();
-                    const id = card.getAttribute('data-id');
                     if (id) window.toggleSelection(id);
                 };
+
+                // Long Press Handler
+                let pressTimer;
+                const startPress = (e) => {
+                    pressTimer = setTimeout(() => {
+                        // Trigger Context Menu
+                        const rect = card.getBoundingClientRect();
+                        // Position near the center of the card or touch point
+                        const x = e.touches ? e.touches[0].clientX : e.clientX;
+                        const y = e.touches ? e.touches[0].clientY : e.clientY;
+
+                        showContextMenu(x, y, id, c);
+                    }, 500); // 500ms for long press
+                };
+
+                const cancelPress = () => {
+                    clearTimeout(pressTimer);
+                };
+
+                // Touch Events
+                card.addEventListener('touchstart', startPress, { passive: true });
+                card.addEventListener('touchend', cancelPress);
+                card.addEventListener('touchmove', cancelPress);
+
+                // Mouse Events
+                card.addEventListener('mousedown', startPress);
+                card.addEventListener('mouseup', cancelPress);
+                card.addEventListener('mouseleave', cancelPress);
             });
 
 
@@ -263,6 +293,75 @@ export function createCaseView(caseId) {
     render();
 
     return container;
+}
+
+function showContextMenu(x, y, imgId, c) {
+    // Remove existing context menus
+    const existing = document.querySelectorAll('.context-menu');
+    existing.forEach(el => el.remove());
+
+    const menu = document.createElement('div');
+    menu.className = 'context-menu glass-card p-2 flex flex-col gap-1 animate-scale-in';
+    menu.style.position = 'fixed';
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+    menu.style.zIndex = '1000';
+    menu.style.minWidth = '160px';
+
+    menu.innerHTML = `
+        <button class="btn-ghost w-full justify-start text-sm" id="ctx-share">
+            <i class="ph ph-share-network"></i> Compartir
+        </button>
+        <button class="btn-ghost w-full justify-start text-sm" id="ctx-move">
+            <i class="ph ph-arrows-down-up"></i> Mover
+        </button>
+        <div class="h-px bg-white/10 my-1"></div>
+        <button class="btn-ghost w-full justify-start text-sm text-danger" id="ctx-delete">
+            <i class="ph ph-trash"></i> Eliminar
+        </button>
+    `;
+
+    document.body.appendChild(menu);
+
+    // Adjust position if off-screen
+    const rect = menu.getBoundingClientRect();
+    if (rect.right > window.innerWidth) menu.style.left = `${window.innerWidth - rect.width - 10}px`;
+    if (rect.bottom > window.innerHeight) menu.style.top = `${window.innerHeight - rect.height - 10}px`;
+
+    // Actions
+    menu.querySelector('#ctx-share').onclick = () => {
+        showShareModal([imgId], c);
+        menu.remove();
+    };
+
+    menu.querySelector('#ctx-delete').onclick = async () => {
+        if (confirm("¿Eliminar este documento?")) {
+            await deleteImages(c.id, [imgId]);
+            // Refresh view (hacky but works for now, ideally dispatch event)
+            const view = document.querySelector('.case-view');
+            if (view) {
+                // Trigger a re-render if possible, or just reload
+                // Since we don't have easy access to 'render' here, we can dispatch a custom event
+                window.dispatchEvent(new CustomEvent('case-updated', { detail: { caseId: c.id } }));
+            }
+        }
+        menu.remove();
+    };
+
+    menu.querySelector('#ctx-move').onclick = () => {
+        alert("Función de mover próximamente."); // Placeholder
+        menu.remove();
+    };
+
+    // Close on click outside
+    const closeHandler = (e) => {
+        if (!menu.contains(e.target)) {
+            menu.remove();
+            window.removeEventListener('click', closeHandler);
+        }
+    };
+    // Delay adding listener to avoid immediate close
+    setTimeout(() => window.addEventListener('click', closeHandler), 10);
 }
 
 function showShareModal(selectedIds, c) {
