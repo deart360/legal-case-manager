@@ -14,7 +14,7 @@ export const AIAnalysisService = {
      * @param {File} file - The file object to analyze.
      * @returns {Promise<Object>} - The analysis result.
      */
-    async analyzeDocument(file) {
+    async analyzeDocument(file, onProgress) {
         const base64Data = await this._fileToBase64(file);
         const mimeType = file.type || 'image/jpeg';
 
@@ -46,7 +46,7 @@ export const AIAnalysisService = {
         `;
 
         try {
-            const result = await this._callGemini(promptText, { mime_type: mimeType, data: base64Data });
+            const result = await this._callGemini(promptText, { mime_type: mimeType, data: base64Data }, true, onProgress);
             result.confidence = "Gemini 3.0 Pro (High Reasoning)";
             return result;
         } catch (error) {
@@ -64,7 +64,7 @@ export const AIAnalysisService = {
     /**
      * Generates a weekly performance report.
      */
-    async generateWeeklyReport(data) {
+    async generateWeeklyReport(data, onProgress) {
         const promptText = `
             Actúa como socio fundador de un despacho de abogados. 👨‍⚖️
             Analiza este JSON de actividad semanal:
@@ -80,13 +80,13 @@ export const AIAnalysisService = {
         `;
 
         // Text-only call
-        return this._callGemini(promptText, null, false); // false = return raw text, not JSON
+        return this._callGemini(promptText, null, false, onProgress); // false = return raw text, not JSON
     },
 
     /**
      * Parses natural language task into structured data.
      */
-    async parseTaskIntent(text) {
+    async parseTaskIntent(text, onProgress) {
         const promptText = `
             Eres un asistente legal eficiente. Convierte esta instrucción en una tarea estructurada JSON.
             Hoy es: ${new Date().toISOString().split('T')[0]} (${new Date().toLocaleDateString('es-MX', { weekday: 'long' })}).
@@ -103,13 +103,13 @@ export const AIAnalysisService = {
             { "type": "...", "date": "...", "urgent": true/false, "description": "..." }
         `;
 
-        return this._callGemini(promptText);
+        return this._callGemini(promptText, null, true, onProgress);
     },
 
     /**
      * Private Helper: Call Gemini API
      */
-    async _callGemini(promptText, inlineData = null, expectJson = true) {
+    async _callGemini(promptText, inlineData = null, expectJson = true, onProgress = null) {
         let apiKey = localStorage.getItem(API_KEY_STORAGE) || EMBEDDED_KEY;
 
         if (!apiKey) {
@@ -122,6 +122,18 @@ export const AIAnalysisService = {
         }
 
         try {
+            // Helper function to simulate progress
+            let progress = 0;
+            let progressInterval;
+            if (onProgress) {
+                onProgress(5); // Start
+                progressInterval = setInterval(() => {
+                    progress += Math.floor(Math.random() * 10) + 5; // +5-15%
+                    if (progress > 90) progress = 90; // Cap at 90%
+                    onProgress(progress);
+                }, 500);
+            }
+
             // Dynamically resolve model to avoid 404s
             const modelName = await this._resolveModel(apiKey);
 
@@ -138,6 +150,10 @@ export const AIAnalysisService = {
                     generationConfig: { response_mime_type: expectJson ? "application/json" : "text/plain" }
                 })
             });
+
+            // Cleanup Progress
+            if (progressInterval) clearInterval(progressInterval);
+            if (onProgress) onProgress(100);
 
             if (!response.ok) {
                 const errData = await response.json();

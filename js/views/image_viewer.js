@@ -259,7 +259,9 @@ function bindEvents(modal) {
                     // Reconstruct a File-like object
                     const fileToAnalyze = new File([blob], img.name, { type: blob.type });
 
-                    const result = await AIAnalysisService.analyzeDocument(fileToAnalyze);
+                    const result = await AIAnalysisService.analyzeDocument(fileToAnalyze, (percent) => {
+                        btnRegen.innerHTML = `<i class="ph ph-scan"></i> Analizando... ${percent}%`;
+                    });
 
                     // Update Store
                     img.aiAnalysis = result;

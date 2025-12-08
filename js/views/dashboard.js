@@ -638,11 +638,12 @@ function bindDashboardEvents(container, events) {
             }
 
             const originalIcon = btnAiTask.innerHTML;
-            btnAiTask.innerHTML = '<i class="ph ph-spinner animate-spin"></i> ...';
 
             try {
                 const { AIAnalysisService } = await import('../services/ai_service.js');
-                const result = await AIAnalysisService.parseTaskIntent(text);
+                const result = await AIAnalysisService.parseTaskIntent(text, (percent) => {
+                    btnAiTask.innerHTML = `<i class="ph ph-spinner animate-spin"></i> ${percent}%`;
+                });
 
                 // Autofill
                 if (result.description) inputDesc.value = result.description;
@@ -732,14 +733,19 @@ function generateReport(container, type) {
     const urgentPending = relevantTasks.filter(e => !e.completed && e.urgent).length;
     const completedCount = completedTasks.length;
 
-    // Show Loading State
+    // Show Loading State with Progress Bar
     const containerInner = modal.querySelector('.infographic-container');
     if (containerInner) {
         containerInner.innerHTML = `
             <div class="h-full flex flex-col items-center justify-center text-center p-8">
                 <i class="ph ph-sparkle text-5xl text-accent animate-pulse mb-4"></i>
                 <h3 class="h3 mb-2">Generando Informe Inteligente...</h3>
-                <p class="text-muted">Gemini está analizando ${relevantTasks.length} actividades para redactar tu resumen ejecutivo.</p>
+                <p class="text-muted mb-4">Gemini está analizando ${relevantTasks.length} actividades...</p>
+                
+                <div class="w-full max-w-xs bg-glass rounded-full h-2.5 overflow-hidden">
+                    <div id="ai-progress-bar" class="bg-accent h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="ai-progress-text" class="text-xs text-muted mt-2">0%</p>
             </div>
          `;
         modal.classList.remove('hidden');
@@ -753,6 +759,11 @@ function generateReport(container, type) {
                 role: type,
                 stats: { completed: completedCount, urgent_pending: urgentPending, total_monitored: relevantTasks.length },
                 tasks_sample: relevantTasks.slice(0, 15).map(t => ({ title: t.title, status: t.completed ? 'Done' : 'Pending', urgent: t.urgent }))
+            }, (percent) => {
+                const bar = document.getElementById('ai-progress-bar');
+                const txt = document.getElementById('ai-progress-text');
+                if (bar) bar.style.width = `${percent}%`;
+                if (txt) txt.textContent = `${percent}%`;
             });
 
             // Render Final Report
