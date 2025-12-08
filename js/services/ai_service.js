@@ -145,6 +145,16 @@ export const AIAnalysisService = {
             }
 
             const data = await response.json();
+
+            // Check for empty response or safety blocks
+            if (!data.candidates || data.candidates.length === 0) {
+                console.warn("Gemini Response Empty:", data);
+                if (data.promptFeedback && data.promptFeedback.blockReason) {
+                    throw new Error(`Gemini Safety Block: ${data.promptFeedback.blockReason}`);
+                }
+                throw new Error("Gemini returned no candidates (Empty Response).");
+            }
+
             const textResponse = data.candidates[0].content.parts[0].text;
 
             if (expectJson) {
