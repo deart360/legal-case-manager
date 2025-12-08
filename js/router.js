@@ -44,6 +44,8 @@ function handleRoute() {
         loadView(import('./views/folder_view.js'));
     } else if (hash.startsWith('#case')) {
         loadView(import('./views/case_view.js'));
+    } else if (hash === '#calendar') {
+        loadView(import('./views/calendar_view.js'));
     } else {
         // 404
         viewContainer.innerHTML = '<h2>404 - Not Found</h2>';

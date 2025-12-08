@@ -47,24 +47,53 @@ function renderFullDashboard(container) {
                     </div>
                 </div>
                 
-                <!-- Calendar -->
-                <div class="card calendar-card">
+                <!-- Quick Add Task Widget -->
+                <div class="card quick-task-card">
                     <div class="card-header">
-                        <h3 class="h3" id="cal-month-label">Calendario</h3>
-                        <div class="cal-nav">
-                            <button class="btn-icon-sm" id="cal-prev"><i class="ph ph-caret-left"></i></button>
-                            <button class="btn-text-sm" id="cal-today">Hoy</button>
-                            <button class="btn-icon-sm" id="cal-next"><i class="ph ph-caret-right"></i></button>
-                        </div>
+                        <h3 class="h3"><i class="ph-fill ph-plus-circle text-accent"></i> Tarea Rápida</h3>
                     </div>
-                    <div class="calendar-wrapper">
-                        <div class="cal-header">
-                            <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
+                    <form id="quick-task-form" class="flex flex-col gap-3">
+                        <div class="form-group">
+                            <label class="text-xs text-muted uppercase font-bold">Ubicación</label>
+                            <select id="qt-state" class="form-input bg-glass border-glass text-sm">
+                                <option value="">Selecciona Estado...</option>
+                                ${appData.states.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+                            </select>
                         </div>
-                        <div class="cal-body" id="calendar-grid">
-                            <!-- Content rendered by JS -->
+                        
+                        <div class="form-group">
+                            <label class="text-xs text-muted uppercase font-bold">Materia</label>
+                            <select id="qt-subject" class="form-input bg-glass border-glass text-sm" disabled>
+                                <option value="">Selecciona Materia...</option>
+                            </select>
                         </div>
-                    </div>
+
+                        <div class="form-group">
+                            <label class="text-xs text-muted uppercase font-bold">Expediente</label>
+                            <select id="qt-case" class="form-input bg-glass border-glass text-sm" disabled>
+                                <option value="">Selecciona Expediente...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="text-xs text-muted uppercase font-bold">Tipo de Pendiente</label>
+                            <select id="qt-type" class="form-input bg-glass border-glass text-sm">
+                                <option value="pendiente">Pendiente General</option>
+                                <option value="termino">Término (Urgente)</option>
+                                <option value="revision">Revisión</option>
+                                <option value="turnar">Turnar a Sentencia</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="text-xs text-muted uppercase font-bold">Fecha Vencimiento</label>
+                            <input type="date" id="qt-date" class="form-input bg-glass border-glass text-sm" required>
+                        </div>
+
+                        <button type="submit" class="btn-primary w-full mt-2">
+                            <i class="ph ph-check"></i> Agregar Tarea
+                        </button>
+                    </form>
                 </div>
 
             </div>
@@ -250,11 +279,94 @@ function renderFullDashboard(container) {
 
     // Render Sub-components
     updateTimeline(container, events);
-    updateCalendar(container, events);
+    // updateCalendar(container, events); // Removed
     updateUrgentTerms(container, events);
 
     // Bind Events
     bindDashboardEvents(container, events);
+    bindQuickTaskEvents(container);
+}
+
+function bindQuickTaskEvents(container) {
+    const stateSelect = container.querySelector('#qt-state');
+    const subjectSelect = container.querySelector('#qt-subject');
+    const caseSelect = container.querySelector('#qt-case');
+    const form = container.querySelector('#quick-task-form');
+
+    // State Change -> Load Subjects
+    stateSelect.onchange = () => {
+        const stateId = stateSelect.value;
+        subjectSelect.innerHTML = '<option value="">Selecciona Materia...</option>';
+        caseSelect.innerHTML = '<option value="">Selecciona Expediente...</option>';
+        subjectSelect.disabled = true;
+        caseSelect.disabled = true;
+
+        if (stateId) {
+            const state = appData.states.find(s => s.id === stateId);
+            if (state) {
+                subjectSelect.innerHTML += state.subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                subjectSelect.disabled = false;
+            }
+        }
+    };
+
+    // Subject Change -> Load Cases
+    subjectSelect.onchange = () => {
+        const subjectId = subjectSelect.value;
+        caseSelect.innerHTML = '<option value="">Selecciona Expediente...</option>';
+        caseSelect.disabled = true;
+
+        if (subjectId) {
+            // Find subject across states (though we know the state, this is safer)
+            for (const state of appData.states) {
+                const subject = state.subjects.find(s => s.id === subjectId);
+                if (subject) {
+                    const cases = subject.cases.map(cId => appData.cases[cId]).filter(c => c);
+                    caseSelect.innerHTML += cases.map(c => `<option value="${c.id}">${c.expediente} - ${c.title}</option>`).join('');
+                    caseSelect.disabled = false;
+                    break;
+                }
+            }
+        }
+    };
+
+    // Form Submit
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const caseId = caseSelect.value;
+        const type = container.querySelector('#qt-type').value;
+        const date = container.querySelector('#qt-date').value;
+
+        if (!caseId || !date) {
+            alert('Por favor selecciona un expediente y una fecha.');
+            return;
+        }
+
+        const taskData = {
+            title: `${type.toUpperCase()}: Revisar expediente`, // Generic title based on type
+            date: date,
+            urgent: type === 'termino'
+        };
+
+        // Customize title based on type
+        if (type === 'termino') taskData.title = 'VENCIMIENTO DE TÉRMINO';
+        if (type === 'revision') taskData.title = 'Revisión de Acuerdos';
+        if (type === 'turnar') taskData.title = 'Turnar a Sentencia';
+
+        const { addTask } = await import('../store.js');
+        await addTask(caseId, taskData);
+
+        alert('Tarea agregada correctamente.');
+        form.reset();
+        // Reset dropdowns
+        subjectSelect.innerHTML = '<option value="">Selecciona Materia...</option>';
+        caseSelect.innerHTML = '<option value="">Selecciona Expediente...</option>';
+        subjectSelect.disabled = true;
+        caseSelect.disabled = true;
+
+        // Refresh dashboard
+        window.dispatchEvent(new HashChangeEvent('hashchange'));
+    };
 }
 
 function updateUrgentTerms(container, events) {
@@ -392,101 +504,34 @@ function updateTimeline(container, events) {
     listContainer.innerHTML = html;
 }
 
-function updateCalendar(container, events) {
-    const grid = container.querySelector('#calendar-grid');
-    const label = container.querySelector('#cal-month-label');
-
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-
-    label.innerText = currentDate.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
-
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startDayOfWeek = firstDay.getDay(); // 0 = Sunday
-
-    let html = '';
-
-    // Empty cells
-    for (let i = 0; i < startDayOfWeek; i++) {
-        html += `<div class="cal-day empty"></div>`;
-    }
-
-    // Days
-    const todayStr = new Date().toISOString().split('T')[0];
-
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayEvents = events.filter(e => e.date === dateStr);
-        const isToday = dateStr === todayStr;
-
-        html += `
-            <div class="cal-day ${isToday ? 'today' : ''}">
-                <span class="day-number">${day}</span>
-                <div class="day-events">
-                    ${dayEvents.map(e => {
-            let clickAction = '';
-            if (e.imgId) {
-                clickAction = `onclick="event.stopPropagation(); window.openImage('${e.caseId}', '${e.imgId}')"`;
-            } else if (e.caseId) {
-                clickAction = `onclick="event.stopPropagation(); window.navigateTo('#case/${e.caseId}')"`;
-            }
-            return `
-                        <div class="cal-event ${e.type} ${e.urgent ? 'urgent' : ''}" title="${e.title}" ${clickAction}>
-                            ${e.type === 'attachment' ? '<i class="ph-fill ph-camera"></i>' : ''}
-                            ${e.type === 'deadline' ? '<i class="ph-fill ph-warning"></i>' : ''}
-                            <span>${e.title}</span>
-                        </div>
-                    `}).join('')}
-                </div>
-            </div>
-        `;
-    }
-
-    grid.innerHTML = html;
-}
-
 function bindDashboardEvents(container, events) {
     // Timeline Switch
     const btnToday = container.querySelector('#btn-today');
     const btnUpcoming = container.querySelector('#btn-upcoming');
 
-    btnToday.onclick = () => {
-        timelineMode = 'today';
-        btnToday.classList.add('active');
-        btnUpcoming.classList.remove('active');
-        updateTimeline(container, events);
-    };
+    if (btnToday && btnUpcoming) {
+        btnToday.onclick = () => {
+            timelineMode = 'today';
+            btnToday.classList.add('active');
+            btnUpcoming.classList.remove('active');
+            updateTimeline(container, events);
+        };
 
-    btnUpcoming.onclick = () => {
-        timelineMode = 'upcoming';
-        btnUpcoming.classList.add('active');
-        btnToday.classList.remove('active');
-        updateTimeline(container, events);
-    };
+        btnUpcoming.onclick = () => {
+            timelineMode = 'upcoming';
+            btnUpcoming.classList.add('active');
+            btnToday.classList.remove('active');
+            updateTimeline(container, events);
+        };
+    }
+}
 
-    // Calendar Nav
-    container.querySelector('#cal-prev').onclick = () => {
-        currentDate.setMonth(currentDate.getMonth() - 1);
-        updateCalendar(container, events);
-    };
+// Infographic Modal
+const modal = container.querySelector('#infographic-modal');
+const btnOpen = container.querySelector('#btn-generate-infographic');
+const btnClose = container.querySelector('#close-infographic');
 
-    container.querySelector('#cal-next').onclick = () => {
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        updateCalendar(container, events);
-    };
-
-    container.querySelector('#cal-today').onclick = () => {
-        currentDate = new Date();
-        updateCalendar(container, events);
-    };
-
-    // Infographic Modal
-    const modal = container.querySelector('#infographic-modal');
-    const btnOpen = container.querySelector('#btn-generate-infographic');
-    const btnClose = container.querySelector('#close-infographic');
-
+if (btnOpen && modal && btnClose) {
     btnOpen.onclick = () => {
         modal.classList.remove('hidden');
     };
@@ -498,4 +543,5 @@ function bindDashboardEvents(container, events) {
     modal.onclick = (e) => {
         if (e.target === modal) modal.classList.add('hidden');
     };
+}
 }

@@ -19,6 +19,10 @@ export function renderSidebar() {
                 <i class="ph ph-squares-four"></i>
                 <span>Dashboard</span>
             </a>
+            <a href="#calendar" class="nav-item">
+                <i class="ph ph-calendar"></i>
+                <span>Calendario</span>
+            </a>
             
             <div class="nav-section-title">EXPEDIENTES</div>
             

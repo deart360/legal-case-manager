@@ -299,6 +299,39 @@ export async function addCase(subjectId, caseData) {
     return newId;
 }
 
+export async function addTask(caseId, taskData) {
+    const c = appData.cases[caseId];
+    if (!c) return false;
+
+    const newTask = {
+        id: `task-${Date.now()}`,
+        title: taskData.title,
+        date: taskData.date,
+        urgent: taskData.urgent,
+        completed: false
+    };
+
+    if (!c.tasks) c.tasks = [];
+    c.tasks.push(newTask);
+    saveToLocal();
+
+    // Firebase Update
+    if (db) {
+        try {
+            await db.collection('cases').doc(caseId).update({
+                tasks: firebase.firestore.FieldValue.arrayUnion(newTask)
+            });
+        } catch (e) {
+            console.error("Error agregando tarea a Firebase:", e);
+            // Fallback
+            await db.collection('cases').doc(caseId).update({
+                tasks: c.tasks
+            });
+        }
+    }
+    return true;
+}
+
 export async function updateCase(caseId, updatedData) {
     const c = appData.cases[caseId];
     if (!c) return false;

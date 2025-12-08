@@ -1,3 +1,25 @@
+/* Gallery Mode */
+.viewer-container.gallery-mode .viewer-sidebar {
+  display: none;
+}
+
+.viewer-container.gallery-mode .viewer-main {
+  background: #000;
+}
+
+.viewer-container.gallery-mode .viewer-toolbar {
+  background: rgba(0, 0, 0, 0.5);
+  border-bottom: none;
+}
+
+.viewer-container.gallery-mode #active-image {
+  object-fit: contain;
+  max-height: 100vh;
+  max-width: 100vw;
+}
+
+/* ... existing code ... */
+
 :root {
   /* Liquid Glass Palette (Deluxe Gold & Green) */
   --bg-app: #000000;

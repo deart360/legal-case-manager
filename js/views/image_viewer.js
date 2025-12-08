@@ -36,6 +36,8 @@ function renderContent(modal) {
                 <div class="viewer-toolbar">
                     <button id="close-viewer" class="btn-icon"><i class="ph ph-x"></i></button>
                     <div class="zoom-controls">
+                        <button id="btn-gallery-mode" class="btn-icon" title="Modo Galería"><i class="ph-fill ph-corners-out"></i></button>
+                        <div class="divider-v"></div>
                         <button id="zoom-out" class="btn-icon"><i class="ph ph-minus"></i></button>
                         <span id="zoom-level">100%</span>
                         <button id="zoom-in" class="btn-icon"><i class="ph ph-plus"></i></button>
@@ -135,4 +137,80 @@ function bindEvents(modal) {
         zoomLevel = newZoom;
         updateTransform();
     };
+
+    // Gallery Mode Toggle
+    const btnGallery = document.getElementById('btn-gallery-mode');
+    const viewerContainer = modal.querySelector('.viewer-container');
+
+    if (btnGallery) {
+        btnGallery.onclick = () => {
+            viewerContainer.classList.toggle('gallery-mode');
+            const isGallery = viewerContainer.classList.contains('gallery-mode');
+            btnGallery.innerHTML = isGallery ? '<i class="ph-fill ph-corners-in"></i>' : '<i class="ph-fill ph-corners-out"></i>';
+
+            if (isGallery) {
+                // Reset zoom for gallery mode swipe
+                zoomLevel = 1;
+                translateX = 0;
+                translateY = 0;
+                updateTransform();
+            }
+        };
+    }
+
+    // Swipe Navigation (Simple implementation)
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    imgWrapper.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+
+    imgWrapper.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+
+    function handleSwipe() {
+        if (!viewerContainer.classList.contains('gallery-mode')) return;
+
+        const swipeThreshold = 50;
+        if (touchEndX < touchStartX - swipeThreshold) {
+            // Swipe Left -> Next Image
+            navigateImage(1);
+        }
+        if (touchEndX > touchStartX + swipeThreshold) {
+            // Swipe Right -> Previous Image
+            navigateImage(-1);
+        }
+    }
+
+    async function navigateImage(direction) {
+        const { getCase } = await import('../store.js');
+        const c = getCase(currentCaseId);
+        if (!c || !c.images) return;
+
+        const currentIndex = c.images.findIndex(i => i.id === currentImageId);
+        if (currentIndex === -1) return;
+
+        let newIndex = currentIndex + direction;
+        if (newIndex < 0) newIndex = c.images.length - 1; // Loop
+        if (newIndex >= c.images.length) newIndex = 0; // Loop
+
+        const newImg = c.images[newIndex];
+        currentImageId = newImg.id;
+
+        // Update View
+        renderContent(modal);
+        // Re-bind events because renderContent replaces DOM
+        bindEvents(modal);
+
+        // Restore Gallery Mode if active
+        if (viewerContainer.classList.contains('gallery-mode')) {
+            modal.querySelector('.viewer-container').classList.add('gallery-mode');
+            // Update button icon
+            const btn = document.getElementById('btn-gallery-mode');
+            if (btn) btn.innerHTML = '<i class="ph-fill ph-corners-in"></i>';
+        }
+    }
 }
