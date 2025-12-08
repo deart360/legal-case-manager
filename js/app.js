@@ -2,7 +2,7 @@
  * Main Application Entry Point
  */
 import { initRouter } from './router.js';
-import { renderSidebar } from './components/sidebar.js';
+import { initSidebar } from './components/sidebar.js';
 import { initResponsive } from './responsive.js';
 import { appData } from './store.js';
 import { showImageViewer } from './views/image_viewer.js';
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
         // Initialize Core layout
-        renderSidebar();
+        initSidebar();
 
         // Global Error Handler
         window.onerror = function (msg, url, lineNo, columnNo, error) {
