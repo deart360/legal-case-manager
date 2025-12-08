@@ -252,7 +252,14 @@ function bindEvents(modal) {
                 const img = c.images.find(i => i.id === currentImageId);
 
                 if (img) {
-                    const result = await AIAnalysisService.analyzeDocument({ name: img.name });
+                    // Fetch the actual image data as Blob to send to Gemini
+                    const response = await fetch(img.url);
+                    const blob = await response.blob();
+
+                    // Reconstruct a File-like object
+                    const fileToAnalyze = new File([blob], img.name, { type: blob.type });
+
+                    const result = await AIAnalysisService.analyzeDocument(fileToAnalyze);
 
                     // Update Store
                     img.aiAnalysis = result;
