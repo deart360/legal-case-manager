@@ -447,61 +447,60 @@ function showShareModal(selectedIds, c) {
             btn.disabled = false;
         }
     };
-};
 
-// Share Images Handler
-modal.querySelector('#share-imgs').onclick = async () => {
-    const btn = modal.querySelector('#share-imgs');
-    btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Preparando...';
-    btn.disabled = true;
+    // Share Images Handler
+    modal.querySelector('#share-imgs').onclick = async () => {
+        const btn = modal.querySelector('#share-imgs');
+        btn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Preparando...';
+        btn.disabled = true;
 
-    try {
-        const images = c.images.filter(img => selectedIds.includes(img.id));
+        try {
+            const images = c.images.filter(img => selectedIds.includes(img.id));
 
-        // If Web Share API is supported and we have 1 image (or multiple if supported)
-        if (navigator.share && navigator.canShare) {
-            // Try to share as files
-            const filesArray = [];
+            // If Web Share API is supported and we have 1 image (or multiple if supported)
+            if (navigator.share && navigator.canShare) {
+                // Try to share as files
+                const filesArray = [];
+                for (const img of images) {
+                    const blob = await fetch(img.url, { mode: 'cors' }).then(r => r.blob());
+                    const file = new File([blob], `${img.type || 'imagen'}.jpg`, { type: blob.type });
+                    filesArray.push(file);
+                }
+
+                if (navigator.canShare({ files: filesArray })) {
+                    await navigator.share({
+                        files: filesArray,
+                        title: 'Documentos del Expediente',
+                        text: `Compartiendo ${images.length} documentos.`
+                    });
+                    close();
+                    return;
+                }
+            }
+
+            // Fallback: Download one by one (or open in new tabs)
+            // For mobile, opening in new tab is often better if share fails.
+            // But let's try to trigger download.
             for (const img of images) {
-                const blob = await fetch(img.url, { mode: 'cors' }).then(r => r.blob());
-                const file = new File([blob], `${img.type || 'imagen'}.jpg`, { type: blob.type });
-                filesArray.push(file);
+                const link = document.createElement('a');
+                link.href = img.url;
+                link.download = `${img.type || 'documento'}.jpg`;
+                link.target = '_blank'; // Fallback
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                // Small delay to prevent browser blocking multiple downloads
+                await new Promise(r => setTimeout(r, 500));
             }
+            close();
 
-            if (navigator.canShare({ files: filesArray })) {
-                await navigator.share({
-                    files: filesArray,
-                    title: 'Documentos del Expediente',
-                    text: `Compartiendo ${images.length} documentos.`
-                });
-                close();
-                return;
-            }
+        } catch (e) {
+            console.error(e);
+            alert("Error compartiendo imágenes: " + e.message);
+            btn.innerHTML = originalContent; // This variable might not be in scope, fix below
+            btn.disabled = false;
         }
-
-        // Fallback: Download one by one (or open in new tabs)
-        // For mobile, opening in new tab is often better if share fails.
-        // But let's try to trigger download.
-        for (const img of images) {
-            const link = document.createElement('a');
-            link.href = img.url;
-            link.download = `${img.type || 'documento'}.jpg`;
-            link.target = '_blank'; // Fallback
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            // Small delay to prevent browser blocking multiple downloads
-            await new Promise(r => setTimeout(r, 500));
-        }
-        close();
-
-    } catch (e) {
-        console.error(e);
-        alert("Error compartiendo imágenes: " + e.message);
-        btn.innerHTML = originalContent; // This variable might not be in scope, fix below
-        btn.disabled = false;
-    }
-};
+    };
 }
 
 // Helper to move image
