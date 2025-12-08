@@ -581,3 +581,114 @@ async function processPdfFile(caseId, file, pdfLib, onProgress) {
         throw new Error("No se pudo leer el PDF. Asegúrate de que no esté corrupto o protegido con contraseña.");
     }
 }
+
+function showDownloadModal(selectedIds, c) {
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'modal flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="modal-content glass-card p-6 w-full max-w-md animate-scale-in rounded-xl border border-white/10 shadow-xl backdrop-blur-md bg-gray-900/90">
+            <div class="modal-header mb-4 flex justify-between items-center">
+                <h3 class="h3 text-white">Descargar Documentos</h3>
+                <button class="btn-icon-sm hover:bg-white/10 rounded-full p-1 transition-colors" id="close-download"><i class="ph ph-x text-white"></i></button>
+            </div>
+            <p class="text-muted mb-6 text-sm">Elige el formato para descargar <strong>${selectedIds.length}</strong> documento(s).</p>
+            
+            <div class="flex flex-col gap-3">
+                <button class="btn-primary w-full justify-between p-4 rounded-lg flex items-center group hover:scale-[1.02] transition-all" id="download-pdf">
+                    <span class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"><i class="ph ph-file-pdf text-xl"></i></div>
+                        <div class="flex flex-col items-start">
+                            <span class="font-bold">Como PDF (Oficio)</span>
+                            <span class="text-xs text-white/70">Un solo archivo PDF</span>
+                        </div>
+                    </span>
+                    <i class="ph ph-download-simple text-xl group-hover:translate-y-1 transition-transform"></i>
+                </button>
+                
+                <button class="btn-secondary w-full justify-between p-4 rounded-lg flex items-center group hover:scale-[1.02] transition-all border border-white/10 hover:bg-white/5" id="download-imgs">
+                    <span class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center"><i class="ph ph-image text-xl text-accent"></i></div>
+                        <div class="flex flex-col items-start">
+                            <span class="font-bold text-white">Como Imágenes</span>
+                            <span class="text-xs text-muted">Archivos JPG individuales</span>
+                        </div>
+                    </span>
+                    <i class="ph ph-download-simple text-xl text-accent group-hover:translate-y-1 transition-transform"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Close Handler
+    const close = () => {
+        modal.remove();
+    };
+    modal.querySelector('#close-download').onclick = close;
+    modal.onclick = (e) => { if (e.target === modal) close(); };
+
+    // PDF Handler
+    modal.querySelector('#download-pdf').onclick = async () => {
+        const btn = modal.querySelector('#download-pdf');
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<span class="flex items-center gap-2"><i class="ph ph-spinner ph-spin"></i> Generando...</span>';
+        btn.disabled = true;
+
+        try {
+            const images = c.images.filter(img => selectedIds.includes(img.id));
+            const pdfBlob = await generateLegalPdf(images);
+            const url = URL.createObjectURL(pdfBlob);
+
+            // Trigger download
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${c.expediente.replace('/', '-')}_Documentos.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            close();
+        } catch (e) {
+            console.error(e);
+            alert("Error generando PDF: " + e.message);
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        }
+    };
+
+    // Images Handler
+    modal.querySelector('#download-imgs').onclick = async () => {
+        const btn = modal.querySelector('#download-imgs');
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<span class="flex items-center gap-2"><i class="ph ph-spinner ph-spin"></i> Preparando...</span>';
+        btn.disabled = true;
+
+        try {
+            const images = c.images.filter(img => selectedIds.includes(img.id));
+
+            for (const img of images) {
+                const fetchUrl = `${img.url}${img.url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+                const blob = await fetch(fetchUrl, { mode: 'cors', cache: 'no-store' }).then(r => r.blob());
+                const url = URL.createObjectURL(blob);
+
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `${img.type || 'imagen'}.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Small delay
+                await new Promise(r => setTimeout(r, 500));
+            }
+            close();
+
+        } catch (e) {
+            console.error(e);
+            alert("Error descargando imágenes: " + e.message);
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        }
+    };
+}
