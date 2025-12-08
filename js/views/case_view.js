@@ -61,6 +61,7 @@ export function createCaseView(caseId) {
                     <div class="flex gap-2">
                         <button class="btn-sm btn-secondary" id="btn-select-all"><i class="ph ph-check-square"></i> Todos</button>
                         <button class="btn-sm btn-secondary" id="btn-share-selection" ${selectedImages.size === 0 ? 'disabled' : ''}><i class="ph ph-share-network"></i> Compartir</button>
+                        <button class="btn-sm btn-secondary" id="btn-download-selection" ${selectedImages.size === 0 ? 'disabled' : ''}><i class="ph ph-download-simple"></i> Descargar</button>
                         <button class="btn-sm btn-danger" id="btn-delete-selection" ${selectedImages.size === 0 ? 'disabled' : ''}><i class="ph ph-trash"></i> Eliminar</button>
                     </div>
                 </div>
@@ -222,6 +223,14 @@ export function createCaseView(caseId) {
                     showShareModal(Array.from(selectedImages), c);
                 };
             }
+
+            // Download Selection
+            const btnDownload = container.querySelector('#btn-download-selection');
+            if (btnDownload) {
+                btnDownload.onclick = () => {
+                    showDownloadModal(Array.from(selectedImages), c);
+                };
+            }
         }
 
         // Upload Handlers (Only if not selection mode)
@@ -312,6 +321,9 @@ function showContextMenu(x, y, imgId, c) {
         <button class="btn-ghost w-full justify-start text-sm hover:bg-white/10 rounded-lg p-2 transition-colors text-gray-200" id="ctx-share">
             <i class="ph ph-share-network text-accent text-lg"></i> Compartir
         </button>
+        <button class="btn-ghost w-full justify-start text-sm hover:bg-white/10 rounded-lg p-2 transition-colors text-gray-200" id="ctx-download">
+            <i class="ph ph-download-simple text-accent text-lg"></i> Descargar
+        </button>
         <button class="btn-ghost w-full justify-start text-sm hover:bg-white/10 rounded-lg p-2 transition-colors text-gray-200" id="ctx-move">
             <i class="ph ph-arrows-down-up text-accent text-lg"></i> Mover
         </button>
@@ -331,6 +343,12 @@ function showContextMenu(x, y, imgId, c) {
     // Actions
     menu.querySelector('#ctx-share').onclick = () => {
         showShareModal([imgId], c);
+        menu.remove();
+    };
+
+    menu.querySelector('#ctx-download').onclick = () => {
+        // Reuse the download modal logic but for single item
+        showDownloadModal([imgId], c);
         menu.remove();
     };
 
