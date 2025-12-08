@@ -137,12 +137,12 @@ function renderFullDashboard(container) {
 
                 <!-- Promotions Widget (NEW) -->
                 <div class="card promotions-widget flex flex-col h-full" style="min-height: 300px;">
-                    <div class="card-header flex justify-between items-center shrink-0">
+                    <div class="card-header flex justify-between items-center shrink-0 cursor-pointer" onclick="window.location.hash='#promotions'">
                         <h3 class="h3"><i class="ph-fill ph-files text-accent"></i> Promociones</h3>
-                         <button class="btn-primary small" onclick="document.getElementById('promo-input-dash').click()">
+                         <button class="btn-primary small" onclick="event.stopPropagation(); document.getElementById('promo-input-dash').click()">
                             <i class="ph ph-camera"></i> Capturar
                         </button>
-                        <input type="file" id="promo-input-dash" accept="image/*" capture="environment" class="hidden">
+                        <input type="file" id="promo-input-dash" accept="image/*" class="hidden">
                     </div>
                     <div id="promotions-list" class="promo-list flex-1 overflow-y-auto mt-2">
                         <!-- Dynamic List Content -->
@@ -735,7 +735,7 @@ function bindDashboardEvents(container, events) {
 
                 const item = document.createElement('div');
                 item.className = `promo-item ${statusClass}`;
-                item.onclick = () => window.navigateTo('#promotions'); // Go to gallery on click
+                item.onclick = () => { window.location.hash = '#promotions'; }; // Go to gallery on click
 
                 item.innerHTML = `
                     <div class="promo-icon-box">
