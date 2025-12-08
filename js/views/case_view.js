@@ -79,8 +79,7 @@ export function createCaseView(caseId) {
                             <img src="${img.url}" alt="${img.type}">
                             
                             ${isSelectionMode ? `
-                            <div class="selection-overlay absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer"
-                                 onclick="event.stopPropagation(); window.toggleSelection('${img.id}')">
+                            <div class="selection-overlay absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer">
                                 <div class="checkbox ${selectedImages.has(img.id) ? 'bg-accent border-accent' : 'border-white'} w-6 h-6 rounded border-2 flex items-center justify-center transition-colors">
                                     ${selectedImages.has(img.id) ? '<i class="ph-bold ph-check text-white text-sm"></i>' : ''}
                                 </div>
@@ -147,6 +146,17 @@ export function createCaseView(caseId) {
                 }
                 render();
             };
+
+            // Bind click events to cards for selection
+            const cards = container.querySelectorAll('.doc-card');
+            cards.forEach(card => {
+                card.onclick = (e) => {
+                    e.stopPropagation();
+                    const id = card.getAttribute('data-id');
+                    if (id) window.toggleSelection(id);
+                };
+            });
+
 
             // Select All
             const btnSelectAll = container.querySelector('#btn-select-all');
