@@ -136,176 +136,165 @@ export function createCaseView(caseId) {
             };
         }
 
-        // Selection Actions
-        if (isSelectionMode) {
-            // Toggle Selection Helper
-            window.toggleSelection = (imgId) => {
-                if (selectedImages.has(imgId)) {
-                    selectedImages.delete(imgId);
+    }
+
+    // Bind events to cards (Context Menu & Interaction)
+    const cards = container.querySelectorAll('.doc-card');
+    cards.forEach(card => {
+        const id = card.getAttribute('data-id');
+
+        // Click Handler (Mode dependent)
+        card.onclick = (e) => {
+            e.stopPropagation();
+            if (isSelectionMode) {
+                if (id) window.toggleSelection(id);
+            } else {
+                window.openImage(caseId, id);
+            }
+        };
+
+        // Long Press Handler (Mobile)
+        let pressTimer;
+        const startPress = (e) => {
+            pressTimer = setTimeout(() => {
+                const x = e.touches ? e.touches[0].clientX : e.clientX;
+                const y = e.touches ? e.touches[0].clientY : e.clientY;
+                showContextMenu(x, y, id, c);
+            }, 500);
+        };
+
+        const cancelPress = () => {
+            clearTimeout(pressTimer);
+        };
+
+        // Touch Events
+        card.addEventListener('touchstart', startPress, { passive: true });
+        card.addEventListener('touchend', cancelPress);
+        card.addEventListener('touchmove', cancelPress);
+
+        // Context Menu (Desktop Right Click)
+        card.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            const x = e.clientX;
+            const y = e.clientY;
+            showContextMenu(x, y, id, c);
+        });
+    });
+
+    // Selection Specific Actions
+    if (isSelectionMode) {
+        // Select All
+        const btnSelectAll = container.querySelector('#btn-select-all');
+        if (btnSelectAll) {
+            btnSelectAll.onclick = () => {
+                if (selectedImages.size === c.images.length) {
+                    selectedImages.clear();
                 } else {
-                    selectedImages.add(imgId);
+                    c.images.forEach(img => selectedImages.add(img.id));
                 }
                 render();
             };
-
-            // Bind click events to cards for selection
-            const cards = container.querySelectorAll('.doc-card');
-            cards.forEach(card => {
-                const id = card.getAttribute('data-id');
-
-                // Click Handler
-                card.onclick = (e) => {
-                    e.stopPropagation();
-                    if (id) window.toggleSelection(id);
-                };
-
-                // Long Press Handler
-                let pressTimer;
-                const startPress = (e) => {
-                    pressTimer = setTimeout(() => {
-                        // Trigger Context Menu
-                        const rect = card.getBoundingClientRect();
-                        // Position near the center of the card or touch point
-                        const x = e.touches ? e.touches[0].clientX : e.clientX;
-                        const y = e.touches ? e.touches[0].clientY : e.clientY;
-
-                        showContextMenu(x, y, id, c);
-                    }, 500); // 500ms for long press
-                };
-
-                const cancelPress = () => {
-                    clearTimeout(pressTimer);
-                };
-
-                // Touch Events (Long Press for Mobile)
-                card.addEventListener('touchstart', startPress, { passive: true });
-                card.addEventListener('touchend', cancelPress);
-                card.addEventListener('touchmove', cancelPress);
-
-                // Mouse Events (Right Click for Desktop)
-                card.addEventListener('contextmenu', (e) => {
-                    e.preventDefault(); // Prevent default browser menu
-                    const rect = card.getBoundingClientRect();
-                    const x = e.clientX;
-                    const y = e.clientY;
-                    showContextMenu(x, y, id, c);
-                });
-            });
-
-
-            // Select All
-            const btnSelectAll = container.querySelector('#btn-select-all');
-            if (btnSelectAll) {
-                btnSelectAll.onclick = () => {
-                    if (selectedImages.size === c.images.length) {
-                        selectedImages.clear();
-                    } else {
-                        c.images.forEach(img => selectedImages.add(img.id));
-                    }
-                    render();
-                };
-            }
-
-            // Delete Selection
-            const btnDelete = container.querySelector('#btn-delete-selection');
-            if (btnDelete) {
-                btnDelete.onclick = async () => {
-                    if (confirm(`¿Estás seguro de eliminar ${selectedImages.size} documentos?`)) {
-                        await deleteImages(caseId, Array.from(selectedImages));
-                        isSelectionMode = false;
-                        selectedImages.clear();
-                        render();
-                    }
-                };
-            }
-
-            // Share Selection
-            const btnShare = container.querySelector('#btn-share-selection');
-            if (btnShare) {
-                btnShare.onclick = () => {
-                    // Show Share Modal
-                    showShareModal(Array.from(selectedImages), c);
-                };
-            }
-
-            // Download Selection
-            const btnDownload = container.querySelector('#btn-download-selection');
-            if (btnDownload) {
-                btnDownload.onclick = () => {
-                    showDownloadModal(Array.from(selectedImages), c);
-                };
-            }
         }
 
-        // Upload Handlers (Only if not selection mode)
-        if (!isSelectionMode) {
-            const triggerUpload = () => fileInput.click();
-            if (uploadBtn) uploadBtn.onclick = triggerUpload;
-            if (uploadCard) uploadCard.onclick = triggerUpload;
-
-            fileInput.onchange = async (e) => {
-                const files = Array.from(e.target.files);
-                if (files.length === 0) return;
-
-                // UI Feedback
-                const originalText = uploadBtn.innerHTML;
-                uploadBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Subiendo...';
-                uploadBtn.disabled = true;
-
-                // Show Progress Bar
-                if (progressContainer) progressContainer.classList.remove('hidden');
-
-                let newCount = 0;
-                const pdfLib = window.pdfjsLib;
-
-                for (const [index, file] of files.entries()) {
-                    try {
-                        if (files.length > 1) {
-                            progressText.textContent = `Archivo ${index + 1}/${files.length}`;
-                            progressBar.style.width = '0%';
-                        }
-
-                        const onProgress = (percent) => {
-                            if (progressBar) progressBar.style.width = `${percent}%`;
-                            if (progressText) progressText.textContent = `${Math.round(percent)}%`;
-                        };
-
-                        if (file.type === 'application/pdf') {
-                            if (!pdfLib) throw new Error("Librería PDF no cargada");
-                            progressText.textContent = "Procesando PDF...";
-                            await processPdfFile(caseId, file, pdfLib, onProgress);
-                            newCount++;
-                        } else {
-                            const result = await addImageToCase(caseId, file, onProgress);
-                            if (result) newCount++;
-                        }
-                    } catch (err) {
-                        console.error("Error en archivo " + file.name, err);
-                        alert("Error procesando " + file.name + ": " + err.message);
-                    }
+        // Delete Selection
+        const btnDelete = container.querySelector('#btn-delete-selection');
+        if (btnDelete) {
+            btnDelete.onclick = async () => {
+                if (confirm(`¿Estás seguro de eliminar ${selectedImages.size} documentos?`)) {
+                    await deleteImages(caseId, Array.from(selectedImages));
+                    isSelectionMode = false;
+                    selectedImages.clear();
+                    render();
                 }
-
-                uploadBtn.innerHTML = originalText;
-                uploadBtn.disabled = false;
-                if (progressContainer) progressContainer.classList.add('hidden');
-
-                if (newCount > 0) render();
             };
         }
-    };
 
-    // Listen for AI updates
-    const aiUpdateHandler = (e) => {
-        if (e.detail.caseId === caseId) {
-            render();
+        // Share Selection
+        const btnShare = container.querySelector('#btn-share-selection');
+        if (btnShare) {
+            btnShare.onclick = () => {
+                showShareModal(Array.from(selectedImages), c);
+            };
         }
-    };
-    window.addEventListener('case-updated', aiUpdateHandler);
 
-    // Initial render
-    render();
+        // Download Selection
+        const btnDownload = container.querySelector('#btn-download-selection');
+        if (btnDownload) {
+            btnDownload.onclick = () => {
+                showDownloadModal(Array.from(selectedImages), c);
+            };
+        }
+    }
 
-    return container;
+    // Upload Handlers (Only if not selection mode)
+    if (!isSelectionMode) {
+        const triggerUpload = () => fileInput.click();
+        if (uploadBtn) uploadBtn.onclick = triggerUpload;
+        if (uploadCard) uploadCard.onclick = triggerUpload;
+
+        fileInput.onchange = async (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+
+            // UI Feedback
+            const originalText = uploadBtn.innerHTML;
+            uploadBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Subiendo...';
+            uploadBtn.disabled = true;
+
+            // Show Progress Bar
+            if (progressContainer) progressContainer.classList.remove('hidden');
+
+            let newCount = 0;
+            const pdfLib = window.pdfjsLib;
+
+            for (const [index, file] of files.entries()) {
+                try {
+                    if (files.length > 1) {
+                        progressText.textContent = `Archivo ${index + 1}/${files.length}`;
+                        progressBar.style.width = '0%';
+                    }
+
+                    const onProgress = (percent) => {
+                        if (progressBar) progressBar.style.width = `${percent}%`;
+                        if (progressText) progressText.textContent = `${Math.round(percent)}%`;
+                    };
+
+                    if (file.type === 'application/pdf') {
+                        if (!pdfLib) throw new Error("Librería PDF no cargada");
+                        progressText.textContent = "Procesando PDF...";
+                        await processPdfFile(caseId, file, pdfLib, onProgress);
+                        newCount++;
+                    } else {
+                        const result = await addImageToCase(caseId, file, onProgress);
+                        if (result) newCount++;
+                    }
+                } catch (err) {
+                    console.error("Error en archivo " + file.name, err);
+                    alert("Error procesando " + file.name + ": " + err.message);
+                }
+            }
+
+            uploadBtn.innerHTML = originalText;
+            uploadBtn.disabled = false;
+            if (progressContainer) progressContainer.classList.add('hidden');
+
+            if (newCount > 0) render();
+        };
+    }
+};
+
+// Listen for AI updates
+const aiUpdateHandler = (e) => {
+    if (e.detail.caseId === caseId) {
+        render();
+    }
+};
+window.addEventListener('case-updated', aiUpdateHandler);
+
+// Initial render
+render();
+
+return container;
 }
 
 function showContextMenu(x, y, imgId, c) {
