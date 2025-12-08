@@ -32,8 +32,8 @@ function renderContent(modal) {
 
     modal.innerHTML = `
         <div class="viewer-container" oncontextmenu="return false;">
-            <!-- Mobile Top Bar (Overlay) -->
-            <div class="mobile-top-bar">
+            <!-- Viewer Top Bar (Overlay) -->
+            <div class="viewer-top-bar">
                  <button id="close-viewer" class="btn-icon transparent flex items-center gap-1 px-3 py-1.5 bg-black/20 rounded-full backdrop-blur-sm hover:bg-black/40 transition-colors">
                     <i class="ph-bold ph-arrow-left text-lg"></i>
                     <span class="text-sm font-medium">Atrás</span>

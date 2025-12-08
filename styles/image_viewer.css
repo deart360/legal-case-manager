@@ -19,8 +19,8 @@
     border-radius: 0;
 }
 
-/* Mobile Top Bar */
-.mobile-top-bar {
+/* Viewer Top Bar */
+.viewer-top-bar {
     position: absolute;
     top: 0;
     left: 0;
@@ -30,7 +30,8 @@
     display: flex;
     align-items: center;
     padding: 0 1rem;
-    z-index: 20;
+    z-index: 21;
+    /* Increased slightly to ensure above everything */
     gap: 1rem;
     color: white;
 }
