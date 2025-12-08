@@ -284,13 +284,13 @@ function bindEvents(modal) {
                             const item = document.createElement('div');
                             item.className = 'p-3 pl-6 border-b border-white/10 hover:bg-white/5 cursor-pointer flex flex-col gap-1';
                             item.innerHTML = `
-                                <div class="flex justify-between">
-                                    <span class="font-bold text-white text-base">${c.expediente || 'S/N'}</span>
-                                    ${c.juicio ? `<span class="text-xs text-accent/80 border border-accent/20 px-1 rounded">${c.juicio}</span>` : ''}
-                                </div>
-                                <span class="text-sm text-gray-300 font-medium">${c.actor} vs ${c.demandado}</span>
-                                <span class="text-xs text-muted truncate">${c.juzgado || 'Juzgado desconocido'}</span>
-                             `;
+                                 <div class="flex justify-between">
+                                     <span class="font-bold text-white text-base">${c.expediente || 'S/N'}</span>
+                                     ${c.juicio ? `<span class="text-xs text-accent/80 border border-accent/20 px-1 rounded">${c.juicio}</span>` : ''}
+                                 </div>
+                                 <span class="text-sm text-gray-300 font-medium">${c.actor} vs ${c.demandado}</span>
+                                 <span class="text-xs text-muted truncate">${c.juzgado || 'Juzgado desconocido'}</span>
+                              `;
                             item.onclick = async () => {
                                 if (confirm(`¿Anexar a ${c.expediente}?`)) {
                                     movePromotionToCase(currentImageId, c.id);
