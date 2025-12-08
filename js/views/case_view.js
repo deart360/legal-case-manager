@@ -76,7 +76,7 @@ export function createCaseView(caseId) {
                          data-id="${img.id}"
                          onclick="${isSelectionMode ? '' : `event.stopPropagation(); window.openImage('${caseId}', '${img.id}')`}">
                         <div class="doc-preview">
-                            <img src="${img.url}" alt="${img.type}">
+                            <img src="${img.url}" alt="${img.type}" crossorigin="anonymous">
                             
                             ${isSelectionMode ? `
                             <div class="selection-overlay absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer">
@@ -447,7 +447,8 @@ function showShareModal(selectedIds, c) {
                 // Try to share as files
                 const filesArray = [];
                 for (const img of images) {
-                    const blob = await fetch(img.url, { mode: 'cors' }).then(r => r.blob());
+                    const fetchUrl = `${img.url}${img.url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+                    const blob = await fetch(fetchUrl, { mode: 'cors', cache: 'no-store' }).then(r => r.blob());
                     const file = new File([blob], `${img.type || 'imagen'}.jpg`, { type: blob.type });
                     filesArray.push(file);
                 }

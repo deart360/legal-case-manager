@@ -17,8 +17,9 @@ export async function generateLegalPdf(images, filename = 'documento.pdf') {
         let image;
         let imgBytes;
         try {
-            // Try fetching with CORS
-            const res = await fetch(imgData.url, { mode: 'cors', cache: 'no-cache' });
+            // Try fetching with CORS and cache busting
+            const fetchUrl = `${imgData.url}${imgData.url.includes('?') ? '&' : '?'}t=${Date.now()}`;
+            const res = await fetch(fetchUrl, { mode: 'cors', cache: 'no-store' });
             if (!res.ok) throw new Error(`Failed to fetch ${imgData.url}`);
             imgBytes = await res.arrayBuffer();
         } catch (fetchErr) {
