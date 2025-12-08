@@ -301,23 +301,23 @@ function showContextMenu(x, y, imgId, c) {
     existing.forEach(el => el.remove());
 
     const menu = document.createElement('div');
-    menu.className = 'context-menu glass-card p-2 flex flex-col gap-1 animate-scale-in';
+    menu.className = 'context-menu glass-card p-2 flex flex-col gap-1 animate-scale-in rounded-xl border border-white/10 shadow-xl backdrop-blur-md bg-gray-900/80';
     menu.style.position = 'fixed';
     menu.style.left = `${x}px`;
     menu.style.top = `${y}px`;
     menu.style.zIndex = '1000';
-    menu.style.minWidth = '160px';
+    menu.style.minWidth = '180px';
 
     menu.innerHTML = `
-        <button class="btn-ghost w-full justify-start text-sm" id="ctx-share">
-            <i class="ph ph-share-network"></i> Compartir
+        <button class="btn-ghost w-full justify-start text-sm hover:bg-white/10 rounded-lg p-2 transition-colors text-gray-200" id="ctx-share">
+            <i class="ph ph-share-network text-accent text-lg"></i> Compartir
         </button>
-        <button class="btn-ghost w-full justify-start text-sm" id="ctx-move">
-            <i class="ph ph-arrows-down-up"></i> Mover
+        <button class="btn-ghost w-full justify-start text-sm hover:bg-white/10 rounded-lg p-2 transition-colors text-gray-200" id="ctx-move">
+            <i class="ph ph-arrows-down-up text-accent text-lg"></i> Mover
         </button>
-        <div class="h-px bg-white/10 my-1"></div>
-        <button class="btn-ghost w-full justify-start text-sm text-danger" id="ctx-delete">
-            <i class="ph ph-trash"></i> Eliminar
+        <div class="h-px bg-white/10 my-1 mx-2"></div>
+        <button class="btn-ghost w-full justify-start text-sm hover:bg-red-500/20 text-red-400 rounded-lg p-2 transition-colors" id="ctx-delete">
+            <i class="ph ph-trash text-lg"></i> Eliminar
         </button>
     `;
 
@@ -352,12 +352,12 @@ function showContextMenu(x, y, imgId, c) {
         // Show sub-menu or just simple Up/Down actions
         // For simplicity, let's replace the menu content with Move options
         menu.innerHTML = `
-            <div class="p-2 text-sm font-bold text-center border-b border-white/10 mb-1">Mover</div>
-            <button class="btn-ghost w-full justify-start text-sm" id="ctx-move-up">
-                <i class="ph ph-arrow-up"></i> Subir
+            <div class="p-2 text-xs font-bold text-center border-b border-white/10 mb-1 text-muted uppercase tracking-wider">Mover</div>
+            <button class="btn-ghost w-full justify-start text-sm hover:bg-white/10 rounded-lg p-2 transition-colors text-gray-200" id="ctx-move-up">
+                <i class="ph ph-arrow-up text-accent"></i> Subir
             </button>
-            <button class="btn-ghost w-full justify-start text-sm" id="ctx-move-down">
-                <i class="ph ph-arrow-down"></i> Bajar
+            <button class="btn-ghost w-full justify-start text-sm hover:bg-white/10 rounded-lg p-2 transition-colors text-gray-200" id="ctx-move-down">
+                <i class="ph ph-arrow-down text-accent"></i> Bajar
             </button>
         `;
 
@@ -375,22 +375,7 @@ function showContextMenu(x, y, imgId, c) {
     // ... (rest of function) ...
 }
 
-function showShareModal(selectedIds, c) {
-    // ... (modal creation) ...
-    // Enable the button by removing disabled attribute in HTML string
-    // ...
 
-
-    // Close on click outside
-    const closeHandler = (e) => {
-        if (!menu.contains(e.target)) {
-            menu.remove();
-            window.removeEventListener('click', closeHandler);
-        }
-    };
-    // Delay adding listener to avoid immediate close
-    setTimeout(() => window.addEventListener('click', closeHandler), 10);
-}
 
 function showShareModal(selectedIds, c) {
     // Create modal
