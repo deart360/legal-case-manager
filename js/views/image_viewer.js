@@ -9,7 +9,7 @@ let isDragging = false;
 let startX, startY, translateX = 0, translateY = 0;
 let currentKeydownHandler = null;
 
-export function showImageViewer(caseId, imgId, mode = 'case') {
+export async function showImageViewer(caseId, imgId, mode = 'case') {
     const modal = document.getElementById('image-viewer-modal');
     currentCaseId = caseId;
     currentImageId = imgId;
@@ -20,7 +20,7 @@ export function showImageViewer(caseId, imgId, mode = 'case') {
     translateX = 0;
     translateY = 0;
 
-    renderContent(modal);
+    await renderContent(modal); // Wait for DOM
     modal.classList.remove('hidden');
 
     // Bind Events
