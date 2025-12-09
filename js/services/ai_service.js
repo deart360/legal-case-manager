@@ -33,6 +33,11 @@ export const AIAnalysisService = {
             3.  **FECHAS FATALES**: Si el documento menciona una excepción a la fecha (ej. "días hábiles salvo..."), razona la implicación exacta.
             4.  **No inventes**: Si NO hay fecha de vencimiento explícita o deducible con 100% de certeza, devuelve "days": 0.
             5.  **Exhaustividad**: Revisa el pie de página y los sellos marginales.
+            6.  **INFERENCIA DE MATERIA**: Deduce la "materia" directamente del NOMBRE DEL JUZGADO.
+                *   Ej: "Juzgado Trigésimo de lo **Familiar**" -> Materia: "**Familiar**".
+                *   Ej: "Juzgado de lo **Civil**" -> Materia: "**Civil**".
+                *   Ej: "Tribunal Laboral" -> Materia: "Laboral".
+                *   Si no es obvio, busca palabras clave en el texto (ej. "divorcio" -> Familiar, "pagaré" -> Mercantil).
 
             EXTRACCIÓN (JSON STRICTO):
             Retorna UNICAMENTE un objeto JSON con:
@@ -238,7 +243,11 @@ export const AIAnalysisService = {
             1. "filingDate": La fecha exacta de presentación (formato YYYY-MM-DD). Si tiene hora, ignórala.
             2. "court": El juzgado o autoridad ante quien se presentó (ej. "Juzgado 12 Civil", "Oficialía de Partes Común").
             3. "caseNumber": El número de expediente al que va dirigido (ej. "1234/2023").
-            4. "materia": Materia del asunto (ej. "Civil", "Mercantil", "Familiar").
+            Extrae la siguiente información con la mayor precisión posible:
+            1. "filingDate": La fecha exacta de presentación (formato YYYY-MM-DD). Si tiene hora, ignórala.
+            2. "court": El juzgado o autoridad ante quien se presentó (ej. "Juzgado 12 Civil", "Oficialía de Partes Común").
+            3. "caseNumber": El número de expediente al que va dirigido (ej. "1234/2023").
+            4. "materia": Materia del asunto. **IMPORTANTE**: Deducirla del NOMBRE DEL JUZGADO (ej. "Juzgado... Familiar" -> "Familiar", "Civil" -> "Civil").
             5. "concept": Breve descripción del tipo de escrito (ej. "Contestación de Demanda", "Solicitud de Copias").
 
             Responde ÚNICAMENTE con un objeto JSON válido.
