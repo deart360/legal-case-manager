@@ -24,8 +24,8 @@
 .viewer-container.ui-hidden .mobile-bottom-bar,
 .viewer-container.ui-hidden .floating-close-btn,
 .viewer-container.ui-hidden .desktop-toolbar {
-    opacity: 0;
-    pointer-events: none;
+    opacity: 0 !important;
+    pointer-events: none !important;
     transform: translateY(-10px);
     /* Top bar goes up */
 }

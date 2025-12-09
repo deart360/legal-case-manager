@@ -227,8 +227,20 @@ async function renderContent(modal) {
 
     if (!img) return;
 
+    const toggleImmersive = (e) => {
+        // Ignore clicks on buttons, inputs, or the bottom sheet itself
+        if (e.target.closest('button') || e.target.closest('.action-btn') || e.target.closest('.bottom-sheet') || e.target.closest('.viewer-top-bar') || e.target.closest('.mobile-bottom-bar')) {
+            return;
+        }
+        // Toggle
+        const container = document.querySelector('.viewer-container');
+        if (container) container.classList.toggle('ui-hidden');
+    };
+
+    modal.onclick = toggleImmersive;
+
     modal.innerHTML = `
-            <div class="viewer-container" oncontextmenu="return false;" onclick="this.classList.toggle('ui-hidden')">
+            <div class="viewer-container" oncontextmenu="return false;">
                 <!-- Floating Fallback Close (For Desktop issues) -->
                 <div class="floating-close-btn" onclick="event.stopPropagation(); document.getElementById('image-viewer-modal').classList.add('hidden')">
                     <i class="ph-bold ph-arrow-left text-white"></i>
@@ -653,13 +665,6 @@ function bindEvents(modal) {
         if (Math.abs(diff) > swipeThreshold) {
             if (diff > 0) navigateImage(-1); // Right swipe -> Prev
             else navigateImage(1);  // Left swipe -> Next
-        } else {
-            // Tap (Insigifnicant movement) -> Toggle Immersive Mode
-            // Only if not zoomed in (to avoid toggling while trying to pan)
-            if (zoomLevel === 1) {
-                const container = document.querySelector('.viewer-container');
-                if (container) container.classList.toggle('ui-hidden');
-            }
         }
     }
 
