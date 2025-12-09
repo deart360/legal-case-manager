@@ -17,7 +17,7 @@ export function createPromotionsView() {
             <button class="btn-primary" onclick="document.getElementById('promo-input-view').click()">
                 <i class="ph ph-camera"></i> Nueva
             </button>
-            <input type="file" id="promo-input-view" accept="image/*" capture="environment" class="hidden">
+            <input type="file" id="promo-input-view" accept="image/*" class="hidden">
         </div>
     `;
 
@@ -25,16 +25,27 @@ export function createPromotionsView() {
         <div class="documents-grid" id="promo-grid">
             ${promotions.map(p => `
                 <div class="doc-card relative" onclick="window.openPromotion('${p.id}')">
-                    <div class="doc-preview">
+                    <div class="doc-preview group">
                         <img src="${p.url}" alt="Promoción" crossorigin="anonymous">
-                        <div class="doc-overlay">
-                            <i class="ph ph-magnifying-glass-plus"></i>
+                        <div class="doc-overlay flex flex-col items-center justify-center gap-4 transition-opacity opacity-0 group-hover:opacity-100 bg-black/40 backdrop-blur-[2px]">
+                            <button class="btn-icon-glass text-white scale-125" title="Ver Detalles">
+                                <i class="ph ph-magnifying-glass-plus"></i>
+                            </button>
+                             <button class="btn-icon-glass text-red-400 hover:text-red-300 hover:bg-red-900/40" onclick="event.stopPropagation(); window.deletePromoWrapper('${p.id}')" title="Eliminar">
+                                <i class="ph ph-trash"></i>
+                            </button>
                         </div>
                         
                         <!-- Status Badge -->
                         ${p.status === 'analyzing' ? `
                         <div class="absolute top-2 right-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-xs text-white flex items-center gap-1">
                             <i class="ph ph-spinner animate-spin"></i> Analizando...
+                        </div>
+                        ` : ''}
+                        
+                         ${p.status === 'error' ? `
+                        <div class="absolute top-2 right-2 bg-red-900/80 backdrop-blur px-2 py-1 rounded text-xs text-red-200 flex items-center gap-1 cursor-pointer" onclick="event.stopPropagation(); window.retryPromotion('${p.id}')">
+                            <i class="ph ph-arrow-clockwise"></i> Error (Reintentar)
                         </div>
                         ` : ''}
 
