@@ -215,8 +215,8 @@ async function renderContent(modal) {
     if (!img) return;
 
     modal.innerHTML = `
-                            < div class= "viewer-container" oncontextmenu = "return false;" >
-                < !--Floating Fallback Close(For Desktop issues)-- >
+            <div class="viewer-container" oncontextmenu="return false;">
+                <!-- Floating Fallback Close (For Desktop issues) -->
                 <div class="floating-close-btn" onclick="document.getElementById('image-viewer-modal').classList.add('hidden')">
                     <i class="ph-bold ph-arrow-left text-white"></i>
                 </div>
@@ -227,14 +227,14 @@ async function renderContent(modal) {
                     <div class="spacer"></div>
                 </div>
 
-            <!--Main Image Area-- >
+            <!-- Main Image Area -->
             <div class="viewer-main">
                 <div class="image-wrapper" id="image-wrapper">
                     <img src="${img.url}" id="active-image" alt="Documento" draggable="false">
                 </div>
             </div>
 
-            <!--Floating Bottom Bar(Context Aware)-- >
+            <!-- Floating Bottom Bar (Context Aware) -->
             <div class="mobile-bottom-bar" onclick="event.stopPropagation()">
                 ${currentMode === 'promotion' ? `
                     <!-- PROMOTION MODE ACTIONS -->
@@ -286,7 +286,7 @@ async function renderContent(modal) {
                 `}
             </div>
 
-            <!--Bottom Sheet(AI Info) - For BOTH modes-- >
+            <!-- Bottom Sheet (AI Info) - For BOTH modes -->
             <div class="bottom-sheet" id="ai-bottom-sheet">
                 <div class="sheet-drag-handle" onclick="document.getElementById('ai-bottom-sheet').classList.remove('active')"></div>
                 <div class="sheet-content">
