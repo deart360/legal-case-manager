@@ -195,6 +195,13 @@ export const addPromotion = async (imageFile) => {
     appData.promotions.unshift(newPromo); // Add to top
     saveToLocal(); // Save initial state
 
+    // Firebase Sync
+    if (db) {
+        db.collection('promotions').doc(newId).set(newPromo).catch(err => {
+            console.error("Error syncing promotion to cloud:", err);
+        });
+    }
+
     // Dispatch update event immediately
     window.dispatchEvent(new Event('promotions-updated'));
 
@@ -320,6 +327,12 @@ export const retryPromotionAnalysis = async (promoId) => {
 export const deletePromotion = (promoId) => {
     appData.promotions = appData.promotions.filter(p => p.id !== promoId);
     saveToLocal();
+
+    // Firebase Sync
+    if (db) {
+        db.collection('promotions').doc(promoId).delete().catch(err => console.error("Error deleting from cloud:", err));
+    }
+
     window.dispatchEvent(new Event('promotions-updated'));
 };
 
@@ -351,6 +364,11 @@ export const movePromotionToCase = async (promoId, targetCaseId) => {
         const promoIndex = appData.promotions.findIndex(p => p.id === promoId);
         if (promoIndex !== -1) {
             appData.promotions.splice(promoIndex, 1);
+
+            // Firebase Delete (Sync)
+            if (db) {
+                db.collection('promotions').doc(promoId).delete().catch(e => console.error("Error removing moved promo from cloud:", e));
+            }
         }
 
         saveToLocal();
@@ -397,6 +415,22 @@ async function syncFromFirebase() {
             appData.dashboardTasks = [];
             tasksSnapshot.forEach(doc => {
                 appData.dashboardTasks.push(doc.data());
+            });
+        }
+
+        // 3. Listen to Promotions (Real-time)
+        if (db) {
+            db.collection('promotions').onSnapshot(snapshot => {
+                const remotePromos = [];
+                snapshot.forEach(doc => remotePromos.push(doc.data()));
+
+                // Update local state
+                remotePromos.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+
+                appData.promotions = remotePromos;
+                saveToLocal();
+                window.dispatchEvent(new Event('promotions-updated'));
+                console.log("Promociones sincronizadas en tiempo real.");
             });
         }
 
@@ -701,7 +735,13 @@ export async function updatePromotion(promoId, updates) {
 
     Object.assign(promo, updates);
     saveToLocal();
-    return true; // Simple local update (persistence logic for promotions array TBD if real backend)
+
+    // Firebase Sync
+    if (db) {
+        db.collection('promotions').doc(promoId).update(updates).catch(e => console.error("Error updating promo cloud:", e));
+    }
+
+    return true;
 }
 
 export async function addImageToCase(caseId, fileObj, onProgress) {
