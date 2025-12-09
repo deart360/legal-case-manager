@@ -228,9 +228,9 @@ async function renderContent(modal) {
     if (!img) return;
 
     modal.innerHTML = `
-            <div class="viewer-container" oncontextmenu="return false;">
+            <div class="viewer-container" oncontextmenu="return false;" onclick="this.classList.toggle('ui-hidden')">
                 <!-- Floating Fallback Close (For Desktop issues) -->
-                <div class="floating-close-btn" onclick="document.getElementById('image-viewer-modal').classList.add('hidden')">
+                <div class="floating-close-btn" onclick="event.stopPropagation(); document.getElementById('image-viewer-modal').classList.add('hidden')">
                     <i class="ph-bold ph-arrow-left text-white"></i>
                 </div>
                 
@@ -240,8 +240,8 @@ async function renderContent(modal) {
                     <div class="spacer"></div>
                 </div>
 
-            <!-- Main Image Area (Tap to Toggle UI) -->
-            <div class="viewer-main" onclick="this.closest('.viewer-container').classList.toggle('ui-hidden')">
+            <!-- Main Image Area -->
+            <div class="viewer-main">
                 <div class="image-wrapper" id="image-wrapper">
                     <img src="${img.url}" id="active-image" alt="Documento" draggable="false">
                 </div>
@@ -300,7 +300,7 @@ async function renderContent(modal) {
             </div>
 
             <!-- Bottom Sheet (AI Info) - For BOTH modes -->
-            <div class="bottom-sheet" id="ai-bottom-sheet">
+            <div class="bottom-sheet" id="ai-bottom-sheet" onclick="event.stopPropagation()">
                 <div class="sheet-drag-handle" onclick="document.getElementById('ai-bottom-sheet').classList.remove('active')"></div>
                 <div class="sheet-content">
                     <div class="sidebar-section">
