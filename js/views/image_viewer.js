@@ -234,14 +234,14 @@ async function renderContent(modal) {
                     <i class="ph-bold ph-arrow-left text-white"></i>
                 </div>
                 
-                <div class="viewer-top-bar">
+                <div class="viewer-top-bar" onclick="event.stopPropagation()">
                     <button id="close-viewer" class="btn-icon transparent"><i class="ph-bold ph-arrow-left"></i></button>
                     <span class="file-title truncate px-2 text-sm md:text-base">${img.name || 'Documento'}</span>
                     <div class="spacer"></div>
                 </div>
 
-            <!-- Main Image Area -->
-            <div class="viewer-main">
+            <!-- Main Image Area (Tap to Toggle UI) -->
+            <div class="viewer-main" onclick="this.closest('.viewer-container').classList.toggle('ui-hidden')">
                 <div class="image-wrapper" id="image-wrapper">
                     <img src="${img.url}" id="active-image" alt="Documento" draggable="false">
                 </div>

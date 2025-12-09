@@ -19,6 +19,29 @@
     border-radius: 0;
 }
 
+/* UI Hidden State (Immersive Mode) */
+.viewer-container.ui-hidden .viewer-top-bar,
+.viewer-container.ui-hidden .mobile-bottom-bar,
+.viewer-container.ui-hidden .floating-close-btn,
+.viewer-container.ui-hidden .desktop-toolbar {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-10px);
+    /* Top bar goes up */
+}
+
+.viewer-container.ui-hidden .mobile-bottom-bar {
+    transform: translateX(-50%) translateY(20px);
+    /* Bottom bar goes down */
+}
+
+.viewer-top-bar,
+.mobile-bottom-bar,
+.floating-close-btn,
+.desktop-toolbar {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
 /* Viewer Top Bar */
 .viewer-top-bar {
     position: absolute;
