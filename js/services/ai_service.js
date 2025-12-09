@@ -3,9 +3,9 @@
  * Connects to Google's Gemini 1.5 Pro API for advanced legal document analysis.
  */
 
-const API_KEY_STORAGE = 'gemini_api_key';
+const API_KEY_STORAGE = 'gemini_api_key_v2';
 // Security Note: In production, do not hardcode keys in frontend code.
-const EMBEDDED_KEY = 'AIzaSyBHXYNdA4c02DDCOjOZGPII1-0CLdRQCQQ'; // Validated for Gemini 3.0 Pro
+const EMBEDDED_KEY = 'AIzaSyA8TXG1Tw2-LNRCxSC5XotptlgGYOTmJzM'; // Updated to Level 1 Key
 
 export const AIAnalysisService = {
 

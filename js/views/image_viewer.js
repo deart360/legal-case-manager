@@ -20,6 +20,81 @@ export async function showImageViewer(caseId, imgId, mode = 'case') {
     translateX = 0;
     translateY = 0;
 
+    // Define Global Action Handler safely
+    window.handleViewerAction = async (action) => {
+        console.log("Viewer Action Triggered:", action);
+
+        // Dynamic imports for logic
+        const { getPromotions, getCase, deletePromotion } = await import('../store.js');
+
+        let img;
+        if (currentMode === 'promotion') {
+            img = getPromotions().find(p => p.id === currentImageId);
+        } else {
+            const c = getCase(currentCaseId);
+            img = c?.images.find(i => i.id === currentImageId);
+        }
+
+        if (!img) return;
+
+        switch (action) {
+            case 'annex': // Promotion: Annex
+                if (currentMode === 'promotion') {
+                    // Show Overlay logic (global pending state)
+                    window.pendingPromoAnnexId = currentImageId;
+                    const overlay = document.getElementById('case-selector-overlay');
+                    if (overlay) overlay.classList.remove('hidden');
+                    else alert("Error: Selector de expedientes no encontrado.");
+                }
+                break;
+
+            case 'date':
+                const date = img.aiAnalysis?.filingDate || img.date || 'No detectada';
+                alert(`📅 Fecha: ${date}`);
+                break;
+
+            case 'answer':
+                // Logic to mark as answered
+                if (confirm("¿Marcar como contestado? Se borrará de pendientes.")) {
+                    deletePromotion(currentImageId);
+                    document.getElementById('image-viewer-modal').classList.add('hidden');
+                }
+                break;
+
+            case 'share':
+                if (navigator.share) {
+                    navigator.share({ title: img.name, text: 'Documento Legal', url: img.url }).catch(console.error);
+                } else {
+                    alert("Tu navegador no soporta compartir nativo.");
+                }
+                break;
+
+            case 'download':
+                const link = document.createElement('a');
+                link.href = img.url;
+                link.download = img.name || 'documento.jpg';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                break;
+
+            case 'info':
+                const sheet = document.getElementById('ai-bottom-sheet');
+                if (sheet) sheet.classList.toggle('active');
+                break;
+
+            case 'delete':
+                if (confirm('¿Seguro que deseas eliminar este documento? Esta acción no se puede deshacer.')) {
+                    if (currentMode === 'promotion') {
+                        deletePromotion(currentImageId);
+                    }
+                    // Close viewer
+                    document.getElementById('image-viewer-modal').classList.add('hidden');
+                }
+                break;
+        }
+    };
+
     await renderContent(modal); // Wait for DOM
     modal.classList.remove('hidden');
 
@@ -62,43 +137,49 @@ async function renderContent(modal) {
             </div>
 
             <!-- Floating Bottom Bar (Context Aware) -->
-            <div class="mobile-bottom-bar">
+            <div class="mobile-bottom-bar" onclick="event.stopPropagation()">
                 ${currentMode === 'promotion' ? `
                     <!-- PROMOTION MODE ACTIONS -->
-                    <button id="btn-promo-date" class="action-btn">
+                    <button class="action-btn" onclick="window.handleViewerAction('date')">
                         <i class="ph ph-calendar-blank"></i>
                         <span>Ver Fecha</span>
                     </button>
                     <div class="divider-v"></div>
-                    <button id="btn-promo-annex" class="action-btn">
+                    <button class="action-btn" onclick="window.handleViewerAction('annex')">
                         <i class="ph ph-folder-plus text-accent"></i>
                         <span>Anexar</span>
                     </button>
                     <div class="divider-v"></div>
-                    <button id="btn-promo-answered" class="action-btn">
+                    <button class="action-btn" onclick="window.handleViewerAction('answer')">
                         <i class="ph ph-check-circle text-green-500"></i>
                         <span>Contestado</span>
                     </button>
                 ` : `
                     <!-- STANDARD CASE MODE ACTIONS -->
-                    <button id="btn-share" class="action-btn">
+                    <!-- STANDARD CASE MODE ACTIONS -->
+                    <button class="action-btn" onclick="window.handleViewerAction('share')">
                         <i class="ph ph-share-network"></i>
                         <span>Compartir</span>
                     </button>
                     <div class="divider-v"></div>
-                    <button id="btn-download" class="action-btn">
+                    <button class="action-btn" onclick="window.handleViewerAction('download')">
                         <i class="ph ph-download-simple"></i>
                         <span>Descargar</span>
                     </button>
                     <div class="divider-v"></div>
-                    <button id="btn-date" class="action-btn">
+                    <button class="action-btn" onclick="window.handleViewerAction('date')">
                         <i class="ph ph-calendar-blank"></i>
                         <span>Fecha</span>
                     </button>
                     <div class="divider-v"></div>
-                    <button id="btn-info" class="action-btn">
+                    <button class="action-btn" onclick="window.handleViewerAction('info')">
                         <i class="ph ph-info"></i>
-                        <span>Detalles IA</span>
+                        <span>Info</span>
+                    </button>
+                    <div class="divider-v"></div>
+                    <button class="action-btn" onclick="window.handleViewerAction('delete')">
+                        <i class="ph ph-trash text-red-400"></i>
+                        <span>Borrar</span>
                     </button>
                 `}
             </div>
