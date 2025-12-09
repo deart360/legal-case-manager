@@ -245,9 +245,25 @@ async function renderContent(modal) {
                         </div>
                         <div class="ai-card compact">
                             <h4 class="text-accent-gold font-bold text-sm mb-1">${img.aiAnalysis?.concept || img.type || "Documento"}</h4>
-                            <p class="text-sm font-medium text-white">${img.aiAnalysis?.summary || img.summary || "Sin análisis previo."}</p>
+                            <p class="text-sm font-medium text-white mb-3">${img.aiAnalysis?.summary || img.summary || "Sin análisis previo."}</p>
                             
-                            <div class="grid grid-cols-2 gap-2 mt-4">
+                            <!-- Context Data -->
+                            <div class="space-y-2 mb-3 bg-white/5 p-2 rounded-lg border border-white/10">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-muted"><i class="ph-bold ph-bank"></i> Juzgado</span>
+                                    <span class="text-white font-medium text-right max-w-[60%] truncate">${img.aiAnalysis?.court || "No identificado"}</span>
+                                </div>
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-muted"><i class="ph-bold ph-folder"></i> Exp.</span>
+                                    <span class="text-white font-medium text-right">${img.aiAnalysis?.caseNumber || "No identificado"}</span>
+                                </div>
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-muted"><i class="ph-bold ph-scales"></i> Materia</span>
+                                    <span class="text-white font-medium text-right">${img.aiAnalysis?.materia || "No identificada"}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-2 mt-2">
                                 <div class="detail-box">
                                     <span class="text-xs text-muted">Fecha Presentación</span>
                                     <span class="font-mono text-white">${img.aiAnalysis?.filingDate || img.date || "N/A"}</span>

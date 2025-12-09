@@ -40,11 +40,14 @@ export const AIAnalysisService = {
             2. "type": Tipo de actuación preciso (ej. "Auto de Radicación", "Sentencia Interlocutoria").
             3. "days": Entero. Días hábiles para el término. 0 si no aplica.
             4. "deadline": String. Fecha exacta calculada o "N/A".
-            5. "legalBasis": Fundamento legal citado o aplicable (ej. "Art. 137 CPCDF").
-            6. "nextAction": Acción procesal recomendada.
+            5. "court": El juzgado o autoridad emisora.
+            6. "caseNumber": El expediente citado.
+            7. "materia": La materia (Civil, Penal, etc.).
+            8. "legalBasis": Fundamento legal citado o aplicable.
+            9. "nextAction": Acción procesal recomendada.
 
             JSON:
-            { "summary": "...", "type": "...", "days": 0, "deadline": "...", "legalBasis": "...", "nextAction": "..." }
+            { "summary": "...", "type": "...", "days": 0, "deadline": "...", "court": "...", "caseNumber": "...", "materia": "...", "legalBasis": "...", "nextAction": "..." }
         `;
 
         try {
@@ -235,14 +238,16 @@ export const AIAnalysisService = {
             1. "filingDate": La fecha exacta de presentación (formato YYYY-MM-DD). Si tiene hora, ignórala.
             2. "court": El juzgado o autoridad ante quien se presentó (ej. "Juzgado 12 Civil", "Oficialía de Partes Común").
             3. "caseNumber": El número de expediente al que va dirigido (ej. "1234/2023").
-            4. "concept": Breve descripción del tipo de escrito (ej. "Contestación de Demanda", "Solicitud de Copias", "Ofrecimiento de Pruebas").
+            4. "materia": Materia del asunto (ej. "Civil", "Mercantil", "Familiar").
+            5. "concept": Breve descripción del tipo de escrito (ej. "Contestación de Demanda", "Solicitud de Copias").
 
             Responde ÚNICAMENTE con un objeto JSON válido.
             Formato:
             {
-                "filingDate": "YYYY-MM-DD", // null si no es legible
-                "court": "Texto", // "Desconocido" si no es legible
-                "caseNumber": "Texto", // "Desconocido" si no es legible
+                "filingDate": "YYYY-MM-DD",
+                "court": "Texto",
+                "caseNumber": "Texto",
+                "materia": "Texto",
                 "concept": "Texto"
             }
             `;
