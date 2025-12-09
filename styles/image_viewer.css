@@ -204,10 +204,28 @@
         height: 85vh;
         border-radius: 16px;
         margin: auto;
+        /* Ensure specific overrides for desktop doesn't hide bars */
+    }
+
+    .viewer-top-bar {
+        border-radius: 16px 16px 0 0;
+        /* Match container */
+        z-index: 100 !important;
     }
 
     .mobile-bottom-bar {
-        /* On desktop, maybe move tools elsewhere or keep them floating */
+        /* Align properly inside the container on desktop */
         bottom: 2rem;
+        z-index: 100 !important;
+        /* Force on top */
+        /* Ensure it isn't too wide */
+        max-width: 80%;
     }
+}
+
+/* Global Fixes */
+.action-btn,
+.btn-icon {
+    pointer-events: auto !important;
+    cursor: pointer !important;
 }

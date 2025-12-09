@@ -284,12 +284,11 @@ export const AIAnalysisService = {
                     // I must force _resolveModel to pick 1.5-pro. 
                     // Hack: Override the cache temporarily?
                     const previousCache = window._geminiModelCache;
-                    window._geminiModelCache = 'models/gemini-1.5-pro';
+                    window._geminiModelCache = 'models/gemini-1.5-flash';
 
                     try {
                         const result = await this._callGemini(prompt, { mime_type: mimeType, data: base64Data }, true, onProgress);
-                        window._geminiModelCache = previousCache; // Restore for next time (or keep fallback?) -> Keep fallback to avoid loops.
-                        // Actually, if 1.5 worked, let's keep it.
+                        window._geminiModelCache = previousCache;
                         return result;
                     } catch (innerErr) {
                         window._geminiModelCache = previousCache;
@@ -303,6 +302,7 @@ export const AIAnalysisService = {
 
             clearInterval(interval);
             console.error("AI Promotion Analysis Error (Final):", error);
+            alert(`Error Final de Análisis (IA): ${error.message}\nVerifica conexión y API Key.`);
             throw error;
         }
     },
