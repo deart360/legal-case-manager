@@ -1,4 +1,4 @@
-import { appData, getAllEvents } from '../store.js';
+import { appData, getAllEvents, getPromotions } from '../store.js';
 import { AuthService } from '../services/auth.js';
 
 let currentDate = new Date();
@@ -332,6 +332,22 @@ function renderFullDashboard(container) {
                 </div>
             </div>
         </div>
+
+        <!-- Promotions Modal (Expanded) -->
+        <div id="promotions-modal" class="modal hidden">
+            <div class="modal-content glass-card p-6 animate-scale-in" style="max-width: 600px; width: 95%; max-height: 85vh; display: flex; flex-direction: column;">
+                <div class="modal-header mb-4 flex justify-between items-center border-b border-glass pb-4">
+                    <div>
+                        <h3 class="h3 text-accent"><i class="ph-fill ph-files"></i> Promociones Recientes</h3>
+                        <p class="text-sm text-muted">Bitácora de documentos presentados</p>
+                    </div>
+                    <button class="btn-icon-sm" id="close-promo-modal"><i class="ph ph-x"></i></button>
+                </div>
+                <div class="modal-body flex-1 overflow-y-auto custom-scrollbar" id="modal-promotions-list">
+                    <!-- Dynamic Content -->
+                </div>
+            </div>
+        </div>
     `;
 
     container.innerHTML = header + dashboardHtml;
@@ -340,6 +356,7 @@ function renderFullDashboard(container) {
     updateTimeline(container, events);
     // updateCalendar(container, events); // Removed
     updateUrgentTerms(container, events);
+    updatePromotionsWidget(container); // New logic
 
     // Bind Events
     bindDashboardEvents(container, events);
@@ -363,6 +380,26 @@ function renderFullDashboard(container) {
 
         termsModal.onclick = (e) => {
             if (e.target === termsModal) termsModal.classList.add('hidden');
+        };
+    }
+
+    // Bind Promotions Modal Events
+    const promoHeader = container.querySelector('.promotions-widget .card-header');
+    const promoModal = container.querySelector('#promotions-modal');
+    const closePromoBtn = container.querySelector('#close-promo-modal');
+
+    if (promoHeader && promoModal) {
+        promoHeader.style.cursor = 'pointer';
+        promoHeader.title = 'Clic para expandir';
+        promoHeader.onclick = () => {
+            // Re-render to ensure freshness
+            updatePromotionsWidget(container);
+            promoModal.classList.remove('hidden');
+        };
+
+        if (closePromoBtn) closePromoBtn.onclick = () => promoModal.classList.add('hidden');
+        promoModal.onclick = (e) => {
+            if (e.target === promoModal) promoModal.classList.add('hidden');
         };
     }
 }
@@ -930,4 +967,74 @@ function generateReport(container, type) {
             if (containerInner) containerInner.innerHTML = `<div class="p-8 text-center"><h3 class="text-danger">Error generando reporte</h3><p>${e.message}</p></div>`;
         }
     });
+}
+
+function updatePromotionsWidget(container) {
+    const listWidget = container.querySelector('#promotions-list');
+    const listModal = container.querySelector('#modal-promotions-list');
+
+    // Get Promotions (sorted by date desc)
+    const promotions = getPromotions().sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // Render Widget (Compact - Top 5)
+    renderPromotionsList(listWidget, promotions.slice(0, 5), false);
+
+    // Render Modal (Full)
+    if (listModal) {
+        renderPromotionsList(listModal, promotions, true);
+    }
+}
+
+function renderPromotionsList(container, promotions, isModal) {
+    if (!container) return;
+
+    if (promotions.length === 0) {
+        container.innerHTML = `<div class="text-muted text-sm text-center p-4">No hay promociones registradas.</div>`;
+        return;
+    }
+
+    container.innerHTML = promotions.map(p => {
+        // Date Logic
+        const pDate = new Date(p.date + 'T00:00:00');
+        const day = pDate.getDate();
+        const month = pDate.toLocaleDateString('es-MX', { month: 'short' });
+
+        // Right side content
+        let rightSide = '';
+        if (isModal) {
+            // EXPANDED: "Fecha presentada"
+            // Ensure filingDate is used if available from AI, else use upload date
+            const displayDate = p.aiAnalysis?.filingDate || `${day}/${month}`;
+            rightSide = `
+                <div class="text-right">
+                    <div class="text-xs text-muted mb-1">Presentado</div>
+                    <div class="font-bold text-accent font-mono">${displayDate}</div>
+                </div>
+            `;
+        } else {
+            // COMPACT: Relative time (e.g. "2d ago" or just date)
+            // Just use simple date for now
+            rightSide = `<span class="text-xs text-muted">${day} ${month}</span>`;
+        }
+
+        // Title/Subtitle
+        const title = p.name || 'Documento sin nombre';
+        const sub = p.aiAnalysis?.court || 'Pendiente de anexo';
+
+        return `
+            <div class="flex items-center justify-between p-3 mb-2 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer"
+                 onclick="window.showImageViewer(null, '${p.id}', 'promotion')">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                        <i class="ph-fill ph-file-text"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h4 class="font-medium text-sm text-white truncate max-w-[150px] md:max-w-[200px]">${title}</h4>
+                        <p class="text-xs text-muted truncate max-w-[150px] md:max-w-[200px]">${sub}</p>
+                    </div>
+                </div>
+                ${rightSide}
+            </div>
+        `;
+    }).join('');
 }
