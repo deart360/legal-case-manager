@@ -745,8 +745,11 @@ function bindDashboardEvents(container, events) {
                 const item = document.createElement('div');
                 item.className = `promo-item ${statusClass}`;
 
-                // Main click navigates
-                item.onclick = () => { window.location.hash = '#promotions'; };
+                // Main click opens viewer directly (User Request)
+                item.onclick = async () => {
+                    const { showImageViewer } = await import('./image_viewer.js');
+                    showImageViewer(null, p.id, 'promotion');
+                };
 
                 let badgeHtml = `<span class="promo-status-badge">${statusText}</span>`;
 

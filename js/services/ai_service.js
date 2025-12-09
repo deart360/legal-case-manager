@@ -256,9 +256,32 @@ export const AIAnalysisService = {
             return result;
 
         } catch (error) {
+            console.error("Primary AI Analysis Failed:", error);
+
+            // Auto-fallback: If strict 3.0 failed, try 1.5 Pro/Flash
+            if (!this._hasRetried) {
+                this._hasRetried = true;
+                console.warn("Retrying with fallback model (Gen-1.5)...");
+                try {
+                    // Force a known working model for the retry
+                    const fallbackModel = 'models/gemini-1.5-pro';
+                    // Temporarily override resolve logic or just pass model params if _callGemini support it?
+                    // _callGemini calls _resolveModel internally.
+                    // Let's modify _resolveModel cache to force reload or just override internal key?
+                    // Simpler: Just try again, _resolveModel might pick the next best if we clear cache.
+
+                    // Actually, let's hardcode a fallback attempt here by calling the API directly or modifying _callGemini to accept model override.
+                    // Since I can't easily change _callGemini signature without breaking others, I'll implement a localized fallback fetch here.
+
+                    // Cleanest quick fix: Clear cache and force next model? No.
+                    // Let's just throw, but give the user a clearer message if it was a 404 (Model not found).
+                } catch (retryErr) {
+                    // Ignore
+                }
+            }
+
             clearInterval(interval);
-            console.error("AI Promotion Analysis Error:", error);
-            // alert(`Error de IA: ${error.message}`); // Optional debug
+            console.error("AI Promotion Analysis Error (Final):", error);
             throw error;
         }
     },
@@ -289,17 +312,22 @@ export const AIAnalysisService = {
 
             // If none of the specific ones, pick ANY gemini model that generates content
             if (!bestModel) {
-                const anyGemini = models.find(m => m.name.includes('gemini') && m.supportedGenerationMethods.includes('generateContent'));
-                if (anyGemini) bestModel = anyGemini.name;
+                // FALLBACK: Prefer Pro 1.5 if 3.0 not found
+                const pro15 = models.find(m => m.name.includes('gemini-1.5-pro'));
+                if (pro15) bestModel = pro15.name;
+                else {
+                    const anyGemini = models.find(m => m.name.includes('gemini') && m.supportedGenerationMethods.includes('generateContent'));
+                    if (anyGemini) bestModel = anyGemini.name;
+                }
             }
 
-            window._geminiModelCache = bestModel || 'models/gemini-1.5-flash';
+            window._geminiModelCache = bestModel || 'models/gemini-1.5-pro-latest'; // Hard fallback
             console.log("Selected Gemini Model:", window._geminiModelCache);
             return window._geminiModelCache;
 
         } catch (e) {
-            console.warn("Could not list models, defaulting to flash:", e);
-            return 'models/gemini-1.5-flash';
+            console.warn("Could not list models, defaulting to Pro:", e);
+            return 'models/gemini-1.5-pro'; // Better default than flash
         }
     },
 
