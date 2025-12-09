@@ -3,9 +3,9 @@
  * Connects to Google's Gemini 1.5 Pro API for advanced legal document analysis.
  */
 
-const API_KEY_STORAGE = 'gemini_api_key_v2';
-// Security Note: In production, do not hardcode keys in frontend code.
-const EMBEDDED_KEY = 'AIzaSyA8TXG1Tw2-LNRCxSC5XotptlgGYOTmJzM'; // Updated to Level 1 Key
+const API_KEY_STORAGE = 'gemini_api_key_v3';
+// Security Note: Key is now loaded from config.js (gitignored)
+let EMBEDDED_KEY = ''; // Will be loaded dynamically
 
 export const AIAnalysisService = {
 
@@ -130,10 +130,43 @@ export const AIAnalysisService = {
     },
 
     /**
+     * Private Helper: Resolves the API Key from various sources.
+     */
+    async _getApiKey() {
+        // 1. Check LocalStorage
+        let key = localStorage.getItem(API_KEY_STORAGE);
+        if (key && key.startsWith('AIza')) return key;
+
+        // 2. Try Import from Config (Secure Method)
+        try {
+            const { CONFIG } = await import('../config.js');
+            if (CONFIG && CONFIG.GEMINI_API_KEY) {
+                EMBEDDED_KEY = CONFIG.GEMINI_API_KEY;
+                console.log("Secure Config Loaded");
+                return EMBEDDED_KEY;
+            }
+        } catch (e) {
+            console.warn("Config file not found or blocked. Using fallback.");
+        }
+
+        // 3. Fallback (If EMBEDDED_KEY was set by a previous successful config load)
+        if (EMBEDDED_KEY) return EMBEDDED_KEY;
+
+        // 4. If no key found, throw an error to trigger prompt
+        throw new Error("API Key faltante. Configure js/config.js o ingrésela manualmente.");
+    },
+
+    /**
      * Private Helper: Call Gemini API
      */
     async _callGemini(promptText, inlineData = null, expectJson = true, onProgress = null) {
-        let apiKey = localStorage.getItem(API_KEY_STORAGE) || EMBEDDED_KEY;
+        let apiKey;
+        try {
+            apiKey = await this._getApiKey();
+        } catch (e) {
+            console.warn(e.message); // Log the config/embedded key error
+            // Fall through to prompt if _getApiKey failed
+        }
 
         if (!apiKey) {
             apiKey = prompt("🔑 Ingresa tu Google AI Studio API Key:");

@@ -69,31 +69,35 @@ export async function showImageViewer(caseId, imgId, mode = 'case') {
                     const list = document.getElementById('case-selector-list');
 
                     if (overlay && list) {
-                        const cases = getCases ? getCases() : []; // Safety check
+                        try {
+                            if (typeof getCases !== 'function') throw new Error("getCases not imported");
+                            const cases = getCases();
 
-                        if (!cases || cases.length === 0) {
-                            // Fallback if getCases failed or empty
-                            if (!getCases) alert("Error Interno: Función getCases no disponible.");
-                            else alert("No hay expedientes registrados a los cuales anexar.");
-                            return;
+                            if (cases.length === 0) {
+                                alert("No hay expedientes disponibles.");
+                                return;
+                            }
+
+                            list.innerHTML = cases.map(c => `
+                                <div class="p-4 bg-gray-800 rounded-lg border border-white/10 hover:bg-gray-700 cursor-pointer flex justify-between items-center transition-colors"
+                                     onclick="window.executeAnnex('${c.id}')">
+                                    <div>
+                                        <h4 class="font-bold text-sm text-white">${c.expediente}</h4>
+                                        <p class="text-xs text-muted">${c.court || 'Juzgado'} • ${c.actor}</p>
+                                    </div>
+                                    <div class="bg-white/10 p-2 rounded-full">
+                                        <i class="ph-bold ph-plus text-accent-gold"></i>
+                                    </div>
+                                </div>
+                             `).join('');
+
+                            overlay.classList.remove('hidden');
+                        } catch (e) {
+                            console.error("Annex Error:", e);
+                            alert("Error al cargar expedientes: " + e.message);
                         }
-
-                        list.innerHTML = cases.map(c => `
-                            <div class="p-4 bg-gray-800 rounded-lg border border-white/10 hover:bg-gray-700 cursor-pointer flex justify-between items-center transition-colors"
-                                 onclick="window.executeAnnex('${c.id}')">
-                                <div>
-                                    <h4 class="font-bold text-sm text-white">${c.expediente}</h4>
-                                    <p class="text-xs text-gray-400">${c.court} • ${c.actor}</p>
-                                </div>
-                                <div class="bg-white/10 p-2 rounded-full">
-                                    <i class="ph-bold ph-plus text-accent-gold"></i>
-                                </div>
-                            </div>
-                         `).join('');
-
-                        overlay.classList.remove('hidden');
                     } else {
-                        alert("Error UI: Selector no encontrado.");
+                        alert("Error UI: Componentes de selección no encontrados.");
                     }
                 }
                 break;
@@ -146,7 +150,7 @@ export async function showImageViewer(caseId, imgId, mode = 'case') {
             case 'reanalyze':
                 if (!confirm("¿Re-analizar este documento con la IA?")) return;
 
-                const btn = document.querySelector(`button[onclick*="'reanalyze'"]`);
+                const btn = document.querySelector(`button[onclick *= "'reanalyze'"]`);
                 const originalContent = btn ? btn.innerHTML : '';
                 if (btn) btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> ...';
 
@@ -211,8 +215,8 @@ async function renderContent(modal) {
     if (!img) return;
 
     modal.innerHTML = `
-            <div class="viewer-container" oncontextmenu="return false;">
-                <!-- Floating Fallback Close (For Desktop issues) -->
+                            < div class= "viewer-container" oncontextmenu = "return false;" >
+                < !--Floating Fallback Close(For Desktop issues)-- >
                 <div class="floating-close-btn" onclick="document.getElementById('image-viewer-modal').classList.add('hidden')">
                     <i class="ph-bold ph-arrow-left text-white"></i>
                 </div>
@@ -223,14 +227,14 @@ async function renderContent(modal) {
                     <div class="spacer"></div>
                 </div>
 
-            <!-- Main Image Area -->
+            <!--Main Image Area-- >
             <div class="viewer-main">
                 <div class="image-wrapper" id="image-wrapper">
                     <img src="${img.url}" id="active-image" alt="Documento" draggable="false">
                 </div>
             </div>
 
-            <!-- Floating Bottom Bar (Context Aware) -->
+            <!--Floating Bottom Bar(Context Aware)-- >
             <div class="mobile-bottom-bar" onclick="event.stopPropagation()">
                 ${currentMode === 'promotion' ? `
                     <!-- PROMOTION MODE ACTIONS -->
@@ -282,7 +286,7 @@ async function renderContent(modal) {
                 `}
             </div>
 
-            <!-- Bottom Sheet (AI Info) - For BOTH modes -->
+            <!--Bottom Sheet(AI Info) - For BOTH modes-- >
             <div class="bottom-sheet" id="ai-bottom-sheet">
                 <div class="sheet-drag-handle" onclick="document.getElementById('ai-bottom-sheet').classList.remove('active')"></div>
                 <div class="sheet-content">
@@ -338,7 +342,7 @@ async function renderContent(modal) {
                 </div>
             </div>
             
-            <!-- Case Selection Overlay (Promotions Mode) -->
+            <!--Case Selection Overlay(Promotions Mode)-- >
              <div id="case-selector-overlay" class="hidden absolute inset-0 bg-black/95 z-50 p-4 flex flex-col">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="h3 text-white">Seleccionar Expediente</h3>
@@ -349,14 +353,14 @@ async function renderContent(modal) {
                 </div>
             </div>
 
-            <!-- Desktop Only Toolbar (Legacy/Fallback) -->
-            <div class="desktop-toolbar hidden md:flex">
-                 <button id="zoom-out" class="btn-icon" onclick="window.adjustZoom(-0.2)"><i class="ph ph-minus"></i></button>
-                 <span id="zoom-level" class="mx-2 text-white">100%</span>
-                 <button id="zoom-in" class="btn-icon" onclick="window.adjustZoom(0.2)"><i class="ph ph-plus"></i></button>
-            </div>
-        </div>
-    `;
+            <!--Desktop Only Toolbar(Legacy / Fallback)-- >
+                            <div class="desktop-toolbar hidden md:flex">
+                                <button id="zoom-out" class="btn-icon" onclick="window.adjustZoom(-0.2)"><i class="ph ph-minus"></i></button>
+                                <span id="zoom-level" class="mx-2 text-white">100%</span>
+                                <button id="zoom-in" class="btn-icon" onclick="window.adjustZoom(0.2)"><i class="ph ph-plus"></i></button>
+                            </div>
+        </div >
+                                `;
 }
 
 function bindEvents(modal) {
@@ -495,15 +499,15 @@ function bindEvents(modal) {
                             const item = document.createElement('div');
                             item.className = 'p-3 pl-6 border-b border-white/10 hover:bg-white/5 cursor-pointer flex flex-col gap-1';
                             item.innerHTML = `
-                                 <div class="flex justify-between">
-                                     <span class="font-bold text-white text-base">${c.expediente || 'S/N'}</span>
+                            < div class= "flex justify-between" >
+                            <span class="font-bold text-white text-base">${c.expediente || 'S/N'}</span>
                                      ${c.juicio ? `<span class="text-xs text-accent/80 border border-accent/20 px-1 rounded">${c.juicio}</span>` : ''}
-                                 </div>
+                                 </div >
                                  <span class="text-sm text-gray-300 font-medium">${c.actor} vs ${c.demandado}</span>
                                  <span class="text-xs text-muted truncate">${c.juzgado || 'Juzgado desconocido'}</span>
                               `;
                             item.onclick = async () => {
-                                if (confirm(`¿Anexar a ${c.expediente}?`)) {
+                                if (confirm(`¿Anexar a ${c.expediente} ? `)) {
                                     movePromotionToCase(currentImageId, c.id);
                                     caseOverlay.classList.add('hidden');
                                     showToast("📂 Anexado correctamente.");
@@ -562,7 +566,7 @@ function bindEvents(modal) {
     // Zoom
     const updateTransform = () => {
         activeImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${zoomLevel})`;
-        document.getElementById('zoom-level').innerText = `${Math.round(zoomLevel * 100)}% `;
+        document.getElementById('zoom-level').innerText = `${Math.round(zoomLevel * 100)} % `;
     };
 
     document.getElementById('zoom-in').onclick = () => { zoomLevel += 0.2; updateTransform(); };
@@ -669,7 +673,7 @@ function bindEvents(modal) {
                     const fileToAnalyze = new File([blob], img.name, { type: blob.type });
 
                     const result = await AIAnalysisService.analyzeDocument(fileToAnalyze, (percent) => {
-                        btnRegen.innerHTML = `< i class="ph ph-scan" ></i > Analizando... ${percent}% `;
+                        btnRegen.innerHTML = `< i class= "ph ph-scan" ></i > Analizando...${percent} % `;
                     });
 
                     // Update Store

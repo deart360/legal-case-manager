@@ -34,8 +34,10 @@
     /* Force Highest Z-Index */
     gap: 1rem;
     color: white;
-    background: #111 !important;
-    /* Force opaque background for debugging/visibility */
+    background: rgba(0, 0, 0, 0.4) !important;
+    /* Liquid Glass */
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
