@@ -20,12 +20,36 @@ export async function showImageViewer(caseId, imgId, mode = 'case') {
     translateX = 0;
     translateY = 0;
 
+    // Zoom Helper
+    window.adjustZoom = (delta) => {
+        zoomLevel = Math.min(Math.max(0.5, zoomLevel + delta), 4);
+        const img = document.getElementById('active-image');
+        if (img) img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${zoomLevel})`;
+        const label = document.getElementById('zoom-level');
+        if (label) label.innerText = `${Math.round(zoomLevel * 100)}%`;
+    };
+
+    // Annex Execution Helper
+    window.executeAnnex = async (targetCaseId) => {
+        if (!window.pendingPromoAnnexId) return;
+        if (confirm("¿Confirmar anexo a este expediente?")) {
+            const { movePromotionToCase } = await import('../store.js');
+            await movePromotionToCase(window.pendingPromoAnnexId, targetCaseId);
+            alert("✅ ¡Documento Anexado Exitosamente!");
+            document.getElementById('image-viewer-modal').classList.add('hidden');
+            // Refresh Dashboard if needed? Store updates usually reactive or user will reload.
+            // Dispatch event to be safe
+            window.dispatchEvent(new CustomEvent('promotions-updated'));
+            window.dispatchEvent(new CustomEvent('cases-updated'));
+        }
+    };
+
     // Define Global Action Handler safely
     window.handleViewerAction = async (action) => {
         console.log("Viewer Action Triggered:", action);
 
         // Dynamic imports for logic
-        const { getPromotions, getCase, deletePromotion } = await import('../store.js');
+        const { getPromotions, getCase, deletePromotion, getCases } = await import('../store.js');
 
         let img;
         if (currentMode === 'promotion') {
@@ -40,11 +64,34 @@ export async function showImageViewer(caseId, imgId, mode = 'case') {
         switch (action) {
             case 'annex': // Promotion: Annex
                 if (currentMode === 'promotion') {
-                    // Show Overlay logic (global pending state)
                     window.pendingPromoAnnexId = currentImageId;
                     const overlay = document.getElementById('case-selector-overlay');
-                    if (overlay) overlay.classList.remove('hidden');
-                    else alert("Error: Selector de expedientes no encontrado.");
+                    const list = document.getElementById('case-selector-list');
+
+                    if (overlay && list) {
+                        const cases = getCases();
+                        if (cases.length === 0) {
+                            alert("No hay expedientes registrados.");
+                            return;
+                        }
+
+                        list.innerHTML = cases.map(c => `
+                            <div class="p-4 bg-gray-800 rounded-lg border border-white/10 hover:bg-gray-700 cursor-pointer flex justify-between items-center transition-colors"
+                                 onclick="window.executeAnnex('${c.id}')">
+                                <div>
+                                    <h4 class="font-bold text-sm text-white">${c.expediente}</h4>
+                                    <p class="text-xs text-gray-400">${c.court} • ${c.actor}</p>
+                                </div>
+                                <div class="bg-white/10 p-2 rounded-full">
+                                    <i class="ph-bold ph-plus text-accent-gold"></i>
+                                </div>
+                            </div>
+                         `).join('');
+
+                        overlay.classList.remove('hidden');
+                    } else {
+                        alert("Error UI: Selector no encontrado.");
+                    }
                 }
                 break;
 
@@ -150,12 +197,16 @@ async function renderContent(modal) {
                         <span>Anexar</span>
                     </button>
                     <div class="divider-v"></div>
+                    <button class="action-btn" onclick="window.handleViewerAction('info')">
+                        <i class="ph ph-sparkle text-accent-gold"></i>
+                        <span>IA Reporte</span>
+                    </button>
+                    <div class="divider-v"></div>
                     <button class="action-btn" onclick="window.handleViewerAction('answer')">
                         <i class="ph ph-check-circle text-green-500"></i>
                         <span>Contestado</span>
                     </button>
                 ` : `
-                    <!-- STANDARD CASE MODE ACTIONS -->
                     <!-- STANDARD CASE MODE ACTIONS -->
                     <button class="action-btn" onclick="window.handleViewerAction('share')">
                         <i class="ph ph-share-network"></i>
@@ -184,46 +235,51 @@ async function renderContent(modal) {
                 `}
             </div>
 
-            <!-- Bottom Sheet (AI Info) - Only for CASE mode -->
-            ${currentMode === 'case' ? `
+            <!-- Bottom Sheet (AI Info) - For BOTH modes -->
             <div class="bottom-sheet" id="ai-bottom-sheet">
-                <div class="sheet-drag-handle"></div>
+                <div class="sheet-drag-handle" onclick="document.getElementById('ai-bottom-sheet').classList.remove('active')"></div>
                 <div class="sheet-content">
-                    <!-- ... AI Content ... -->
                     <div class="sidebar-section">
                         <div class="flex justify-between items-center mb-2">
-                             <h3 class="h3 !mb-0">Análisis Gemini</h3>
-                             <!-- Re-analyze mini button -->
-                             <button id="btn-regenerate-ai" class="text-xs text-accent hover:underline flex items-center gap-1">
-                                <i class="ph-fill ph-arrows-clockwise"></i> Actualizar
-                             </button>
+                             <h3 class="h3 !mb-0">Análisis Gemini 3.0</h3>
                         </div>
                         <div class="ai-card compact">
+                            <h4 class="text-accent-gold font-bold text-sm mb-1">${img.aiAnalysis?.concept || img.type || "Documento"}</h4>
                             <p class="text-sm font-medium text-white">${img.aiAnalysis?.summary || img.summary || "Sin análisis previo."}</p>
+                            
+                            <div class="grid grid-cols-2 gap-2 mt-4">
+                                <div class="detail-box">
+                                    <span class="text-xs text-muted">Fecha Presentación</span>
+                                    <span class="font-mono text-white">${img.aiAnalysis?.filingDate || img.date || "N/A"}</span>
+                                </div>
+                                <div class="detail-box">
+                                    <span class="text-xs text-muted">Término (Días)</span>
+                                    <span class="font-mono text-red-400 font-bold">${img.aiAnalysis?.days || "0"}</span>
+                                </div>
+                            </div>
+
                             ${img.aiAnalysis?.legalBasis ? `<p class="text-xs text-muted mt-2 border-t border-glass pt-2">⚖️ ${img.aiAnalysis.legalBasis}</p>` : ''}
                         </div>
                     </div>
-                     <!-- ... Other AI details ... -->
                 </div>
             </div>
-            ` : ''} 
             
             <!-- Case Selection Overlay (Promotions Mode) -->
-             <div id="case-selector-overlay" class="hidden absolute inset-0 bg-black/90 z-40 p-4 flex flex-col">
+             <div id="case-selector-overlay" class="hidden absolute inset-0 bg-black/95 z-50 p-4 flex flex-col">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="h3 text-white">Seleccionar Expediente</h3>
-                    <button id="close-case-selector" class="btn-icon"><i class="ph ph-x"></i></button>
+                    <button onclick="document.getElementById('case-selector-overlay').classList.add('hidden')" class="btn-icon"><i class="ph ph-x"></i></button>
                 </div>
-                <div class="flex-1 overflow-y-auto" id="case-selector-list">
+                <div class="flex-1 overflow-y-auto space-y-2" id="case-selector-list">
                     <!-- Populated by JS -->
                 </div>
             </div>
 
             <!-- Desktop Only Toolbar (Legacy/Fallback) -->
             <div class="desktop-toolbar hidden md:flex">
-                 <button id="zoom-out" class="btn-icon"><i class="ph ph-minus"></i></button>
+                 <button id="zoom-out" class="btn-icon" onclick="window.adjustZoom(-0.2)"><i class="ph ph-minus"></i></button>
                  <span id="zoom-level" class="mx-2 text-white">100%</span>
-                 <button id="zoom-in" class="btn-icon"><i class="ph ph-plus"></i></button>
+                 <button id="zoom-in" class="btn-icon" onclick="window.adjustZoom(0.2)"><i class="ph ph-plus"></i></button>
             </div>
         </div>
     `;
