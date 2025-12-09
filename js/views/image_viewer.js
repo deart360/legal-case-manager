@@ -412,6 +412,14 @@ function bindEvents(modal) {
             // Safety check: Viewer must be visible
             if (modal.classList.contains('hidden')) return;
 
+            const target = e.target;
+            const tag = target.tagName;
+            const cls = target.className;
+
+            // DEBUG: Show what was clicked
+            const debugMsg = `CLICK: ${tag} .${cls.toString().substring(0, 15)}`;
+            showToast(debugMsg);
+
             // Ignore if clicking interactive elements
             if (e.target.closest('button') ||
                 e.target.closest('.action-btn') ||
@@ -420,6 +428,7 @@ function bindEvents(modal) {
                 e.target.closest('.mobile-bottom-bar') ||
                 e.target.closest('#case-selector-overlay') ||
                 e.target.closest('.floating-close-btn')) {
+                // console.log("Blocked by exclusion");
                 return;
             }
 
@@ -428,6 +437,7 @@ function bindEvents(modal) {
             const container = document.querySelector('.viewer-container');
             if (container) {
                 container.classList.toggle('ui-hidden');
+                showToast("Toggle UI");
             }
         };
 
