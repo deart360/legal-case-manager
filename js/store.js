@@ -689,6 +689,21 @@ export async function deleteCase(caseId) {
     return true;
 }
 
+// Helper to get all cases as array (for UI selectors)
+export function getCases() {
+    return Object.values(appData.cases || {});
+}
+
+// Helper to Update Promotion Metadata
+export async function updatePromotion(promoId, updates) {
+    const promo = appData.promotions.find(p => p.id === promoId);
+    if (!promo) return false;
+
+    Object.assign(promo, updates);
+    saveToLocal();
+    return true; // Simple local update (persistence logic for promotions array TBD if real backend)
+}
+
 export async function addImageToCase(caseId, fileObj, onProgress) {
     // alert("Store: Buscando caso " + caseId); // Removed Debug
     const c = appData.cases[caseId];
