@@ -1010,8 +1010,8 @@ function renderPromotionsList(container, promotions, isModal) {
         let rightSide = '';
         if (isModal) {
             // EXPANDED: "Fecha presentada"
-            // Ensure filingDate is used if available from AI, else use upload date
-            const displayDate = p.aiAnalysis?.filingDate || `${day}/${month}`;
+            // User Request: Use Upload Date (System Date), NOT AI Date
+            const displayDate = `${day} ${month}`; // Uses p.date (System Date)
             rightSide = `
                 <div class="text-right">
                     <div class="text-xs text-muted mb-1">Presentado</div>

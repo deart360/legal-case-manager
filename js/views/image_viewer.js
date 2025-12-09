@@ -103,8 +103,15 @@ export async function showImageViewer(caseId, imgId, mode = 'case') {
                 break;
 
             case 'date':
-                const date = img.aiAnalysis?.filingDate || img.date || 'No detectada';
-                alert(`📅 Fecha: ${date}`);
+                // User Request: Use Upload/System Date as Primary (Avoid AI confusion)
+                let d = 'No detectada';
+                if (img.date) {
+                    const dateObj = new Date(img.date);
+                    d = dateObj.toLocaleDateString();
+                } else if (img.aiAnalysis?.filingDate) {
+                    d = img.aiAnalysis.filingDate + " (AI)";
+                }
+                alert(`📅 Fecha de Presentación (Subida): ${d}`);
                 break;
 
             case 'answer':
