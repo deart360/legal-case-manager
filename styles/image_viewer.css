@@ -30,10 +30,30 @@
     display: flex;
     align-items: center;
     padding: 0 1rem;
-    z-index: 21;
-    /* Increased slightly to ensure above everything */
+    z-index: 5000 !important;
+    /* Force Highest Z-Index */
     gap: 1rem;
     color: white;
+    background: #111 !important;
+    /* Force opaque background for debugging/visibility */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Floating Close Button Fallback */
+.floating-close-btn {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 6000 !important;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .file-title {
@@ -240,6 +260,12 @@
 
 
 
+/* Force Overlay on Top */
+#case-selector-overlay {
+    z-index: 7000 !important;
+}
+
+/* Small Foldable / Phone Optimization */
 /* Small Foldable / Phone Optimization */
 @media (max-width: 400px) {
     .mobile-bottom-bar {

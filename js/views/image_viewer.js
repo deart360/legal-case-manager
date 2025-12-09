@@ -69,9 +69,12 @@ export async function showImageViewer(caseId, imgId, mode = 'case') {
                     const list = document.getElementById('case-selector-list');
 
                     if (overlay && list) {
-                        const cases = getCases();
-                        if (cases.length === 0) {
-                            alert("No hay expedientes registrados.");
+                        const cases = getCases ? getCases() : []; // Safety check
+
+                        if (!cases || cases.length === 0) {
+                            // Fallback if getCases failed or empty
+                            if (!getCases) alert("Error Interno: Función getCases no disponible.");
+                            else alert("No hay expedientes registrados a los cuales anexar.");
                             return;
                         }
 
@@ -208,16 +211,17 @@ async function renderContent(modal) {
     if (!img) return;
 
     modal.innerHTML = `
-        <div class="viewer-container" oncontextmenu="return false;">
-            <!-- Viewer Top Bar (Overlay) -->
-            <div class="viewer-top-bar">
-                 <button id="close-viewer" class="btn-icon transparent flex items-center gap-1 px-3 py-1.5 bg-black/20 rounded-full backdrop-blur-sm hover:bg-black/40 transition-colors">
-                    <i class="ph-bold ph-arrow-left text-lg"></i>
-                    <span class="text-sm font-medium">Atrás</span>
-                 </button>
-                 <span class="file-title text-sm truncate">${img.name}</span>
-                 <div class="spacer"></div> <!-- Balance layout -->
-            </div>
+            <div class="viewer-container" oncontextmenu="return false;">
+                <!-- Floating Fallback Close (For Desktop issues) -->
+                <div class="floating-close-btn" onclick="document.getElementById('image-viewer-modal').classList.add('hidden')">
+                    <i class="ph-bold ph-arrow-left text-white"></i>
+                </div>
+                
+                <div class="viewer-top-bar">
+                    <button id="close-viewer" class="btn-icon transparent"><i class="ph-bold ph-arrow-left"></i></button>
+                    <span class="file-title truncate px-2 text-sm md:text-base">${img.name || 'Documento'}</span>
+                    <div class="spacer"></div>
+                </div>
 
             <!-- Main Image Area -->
             <div class="viewer-main">
