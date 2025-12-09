@@ -423,10 +423,11 @@ function bindEvents(modal) {
                 return;
             }
 
-            // Must be clicking the container or the image wrapper
-            if (e.target.closest('.viewer-container')) {
-                const container = document.querySelector('.viewer-container');
-                if (container) container.classList.toggle('ui-hidden');
+            // Must be clicking the container or the image wrapper OR the modal background
+            // Use permissive check: If we haven't returned yet (meaning not a button), then it's a toggle.
+            const container = document.querySelector('.viewer-container');
+            if (container) {
+                container.classList.toggle('ui-hidden');
             }
         };
 
