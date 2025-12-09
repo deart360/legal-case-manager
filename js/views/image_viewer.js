@@ -139,6 +139,49 @@ export async function showImageViewer(caseId, imgId, mode = 'case') {
                     document.getElementById('image-viewer-modal').classList.add('hidden');
                 }
                 break;
+
+            case 'reanalyze':
+                if (!confirm("¿Re-analizar este documento con la IA?")) return;
+
+                const btn = document.querySelector(`button[onclick*="'reanalyze'"]`);
+                const originalContent = btn ? btn.innerHTML : '';
+                if (btn) btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> ...';
+
+                try {
+                    const { AIAnalysisService } = await import('../services/ai_service.js');
+                    // Fetch image as blob
+                    const response = await fetch(img.url);
+                    const blob = await response.blob();
+                    const file = new File([blob], img.name || "doc.jpg", { type: blob.type });
+
+                    const result = await AIAnalysisService.analyzePromotion(file);
+
+                    // Update Object
+                    img.aiAnalysis = result;
+
+                    // Persist Update
+                    const { updatePromotion, appData, saveData } = await import('../store.js');
+                    if (updatePromotion) {
+                        updatePromotion(currentImageId, { aiAnalysis: result });
+                    } else if (saveData) {
+                        saveData(); // Fallback: Assume img modification via reference worked
+                    }
+
+                    // Re-render
+                    await renderContent(document.getElementById('image-viewer-modal'));
+
+                    // Open Sheet
+                    const sheet = document.getElementById('ai-bottom-sheet');
+                    if (sheet) sheet.classList.add('active');
+
+                    alert("✅ Análisis actualizado: " + (result._meta?.model || "Gemini"));
+
+                } catch (err) {
+                    console.error('Reanalyze failed', err);
+                    alert("Error: " + err.message);
+                    if (btn) btn.innerHTML = originalContent;
+                }
+                break;
         }
     };
 
@@ -241,7 +284,18 @@ async function renderContent(modal) {
                 <div class="sheet-content">
                     <div class="sidebar-section">
                         <div class="flex justify-between items-center mb-2">
-                             <h3 class="h3 !mb-0">Análisis Gemini 3.0</h3>
+                             <div class="flex items-center gap-2">
+                                <h3 class="h3 !mb-0 text-sm">Análisis IA</h3>
+                                <span class="text-[0.65rem] font-mono uppercase px-1.5 py-0.5 rounded border ${img.aiAnalysis?._meta?.model?.includes('gemini-1.5')
+            ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+            : 'bg-purple-500/10 border-purple-500/30 text-accent-gold'
+        }">
+                                    ${img.aiAnalysis?._meta?.model || 'Gemini 3.0'}
+                                </span>
+                             </div>
+                             <button onclick="window.handleViewerAction('reanalyze')" class="text-xs text-muted hover:text-white flex items-center gap-1 transition-colors px-2 py-1 hover:bg-white/5 rounded">
+                                <i class="ph ph-arrows-clockwise"></i> Reanalizar
+                            </button>
                         </div>
                         <div class="ai-card compact">
                             <h4 class="text-accent-gold font-bold text-sm mb-1">${img.aiAnalysis?.concept || img.type || "Documento"}</h4>

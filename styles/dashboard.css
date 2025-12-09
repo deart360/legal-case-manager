@@ -14,30 +14,15 @@
     }
 }
 
-.dash-grid {
-    display: grid;
-    grid-template-columns: 3fr 2fr 2fr;
-    gap: 1.5rem;
-    height: calc(100vh - 120px);
-    /* Fallback */
-    height: calc(100dvh - 120px);
-    overflow: hidden;
-    padding-bottom: 1rem;
-}
-
 .dash-col {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    /* Allow scrolling if content is too tall */
     overflow-x: hidden;
     min-height: 0;
     padding-right: 4px;
-    /* Space for scrollbar */
-    /* Allow flex children to scroll */
 }
 
-/* Ensure full height for scrolling containers */
 .h-full {
     height: 100%;
 }
@@ -50,21 +35,12 @@
     overflow-y: auto;
 }
 
-/* Timeline specific adjustments for new layout */
-.timeline-list {
-    max-height: none;
-    /* Let flex handle height */
-    padding-right: 0.5rem;
-}
-
+.timeline-list,
 .urgent-list {
     max-height: none;
-    /* Let flex handle height */
-    overflow-y: auto;
     padding-right: 0.5rem;
 }
 
-/* Fix for white bar at bottom on mobile */
 html {
     height: 100%;
     background: #0f172a;
@@ -76,12 +52,68 @@ body {
     position: relative;
 }
 
-@media (max-width: 1024px) {
+.dash-grid {
+    display: grid;
+    /* Default Desktop (Large): 3 Columns */
+    grid-template-columns: 3fr 2fr 2fr;
+    grid-template-areas: "agenda terms misc";
+    gap: 1.5rem;
+    height: calc(100vh - 120px);
+    /* Fallback */
+    height: calc(100dvh - 120px);
+    overflow: hidden;
+    padding-bottom: 1rem;
+}
+
+/* Tablet / Foldable (Intermediate) */
+@media (min-width: 768px) and (max-width: 1199px) {
+    .dash-grid {
+        /* 2 Columns: Agenda Left, Terms/Misc Right Stacked */
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+            "agenda terms"
+            "agenda misc";
+        height: auto;
+        /* Allow scroll on body for tablets usually */
+        overflow: visible;
+    }
+
+    .col-agenda {
+        grid-area: agenda;
+    }
+
+    .col-terms {
+        grid-area: terms;
+    }
+
+    .col-misc {
+        grid-area: misc;
+    }
+}
+
+/* Mobile (Small) */
+@media (max-width: 767px) {
     .dash-grid {
         grid-template-columns: 1fr;
+        grid-template-areas:
+            "agenda"
+            "terms"
+            "misc";
         height: auto;
         overflow: visible;
         padding-bottom: 100px;
+    }
+
+    .col-agenda {
+        grid-area: agenda;
+    }
+
+    .col-terms {
+        grid-area: terms;
+    }
+
+    .col-misc {
+        grid-area: misc;
     }
 
     .calendar-card {

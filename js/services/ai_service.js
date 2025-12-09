@@ -207,7 +207,21 @@ export const AIAnalysisService = {
 
             if (expectJson) {
                 const cleanJson = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-                return JSON.parse(cleanJson);
+                try {
+                    const jsonObj = JSON.parse(cleanJson);
+                    // Inject Metadata (Model Used)
+                    if (typeof jsonObj === 'object' && jsonObj !== null) {
+                        jsonObj._meta = {
+                            model: modelName,
+                            usage: data.usageMetadata || {},
+                            timestamp: new Date().toISOString()
+                        };
+                    }
+                    return jsonObj;
+                } catch (e) {
+                    console.error("JSON Parse Error", e);
+                    return { summary: textResponse, _meta: { model: modelName, error: "JSON Parse Failed" } };
+                }
             }
             return textResponse;
 
@@ -239,10 +253,6 @@ export const AIAnalysisService = {
             const prompt = `
             Actúa como un Secretario Judicial experto. Analiza este sello de recepción (acuse de recibo) de una promoción legal o escrito.
             
-            Extrae la siguiente información con la mayor precisión posible:
-            1. "filingDate": La fecha exacta de presentación (formato YYYY-MM-DD). Si tiene hora, ignórala.
-            2. "court": El juzgado o autoridad ante quien se presentó (ej. "Juzgado 12 Civil", "Oficialía de Partes Común").
-            3. "caseNumber": El número de expediente al que va dirigido (ej. "1234/2023").
             Extrae la siguiente información con la mayor precisión posible:
             1. "filingDate": La fecha exacta de presentación (formato YYYY-MM-DD). Si tiene hora, ignórala.
             2. "court": El juzgado o autoridad ante quien se presentó (ej. "Juzgado 12 Civil", "Oficialía de Partes Común").

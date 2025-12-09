@@ -58,6 +58,8 @@ window.openImage = (caseId, imgId) => {
     showImageViewer(caseId, imgId);
 };
 
+window.showImageViewer = showImageViewer;
+
 // Global Actions
 window.promptAddSubject = (stateId) => {
     const name = prompt('Nombre de la nueva materia (ej. Mercantil):');
