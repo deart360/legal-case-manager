@@ -264,19 +264,40 @@ export const AIAnalysisService = {
                 console.warn("Retrying with fallback model (Gen-1.5)...");
                 try {
                     // Force a known working model for the retry
-                    const fallbackModel = 'models/gemini-1.5-pro';
-                    // Temporarily override resolve logic or just pass model params if _callGemini support it?
-                    // _callGemini calls _resolveModel internally.
-                    // Let's modify _resolveModel cache to force reload or just override internal key?
-                    // Simpler: Just try again, _resolveModel might pick the next best if we clear cache.
+                    console.warn("Attempting retry with gemini-1.5-pro...");
 
-                    // Actually, let's hardcode a fallback attempt here by calling the API directly or modifying _callGemini to accept model override.
-                    // Since I can't easily change _callGemini signature without breaking others, I'll implement a localized fallback fetch here.
+                    // We need to re-invoke _callGemini but we need the PROMPT first.
+                    // The prompt is distinct per function (analyzeDocument vs analyzePromotion).
+                    // This generalized handler in analyzePromotion doesn't know about generic documents, implies analyzePromotion context.
 
-                    // Cleanest quick fix: Clear cache and force next model? No.
-                    // Let's just throw, but give the user a clearer message if it was a 404 (Model not found).
+                    // Re-construct Prompt for Promotion (duplication needed or refactor?)
+                    // Refactor: Extract prompt to constant or helper? 
+                    // For stability now, I will inline the prompt logic again or assume we can just pass parameters if I refactored.
+                    // Since I can't easily fetch the original arguments here without closure:
+                    // actually, 'base64Data' and 'mimeType' are available in closure!
+                    // 'prompt' (string) is also available in closure!
+
+                    // So I can just call:
+                    // const retryResult = await this._callGemini(prompt, { mime_type: mimeType, data: base64Data }, true, onProgress);
+
+                    // BUT _callGemini uses _resolveModel which might pick the broken 3.0 again if I don't force it.
+                    // I must force _resolveModel to pick 1.5-pro. 
+                    // Hack: Override the cache temporarily?
+                    const previousCache = window._geminiModelCache;
+                    window._geminiModelCache = 'models/gemini-1.5-pro';
+
+                    try {
+                        const result = await this._callGemini(prompt, { mime_type: mimeType, data: base64Data }, true, onProgress);
+                        window._geminiModelCache = previousCache; // Restore for next time (or keep fallback?) -> Keep fallback to avoid loops.
+                        // Actually, if 1.5 worked, let's keep it.
+                        return result;
+                    } catch (innerErr) {
+                        window._geminiModelCache = previousCache;
+                        throw innerErr;
+                    }
+
                 } catch (retryErr) {
-                    // Ignore
+                    console.error("Fallback Retry Failed:", retryErr);
                 }
             }
 
