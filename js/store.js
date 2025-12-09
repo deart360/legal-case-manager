@@ -247,8 +247,74 @@ export const addPromotion = async (imageFile) => {
             window.dispatchEvent(new Event('promotions-updated'));
         }
     });
-
     return newPromo;
+};
+
+// Retries analysis for an existing promotion (e.g. after error)
+export const retryPromotionAnalysis = async (promoId) => {
+    const promoIndex = appData.promotions.findIndex(p => p.id === promoId);
+    if (promoIndex === -1) return;
+
+    const promo = appData.promotions[promoIndex];
+
+    // Set status directly to re-analyzing
+    appData.promotions[promoIndex].status = 'analyzing';
+    saveToLocal();
+    window.dispatchEvent(new Event('promotions-updated'));
+
+    try {
+        // We need to fetch the blob because AI service expects a File/Blob
+        // If it's a firebase URL, we fetch it. If it's base64, we convert it.
+        const response = await fetch(promo.url);
+        const blob = await response.blob();
+        const file = new File([blob], promo.name, { type: blob.type });
+
+        // Trigger AI Analysis
+        AIAnalysisService.analyzePromotion(file, (progress) => {
+            // Optional progress
+        }).then(analysis => {
+            const currentIdx = appData.promotions.findIndex(p => p.id === promoId);
+            if (currentIdx !== -1) {
+                appData.promotions[currentIdx].aiAnalysis = analysis;
+                appData.promotions[currentIdx].status = 'ready'; // Success
+
+                // Auto-Create Event logic (Duplicated from addPromotion - should be a helper but inline is fine for now)
+                if (analysis && analysis.filingDate) {
+                    const filingDate = analysis.filingDate;
+                    const eventTitle = `📜 Promoción: ${analysis.concept || 'Escrito presentado'}`;
+                    const eventDesc = `Juzgado: ${analysis.court || 'N/A'}\nExp: ${analysis.caseNumber || 'N/A'}`;
+                    const newEvent = {
+                        id: `evt-${Date.now()}`,
+                        title: eventTitle,
+                        description: eventDesc,
+                        date: filingDate,
+                        time: '09:00',
+                        type: 'audience',
+                        caseId: null
+                    };
+                    appData.generalEvents = appData.generalEvents || [];
+                    appData.generalEvents.push(newEvent);
+                }
+
+                saveToLocal();
+                window.dispatchEvent(new Event('promotions-updated'));
+            }
+        }).catch(err => {
+            console.error("Retry Analysis Failed", err);
+            const currentIdx = appData.promotions.findIndex(p => p.id === promoId);
+            if (currentIdx !== -1) {
+                appData.promotions[currentIdx].status = 'error';
+                saveToLocal();
+                window.dispatchEvent(new Event('promotions-updated'));
+            }
+        });
+
+    } catch (e) {
+        console.error("Error fetching image for retry:", e);
+        appData.promotions[promoIndex].status = 'error';
+        saveToLocal();
+        window.dispatchEvent(new Event('promotions-updated'));
+    }
 };
 
 export const deletePromotion = (promoId) => {

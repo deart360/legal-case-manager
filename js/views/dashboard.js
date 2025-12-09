@@ -712,7 +712,16 @@ function bindDashboardEvents(container, events) {
         if (!promoListEl) return;
 
         try {
-            const { getPromotions } = await import('../store.js');
+            const { getPromotions, retryPromotionAnalysis, deletePromotion } = await import('../store.js');
+            window.retryPromotion = retryPromotionAnalysis;
+
+            // Expose safer delete wrapper
+            window.deletePromoWrapper = (id) => {
+                if (confirm('¿Seguro que quieres borrar esta promoción pendiente?')) {
+                    deletePromotion(id);
+                }
+            };
+
             const list = getPromotions() || [];
 
             promoListEl.innerHTML = '';
@@ -735,23 +744,38 @@ function bindDashboardEvents(container, events) {
 
                 const item = document.createElement('div');
                 item.className = `promo-item ${statusClass}`;
-                item.onclick = () => { window.location.hash = '#promotions'; }; // Go to gallery on click
+
+                // Main click navigates
+                item.onclick = () => { window.location.hash = '#promotions'; };
+
+                let badgeHtml = `<span class="promo-status-badge">${statusText}</span>`;
+
+                // Interactive Retry Badge
+                if (isError) {
+                    badgeHtml = `<span class="promo-status-badge cursor-pointer hover:text-white transition-colors" onclick="event.stopPropagation(); retryPromotion('${p.id}')">
+                        <i class="ph-bold ph-arrow-clockwise"></i> ${statusText}
+                     </span>`;
+                }
 
                 item.innerHTML = `
                     <div class="promo-icon-box">
                         ${p.url ? `<img src="${p.url}" class="promo-thumb" alt="preview">` : '<i class="ph ph-file-image text-cyan-400"></i>'}
                     </div>
-                    <div class="promo-info">
+                    <div class="promo-info flex-1 min-w-0 pr-2">
                         <div class="flex justify-between items-start">
-                            <span class="promo-name" title="${p.name}">${p.aiAnalysis?.concept || p.name}</span>
-                            ${p.aiAnalysis?.filingDate ? `<span class="promo-date text-xs text-accent">${p.aiAnalysis.filingDate}</span>` : ''}
+                            <span class="promo-name truncate" title="${p.name}">${p.aiAnalysis?.concept || p.name}</span>
+                            ${p.aiAnalysis?.filingDate ? `<span class="promo-date text-xs text-accent whitespace-nowrap ml-2">${p.aiAnalysis.filingDate}</span>` : ''}
                         </div>
                         <div class="promo-meta">
-                            <span class="promo-status-badge">${statusText}</span>
+                            ${badgeHtml}
                             ${p.aiAnalysis?.court ? `<span class="truncate border-l border-white/10 pl-2 ml-1" style="max-width: 100px;">${p.aiAnalysis.court}</span>` : ''}
                         </div>
                     </div>
-                    <i class="ph ph-caret-right text-muted text-xs ml-2"></i>
+                    <div class="flex flex-col items-center justify-center pl-2 border-l border-white/5 space-y-2">
+                         <button class="text-zinc-500 hover:text-red-400 p-1 rounded-sm transition-colors" onclick="event.stopPropagation(); window.deletePromoWrapper('${p.id}')" title="Borrar">
+                            <i class="ph ph-trash"></i>
+                        </button>
+                    </div>
                 `;
                 promoListEl.appendChild(item);
             });
@@ -770,11 +794,18 @@ function bindDashboardEvents(container, events) {
             const file = e.target.files[0];
             if (!file) return;
 
+            // Stay on dashboard, show feedback if needed
+            // console.log("Subiendo archivo desde Dashboard...");
+
             const { addPromotion } = await import('../store.js');
 
-            // Optimistic UI? Logic handles it via event
             try {
+                // Just add it, store will trigger 'promotions-updated'
+                // Dashboard listens to this and re-renders the list in place
                 await addPromotion(file);
+
+                // Reset input to allow re-selecting same file if needed
+                promoInput.value = '';
             } catch (err) {
                 console.error(err);
                 alert("Error subiendo promoción: " + err.message);

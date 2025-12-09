@@ -27,10 +27,12 @@ export const AIAnalysisService = {
             TAREA:
             Analiza la imagen adjunta. Identifica fechas fatales y términos legales.
             
-            REGLAS DE RAZONAMIENTO:
-            1. Si el documento menciona una excepción a la fecha (ej. "días hábiles salvo..."), aplícala.
-            2. Si NO hay fecha de vencimiento explícita o deducible con 100% de certeza, devuelve "days": 0 y "deadline": "N/A". NO INVENTES FECHAS.
-            3. Analiza el contenido completo para encontrar cláusulas trampa.
+            REGLAS DE RAZONAMIENTO (DEEP THINK MODE):
+            1.  **PIENSA PASO A PASO**: Antes de extraer datos, analiza la coherencia interna del documento.
+            2.  **CONTRADICCIONES**: Busca activamente contradicciones sutiles entre el tipo de documento y el contenido.
+            3.  **FECHAS FATALES**: Si el documento menciona una excepción a la fecha (ej. "días hábiles salvo..."), razona la implicación exacta.
+            4.  **No inventes**: Si NO hay fecha de vencimiento explícita o deducible con 100% de certeza, devuelve "days": 0.
+            5.  **Exhaustividad**: Revisa el pie de página y los sellos marginales.
 
             EXTRACCIÓN (JSON STRICTO):
             Retorna UNICAMENTE un objeto JSON con:
@@ -256,6 +258,7 @@ export const AIAnalysisService = {
         } catch (error) {
             clearInterval(interval);
             console.error("AI Promotion Analysis Error:", error);
+            // alert(`Error de IA: ${error.message}`); // Optional debug
             throw error;
         }
     },
@@ -274,12 +277,13 @@ export const AIAnalysisService = {
             const data = await listRes.json();
             const models = data.models || [];
 
-            // Priority List - Updated based on actual API capabilities
+            // Priority List - STRICTLY Gemini 3.0 Pro as requested for Legal Reasoning
             const candidates = [
-                'models/gemini-3-pro-preview',   // CONFIRMED AVAILABLE
-                'models/gemini-3.0-pro',         // Future alias
-                'models/gemini-1.5-pro-002',     // Stable High Reasoning
-                'models/gemini-1.5-pro'          // Standard
+                'models/gemini-3.0-pro',         // Producción (Nov 2025)
+                'models/gemini-3.0-pro-001',     // Versionada
+                'models/gemini-3.0-pro-preview', // Preview
+                'models/gemini-exp-1206',        // Experimental High Reasoning
+                'models/gemini-1.5-pro'          // Fallback only if 3.0 is totally unreachable
             ];
             let bestModel = candidates.find(c => models.some(m => m.name === c));
 
