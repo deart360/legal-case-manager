@@ -919,7 +919,7 @@ function generateReport(container, type) {
     // Call AI
     import('../services/ai_service.js').then(async module => {
         try {
-            const aiReportHtml = await module.AIAnalysisService.generateWeeklyReport({
+            const reportResult = await module.AIAnalysisService.generateWeeklyReport({
                 user: user.name,
                 role: type,
                 stats: { completed: completedCount, urgent_pending: urgentPending, total_monitored: relevantTasks.length },
@@ -931,6 +931,10 @@ function generateReport(container, type) {
                 if (txt) txt.textContent = `${percent}%`;
             });
 
+            // Handle Metadata
+            const aiReportHtml = reportResult.text || reportResult;
+            const modelUsed = reportResult._meta?.model || 'Gemini 3.0';
+
             // Render Final Report
             const html = `
                 <div class="report-content p-6 h-full overflow-y-auto">
@@ -938,6 +942,9 @@ function generateReport(container, type) {
                         <i class="ph-duotone ph-chart-polar text-5xl text-accent mb-2"></i>
                         <h2 class="h2 text-gradient">${title}</h2>
                         <p class="text-sm text-muted">${lastWeek.toLocaleDateString()} - ${today.toLocaleDateString()}</p>
+                         <div class="mt-2 text-[0.7rem] uppercase tracking-wider text-muted/60 border border-white/10 inline-block px-2 py-0.5 rounded-full bg-white/5">
+                            Generado con <span class="${modelUsed.includes('1.5') ? 'text-blue-400' : 'text-purple-400'} font-bold">${modelUsed}</span>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4 mb-6">

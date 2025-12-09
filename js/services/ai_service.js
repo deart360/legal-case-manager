@@ -57,7 +57,8 @@ export const AIAnalysisService = {
 
         try {
             const result = await this._callGemini(promptText, { mime_type: mimeType, data: base64Data }, true, onProgress);
-            result.confidence = "Gemini 3.0 Pro (High Reasoning)";
+            // Use real model name if available, else hardcode fallback
+            result.confidence = (result._meta?.model || "Gemini 3.0 Pro") + " (Legacy Reasoning)";
             return result;
         } catch (error) {
             console.error("Gemini API Error in analyzeDocument:", error);
@@ -101,8 +102,8 @@ export const AIAnalysisService = {
             -   NO uses markdown blocks. Solo HTML puro renderizable.
         `;
 
-        // Text-only call but requesting HTML format
-        return this._callGemini(promptText, null, false, onProgress);
+        // Request text but package with metadata
+        return this._callGemini(promptText, null, 'text_with_meta', onProgress);
     },
 
     /**
@@ -179,7 +180,7 @@ export const AIAnalysisService = {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ parts: parts }],
-                    generationConfig: { response_mime_type: expectJson ? "application/json" : "text/plain" }
+                    generationConfig: { response_mime_type: (expectJson === true) ? "application/json" : "text/plain" }
                 }),
                 signal: controller.signal
             });
@@ -205,7 +206,7 @@ export const AIAnalysisService = {
 
             const textResponse = data.candidates[0].content.parts[0].text;
 
-            if (expectJson) {
+            if (expectJson === true) {
                 const cleanJson = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
                 try {
                     const jsonObj = JSON.parse(cleanJson);
@@ -223,6 +224,19 @@ export const AIAnalysisService = {
                     return { summary: textResponse, _meta: { model: modelName, error: "JSON Parse Failed" } };
                 }
             }
+
+
+            if (expectJson === 'text_with_meta') {
+                return {
+                    text: textResponse,
+                    _meta: {
+                        model: modelName,
+                        usage: data.usageMetadata || {},
+                        timestamp: new Date().toISOString()
+                    }
+                };
+            }
+
             return textResponse;
 
         } catch (error) {
