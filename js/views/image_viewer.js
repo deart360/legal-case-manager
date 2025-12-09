@@ -355,23 +355,20 @@ async function renderContent(modal) {
                 </div>
             </div>
             
-            <!-- Case Selection Overlay (Promotions Mode) -->
-             <div id="case-selector-overlay" class="hidden absolute inset-0 bg-black/95 z-[7000] p-4 flex flex-col">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="h3 text-white">Seleccionar Expediente</h3>
-                    <button onclick="document.getElementById('case-selector-overlay').classList.add('hidden')" class="btn-icon"><i class="ph ph-x"></i></button>
-                </div>
-                <div class="flex-1 overflow-y-auto space-y-2" id="case-selector-list">
-                    <!-- Populated by JS -->
-                </div>
-            </div>
-
-            <!-- Desktop Only Toolbar (Legacy / Fallback) -->
-                            <div class="desktop-toolbar hidden md:flex">
-                                <button id="zoom-out" class="btn-icon" onclick="window.adjustZoom(-0.2)"><i class="ph ph-minus"></i></button>
-                                <span id="zoom-level" class="mx-2 text-white">100%</span>
-                                <button id="zoom-in" class="btn-icon" onclick="window.adjustZoom(0.2)"><i class="ph ph-plus"></i></button>
                             </div>
+        </div>
+
+        <!-- Case Selection Overlay (Promotions Mode) - MOVED TO ROOT OF MODAL -->
+        <div id="case-selector-overlay" class="hidden absolute inset-0 bg-black/95 z-[7000] p-4 flex flex-col justify-center items-center backdrop-blur-md">
+                <div class="w-full max-w-md bg-gray-900 rounded-xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+                    <div class="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
+                        <h3 class="h3 text-white m-0">Seleccionar Expediente</h3>
+                        <button onclick="document.getElementById('case-selector-overlay').classList.add('hidden')" class="btn-icon text-white hover:text-red-400"><i class="ph-bold ph-x"></i></button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto space-y-2 p-2 custom-scrollbar" id="case-selector-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
         </div>
                                 `;
 }
