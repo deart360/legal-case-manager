@@ -355,8 +355,8 @@ async function renderContent(modal) {
                 </div>
             </div>
             
-            <!--Case Selection Overlay(Promotions Mode)-- >
-             <div id="case-selector-overlay" class="hidden absolute inset-0 bg-black/95 z-50 p-4 flex flex-col">
+            <!-- Case Selection Overlay (Promotions Mode) -->
+             <div id="case-selector-overlay" class="hidden absolute inset-0 bg-black/95 z-[7000] p-4 flex flex-col">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="h3 text-white">Seleccionar Expediente</h3>
                     <button onclick="document.getElementById('case-selector-overlay').classList.add('hidden')" class="btn-icon"><i class="ph ph-x"></i></button>
@@ -366,13 +366,13 @@ async function renderContent(modal) {
                 </div>
             </div>
 
-            <!--Desktop Only Toolbar(Legacy / Fallback)-- >
+            <!-- Desktop Only Toolbar (Legacy / Fallback) -->
                             <div class="desktop-toolbar hidden md:flex">
                                 <button id="zoom-out" class="btn-icon" onclick="window.adjustZoom(-0.2)"><i class="ph ph-minus"></i></button>
                                 <span id="zoom-level" class="mx-2 text-white">100%</span>
                                 <button id="zoom-in" class="btn-icon" onclick="window.adjustZoom(0.2)"><i class="ph ph-plus"></i></button>
                             </div>
-        </div >
+        </div>
                                 `;
 }
 
