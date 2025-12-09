@@ -106,8 +106,14 @@ export async function showImageViewer(caseId, imgId, mode = 'case') {
                 // User Request: Use Upload/System Date as Primary (Avoid AI confusion)
                 let d = 'No detectada';
                 if (img.date) {
+                    // Parse ISO (e.g. 2025-12-08) and force local timezone handling or UTC? 
+                    // Usually ISO from input type="date" is YYYY-MM-DD. 
+                    // If splitting by T, we might get UTC issue. Better to construct explicitly if needed.
+                    // But store.js uses T encoded. Let's start simple.
                     const dateObj = new Date(img.date);
-                    d = dateObj.toLocaleDateString();
+                    d = dateObj.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    // Capitalize first letter of day
+                    d = d.charAt(0).toUpperCase() + d.slice(1);
                 } else if (img.aiAnalysis?.filingDate) {
                     d = img.aiAnalysis.filingDate + " (AI)";
                 }

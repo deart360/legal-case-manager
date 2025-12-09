@@ -1005,17 +1005,21 @@ function renderPromotionsList(container, promotions, isModal) {
         const pDate = new Date(p.date + 'T00:00:00');
         const day = pDate.getDate();
         const month = pDate.toLocaleDateString('es-MX', { month: 'short' });
+        // Add Weekday (short) for context
+        const weekday = pDate.toLocaleDateString('es-MX', { weekday: 'short' }).replace('.', '');
+        const displayDate = `${day} ${month}`; // Keep compact
+        const displayDateFull = `${weekday} ${day} ${month}`; // Expanded for Modal
 
         // Right side content
         let rightSide = '';
         if (isModal) {
             // EXPANDED: "Fecha presentada"
-            // User Request: Use Upload Date (System Date), NOT AI Date
-            const displayDate = `${day} ${month}`; // Uses p.date (System Date)
+            // User Request: Use Upload Date (System Date) with Weekday
+            // const displayDate = `${day} ${month}`; // OLD
             rightSide = `
                 <div class="text-right">
                     <div class="text-xs text-muted mb-1">Presentado</div>
-                    <div class="font-bold text-accent font-mono">${displayDate}</div>
+                    <div class="font-bold text-accent font-mono capitalize">${displayDateFull}</div>
                 </div>
             `;
         } else {
