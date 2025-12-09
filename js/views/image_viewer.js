@@ -647,12 +647,19 @@ function bindEvents(modal) {
 
     function handleSwipe() {
         const swipeThreshold = 50;
-        // Always allow swipe navigation if we are just viewing
-        if (touchEndX < touchStartX - swipeThreshold) {
-            navigateImage(1);
-        }
-        if (touchEndX > touchStartX + swipeThreshold) {
-            navigateImage(-1);
+        const diff = touchEndX - touchStartX;
+
+        // If swipe distance is significant -> Navigate
+        if (Math.abs(diff) > swipeThreshold) {
+            if (diff > 0) navigateImage(-1); // Right swipe -> Prev
+            else navigateImage(1);  // Left swipe -> Next
+        } else {
+            // Tap (Insigifnicant movement) -> Toggle Immersive Mode
+            // Only if not zoomed in (to avoid toggling while trying to pan)
+            if (zoomLevel === 1) {
+                const container = document.querySelector('.viewer-container');
+                if (container) container.classList.toggle('ui-hidden');
+            }
         }
     }
 
