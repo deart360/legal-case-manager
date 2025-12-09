@@ -7,7 +7,9 @@ let currentMode = 'case'; // 'case' or 'promotion'
 let zoomLevel = 1;
 let isDragging = false;
 let startX, startY, translateX = 0, translateY = 0;
+
 let currentKeydownHandler = null;
+let currentClickHandler = null;
 
 export async function showImageViewer(caseId, imgId, mode = 'case') {
     const modal = document.getElementById('image-viewer-modal');
@@ -395,7 +397,45 @@ function bindEvents(modal) {
             window.removeEventListener('keydown', currentKeydownHandler);
             currentKeydownHandler = null;
         }
+        if (currentClickHandler) {
+            document.removeEventListener('click', currentClickHandler);
+            currentClickHandler = null;
+        }
+        if (modal.onclick) modal.onclick = null; // Clear local
     };
+
+    // Initialize Global Click Handler for Immersive Mode
+    const initImmersiveToggle = () => {
+        if (currentClickHandler) document.removeEventListener('click', currentClickHandler);
+
+        currentClickHandler = (e) => {
+            // Safety check: Viewer must be visible
+            if (modal.classList.contains('hidden')) return;
+
+            // Ignore if clicking interactive elements
+            if (e.target.closest('button') ||
+                e.target.closest('.action-btn') ||
+                e.target.closest('.bottom-sheet') ||
+                e.target.closest('.viewer-top-bar') ||
+                e.target.closest('.mobile-bottom-bar') ||
+                e.target.closest('#case-selector-overlay') ||
+                e.target.closest('.floating-close-btn')) {
+                return;
+            }
+
+            // Must be clicking the container or the image wrapper
+            if (e.target.closest('.viewer-container')) {
+                const container = document.querySelector('.viewer-container');
+                if (container) container.classList.toggle('ui-hidden');
+            }
+        };
+
+        // Delay attachment slightly to avoid immediate trigger from opening click
+        setTimeout(() => {
+            document.addEventListener('click', currentClickHandler);
+        }, 100);
+    };
+    initImmersiveToggle();
 
     // Close
     document.getElementById('close-viewer').onclick = () => {
