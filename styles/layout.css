@@ -1,10 +1,10 @@
 /* Layout Grid & Sidebar Styling */
 #sidebar {
     width: 280px;
-    background: rgba(5, 28, 18, 0.8);
-    /* Dark Green Tint */
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(10, 10, 10, 0.75);
+    /* Deep Black Glass */
+    backdrop-filter: saturate(180%) blur(25px);
+    -webkit-backdrop-filter: saturate(180%) blur(25px);
     border-right: 1px solid var(--glass-border);
     color: var(--text-main);
     display: flex;
@@ -32,6 +32,7 @@ body.login-mode #main-content {
     color: var(--accent);
     border-left: 3px solid var(--accent);
     border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.05);
 }
 
 /* ... existing code ... */
@@ -39,8 +40,8 @@ body.login-mode #main-content {
 .avatar {
     width: 42px;
     height: 42px;
-    background: linear-gradient(135deg, #d4af37, #051c12);
-    /* Gold to Dark Green */
+    background: linear-gradient(135deg, #d4af37, #b48e25);
+    /* Gold Gradient */
     border-radius: 50%;
     display: flex;
     align-items: center;

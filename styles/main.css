@@ -75,37 +75,40 @@
 /* ... existing code ... */
 
 :root {
-  /* Liquid Glass Palette (Deluxe Gold & Green) */
+  /* DELUXE LIQUID GLASS (Apple Dark + Black/Gold) */
   --bg-app: #000000;
-  /* Deep Dark Green Gradient */
-  --bg-gradient: radial-gradient(circle at 0% 0%, #0f291e 0%, #051c12 50%, #020617 100%);
+  --bg-gradient: radial-gradient(circle at 50% 0%, #1a1a1a 0%, #000000 70%);
 
-  /* Glass Surfaces (Gold Tinted) */
-  --glass-panel: rgba(212, 175, 55, 0.03);
-  --glass-panel-hover: rgba(212, 175, 55, 0.08);
-  --glass-border: rgba(212, 175, 55, 0.15);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
-  --glass-blur: blur(16px);
+  /* Glass Surfaces (Sophisticated Dark) */
+  --glass-panel: rgba(20, 20, 20, 0.65);
+  /* Darker, more substantial */
+  --glass-panel-hover: rgba(30, 30, 30, 0.75);
+  --glass-border: rgba(212, 175, 55, 0.25);
+  /* Subtle Gold Border */
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+  --glass-blur: blur(25px);
+  /* Heavy Apple-style blur */
+  --glass-saturate: saturate(180%);
 
-  /* Text Colors (Light on Dark) */
-  --text-main: #fefcf5;
-  /* Off-white Gold */
-  --text-muted: #94a3b8;
-  --text-accent: #fcd34d;
-  /* Light Gold */
+  /* Text Colors */
+  --text-main: #ffffff;
+  --text-muted: #9ca3af;
+  --text-accent: #fbbf24;
+  /* Bright Gold */
 
   /* Accents */
   --accent: #d4af37;
-  /* Gold */
-  --accent-glow: 0 0 20px rgba(212, 175, 55, 0.4);
+  /* Classic Gold */
+  --accent-glow: 0 0 25px rgba(212, 175, 55, 0.3);
+  --gradient-gold: linear-gradient(135deg, #d4af37 0%, #a17f1a 100%);
   --danger: #ef4444;
 
   /* Dimensions */
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --radius-xl: 32px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
+  --radius-xl: 40px;
 
-  --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-main: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
 }
 
 /* Reset & Base */
@@ -136,8 +139,10 @@ body {
   /* Dynamic Viewport Height */
   width: 100vw;
   background-image:
-    radial-gradient(circle at 80% 20%, rgba(56, 189, 248, 0.08) 0%, transparent 25%),
-    radial-gradient(circle at 10% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 25%);
+    radial-gradient(circle at 80% 10%, rgba(212, 175, 55, 0.08) 0%, transparent 40%),
+    /* Subtle Gold Glow */
+    radial-gradient(circle at 10% 90%, rgba(255, 255, 255, 0.03) 0%, transparent 40%);
+  /* Silver/Cloud */
 }
 
 /* Typography Utilities */
@@ -206,13 +211,29 @@ body {
 }
 
 /* Glass Card Utility */
+/* Glass Card Utility - Enhanced */
 .glass-card {
   background: var(--glass-panel);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur) var(--glass-saturate);
+  -webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shine Effect */
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.03), transparent);
+  transform: skewX(-25deg);
+  pointer-events: none;
 }
 
 .full-h {
@@ -346,22 +367,28 @@ body {
 }
 
 /* Global Liquid Glass Inputs & Buttons */
+/* Global Liquid Glass Inputs & Buttons */
 input,
 select,
 textarea {
-  background: rgba(17, 24, 39, 0.7) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  /* Lighter glass */
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: white !important;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 0.5rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--accent) !important;
-  background: rgba(17, 24, 39, 0.9) !important;
+  background: rgba(0, 0, 0, 0.4) !important;
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
   outline: none;
 }
 
