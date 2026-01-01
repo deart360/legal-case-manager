@@ -1,4 +1,4 @@
-const CACHE_NAME = 'legal-case-manager-v99';
+const CACHE_NAME = 'legal-case-manager-v100';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
