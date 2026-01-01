@@ -84,7 +84,7 @@ export function initSidebar() {
                     <span class="text-xs text-muted capitalize">${user.role === 'admin' ? 'Administrador' : 'Abogado'}</span>
                 </div>
                 <div class="status-indicator-sidebar connected" title="Conectado"></div>
-                <button class="btn-icon-sm ml-2 text-info" onclick="import('../utils/seed_data.js').then(m => m.seedScheduleData()).catch(e => alert('Error: ' + e))" title="IMPORTAR DATOS INICIALES">
+                <button class="btn-icon-sm ml-2 text-info" onclick="import('/js/utils/seed_data.js').then(m => m.seedScheduleData()).catch(e => alert('Error: ' + e))" title="IMPORTAR DATOS INICIALES">
                     <i class="ph ph-cloud-arrow-up"></i>
                 </button>
                 <button class="btn-icon-sm ml-2 text-danger" id="btn-logout" title="Cerrar Sesión">
