@@ -12,7 +12,7 @@ const getRelativeDate = (days) => {
 
 // Local Cache / Fallback Data
 // Local Cache / Fallback Data
-const LOCAL_STORAGE_KEY = 'legal_case_manager_data_v1';
+const LOCAL_STORAGE_KEY = 'legal_case_manager_data_v2'; // Version bump to clear old data
 
 // Load initial data from LocalStorage or use default
 let storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -22,10 +22,10 @@ export let appData = storedData ? JSON.parse(storedData) : {
             id: 'cdmx',
             name: 'Ciudad de México',
             subjects: [
-                { id: 'cdmx-fam', name: 'Familiar', cases: ['exp-001', 'exp-002'] },
-                { id: 'cdmx-civ', name: 'Civil', cases: ['exp-003'] },
-                { id: 'cdmx-pen', name: 'Penal', cases: ['exp-005'] },
-                { id: 'cdmx-lab', name: 'Laboral', cases: ['exp-006'] }
+                { id: 'cdmx-fam', name: 'Familiar', cases: [] },
+                { id: 'cdmx-civ', name: 'Civil', cases: [] },
+                { id: 'cdmx-pen', name: 'Penal', cases: [] },
+                { id: 'cdmx-lab', name: 'Laboral', cases: [] }
             ]
         },
         {
@@ -33,7 +33,7 @@ export let appData = storedData ? JSON.parse(storedData) : {
             name: 'Estado de México',
             subjects: [
                 { id: 'edomex-fam', name: 'Familiar', cases: [] },
-                { id: 'edomex-civ', name: 'Civil', cases: ['exp-004'] }
+                { id: 'edomex-civ', name: 'Civil', cases: [] }
             ]
         },
         {
@@ -47,91 +47,9 @@ export let appData = storedData ? JSON.parse(storedData) : {
     ],
     // State to hold pending promotions (filings)
     promotions: [],
-    cases: {
-        'exp-001': {
-            id: 'exp-001',
-            title: 'Divorcio Incausado - Perez vs Martinez',
-            expediente: '1234/2024',
-            juzgado: 'Juzgado 12 Familiar CDMX',
-            status: 'En Proceso',
-            lastUpdate: getRelativeDate(0),
-            images: [
-                { id: 'img1', url: 'https://placehold.co/600x800/png?text=Auto+Admisorio', type: 'Auto', summary: 'Se admite la demanda de divorcio.', deadline: getRelativeDate(2), nextAction: 'Presentar propuesta de convenio.', date: getRelativeDate(-2) },
-                { id: 'img2', url: 'https://placehold.co/600x800/png?text=Notificaci%C3%B3n', type: 'Notificación', summary: 'Emplazamiento a la contraparte realizado.', deadline: null, nextAction: 'Esperar contestación (9 días)', date: getRelativeDate(0) }
-            ],
-            tasks: [
-                { id: 't1', title: 'Audiencia Conciliatoria', date: getRelativeDate(5), urgent: true }
-            ]
-        },
-        // ... (Other mock cases would be here if not loaded from LS)
-        'exp-002': {
-            id: 'exp-002',
-            title: 'Sucesión Intestamentaria - Familia López',
-            expediente: '987/2023',
-            juzgado: 'Juzgado 4 Familiar CDMX',
-            status: 'Radicación',
-            lastUpdate: getRelativeDate(-1),
-            images: [
-                { id: 'img3', url: 'https://placehold.co/600x800/png?text=Declaratoria+Herederos', type: 'Sentencia', summary: 'Se reconocen herederos a hijos y cónyuge.', deadline: null, nextAction: 'Designar albacea', date: getRelativeDate(-1) }
-            ],
-            tasks: []
-        },
-        'exp-003': {
-            id: 'exp-003',
-            title: 'Juicio Ordinario Civil - Arrendamiento',
-            expediente: '888/2023',
-            juzgado: 'Juzgado 5 Civil CDMX',
-            status: 'Sentencia',
-            images: [],
-            tasks: [
-                { id: 't2', title: 'Recoger billete de depósito', date: getRelativeDate(1), urgent: false }
-            ]
-        },
-        'exp-004': {
-            id: 'exp-004',
-            title: 'Ejecutivo Mercantil - Banco vs Empresa X',
-            expediente: '111/2024',
-            juzgado: 'Juzgado 2 Civil EdoMex',
-            status: 'Embargo',
-            lastUpdate: getRelativeDate(1),
-            images: [
-                { id: 'img4', url: 'https://placehold.co/600x800/png?text=Diligencia+Embargo', type: 'Acta', summary: 'Se traba embargo sobre bienes muebles.', deadline: getRelativeDate(4), nextAction: 'Inscribir embargo RPP', date: getRelativeDate(1) }
-            ],
-            tasks: []
-        },
-        'exp-005': {
-            id: 'exp-005',
-            title: 'Carpeta Investigación - Robo',
-            expediente: 'CI-FCH/CU/UI-1/002/2024',
-            juzgado: 'Fiscalía Cuauhtémoc',
-            status: 'Investigación',
-            lastUpdate: getRelativeDate(2),
-            images: [],
-            tasks: [
-                { id: 't3', title: 'Acompañar a ratificación', date: getRelativeDate(2), urgent: true },
-                { id: 't4', title: 'Presentar peritaje', date: getRelativeDate(3), urgent: true }
-            ]
-        },
-        'exp-006': {
-            id: 'exp-006',
-            title: 'Despido Injustificado - Ramirez vs Patrón',
-            expediente: '567/2024',
-            juzgado: 'Junta Local Conciliación',
-            status: 'Conciliación',
-            lastUpdate: getRelativeDate(3),
-            images: [
-                { id: 'img5', url: 'https://placehold.co/600x800/png?text=Citatorio', type: 'Citatorio', summary: 'Cita para pláticas conciliatorias.', deadline: getRelativeDate(3), nextAction: 'Asistir a audiencia', date: getRelativeDate(3) }
-            ],
-            tasks: []
-        }
-    },
+    cases: {},
     // Mock user tasks for dashboard
-    dashboardTasks: [
-        { id: 'dt1', title: 'Revisar acuerdo Exp 1234/2024', date: getRelativeDate(0), type: 'urgent', caseId: 'exp-001' },
-        { id: 'dt2', title: 'Presentar promoción Exp 888/2023', date: getRelativeDate(1), type: 'normal', caseId: 'exp-003' },
-        { id: 'dt3', title: 'Llamar a cliente (Divorcio)', date: getRelativeDate(0), type: 'normal', caseId: 'exp-001' },
-        { id: 'dt4', title: 'Pagar copias certificadas', date: getRelativeDate(2), type: 'normal', caseId: 'exp-005' }
-    ]
+    dashboardTasks: []
 };
 
 // Helper to save to LocalStorage
@@ -742,6 +660,48 @@ export async function updatePromotion(promoId, updates) {
     }
 
     return true;
+}
+
+// --- Debug / Reset Tools ---
+export async function wipeCloudData() {
+    if (!confirm("⚠️ ¡ADVERTENCIA! ⚠️\n\nEsto borrará PERMANENTEMENTE todos los datos de la base de datos (Casos, Tareas, Promociones) en la nube.\n\n¿Estás seguro que deseas continuar?")) {
+        return;
+    }
+
+    if (db) {
+        try {
+            console.log("Iniciando borrado masivo...");
+
+            // 1. Delete Cases
+            const casesQ = await db.collection('cases').get();
+            const caseBatch = db.batch();
+            casesQ.forEach(doc => caseBatch.delete(doc.ref));
+            await caseBatch.commit();
+            console.log(`Eliminados ${casesQ.size} casos.`);
+
+            // 2. Delete Tasks
+            const tasksQ = await db.collection('tasks').get();
+            const tasksBatch = db.batch();
+            tasksQ.forEach(doc => tasksBatch.delete(doc.ref));
+            await tasksBatch.commit();
+            console.log(`Eliminadas ${tasksQ.size} tareas.`);
+
+            // 3. Delete Promotions
+            const promosQ = await db.collection('promotions').get();
+            const promosBatch = db.batch();
+            promosQ.forEach(doc => promosBatch.delete(doc.ref));
+            await promosBatch.commit();
+            console.log(`Eliminadas ${promosQ.size} promociones.`);
+
+        } catch (e) {
+            console.error("Error borrando datos:", e);
+            alert("Error borrando datos de la nube: " + e.message);
+        }
+    }
+
+    // Clear Local
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+    window.location.reload();
 }
 
 export async function addImageToCase(caseId, fileObj, onProgress) {

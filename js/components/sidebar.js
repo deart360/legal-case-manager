@@ -84,6 +84,9 @@ export function initSidebar() {
                     <span class="text-xs text-muted capitalize">${user.role === 'admin' ? 'Administrador' : 'Abogado'}</span>
                 </div>
                 <div class="status-indicator-sidebar connected" title="Conectado"></div>
+                <button class="btn-icon-sm ml-2 text-warning" onclick="import('../store.js').then(m => m.wipeCloudData())" title="LIMPIAR BASES DE DATOS (RESET)">
+                    <i class="ph ph-trash"></i>
+                </button>
                 <button class="btn-icon-sm ml-2 text-danger" id="btn-logout" title="Cerrar Sesión">
                     <i class="ph ph-sign-out"></i>
                 </button>
