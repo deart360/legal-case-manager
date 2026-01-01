@@ -115,7 +115,7 @@ export const addPromotion = async (imageFile) => {
 
     // Firebase Sync
     if (db) {
-        db.collection('promotions').doc(newId).set(newPromo).catch(err => {
+        db.collection('promotions_v2').doc(newId).set(newPromo).catch(err => {
             console.error("Error syncing promotion to cloud:", err);
         });
     }
@@ -248,7 +248,7 @@ export const deletePromotion = (promoId) => {
 
     // Firebase Sync
     if (db) {
-        db.collection('promotions').doc(promoId).delete().catch(err => console.error("Error deleting from cloud:", err));
+        db.collection('promotions_v2').doc(promoId).delete().catch(err => console.error("Error deleting from cloud:", err));
     }
 
     window.dispatchEvent(new Event('promotions-updated'));
@@ -285,7 +285,7 @@ export const movePromotionToCase = async (promoId, targetCaseId) => {
 
             // Firebase Delete (Sync)
             if (db) {
-                db.collection('promotions').doc(promoId).delete().catch(e => console.error("Error removing moved promo from cloud:", e));
+                db.collection('promotions_v2').doc(promoId).delete().catch(e => console.error("Error removing moved promo from cloud:", e));
             }
         }
 
@@ -296,7 +296,7 @@ export const movePromotionToCase = async (promoId, targetCaseId) => {
             try {
                 // We add to the array
                 // For safety in this MVP, we save the whole image array
-                db.collection('cases').doc(targetCaseId).update({
+                db.collection('cases_v2').doc(targetCaseId).update({
                     images: c.images
                 });
             } catch (e) {
@@ -316,7 +316,7 @@ async function syncFromFirebase() {
     if (!db) return;
     try {
         // 1. Load Cases
-        const casesSnapshot = await db.collection('cases').get();
+        const casesSnapshot = await db.collection('cases_v2').get();
         if (!casesSnapshot.empty) {
             // Merge strategy: We trust Firebase more, but we don't want to lose local unsynced changes immediately.
             // For simplicity in this demo: We overwrite local cases with Firebase cases if they exist.
@@ -328,7 +328,7 @@ async function syncFromFirebase() {
         }
 
         // 2. Load Dashboard Tasks
-        const tasksSnapshot = await db.collection('tasks').get();
+        const tasksSnapshot = await db.collection('tasks_v2').get();
         if (!tasksSnapshot.empty) {
             appData.dashboardTasks = [];
             tasksSnapshot.forEach(doc => {
@@ -338,7 +338,7 @@ async function syncFromFirebase() {
 
         // 3. Listen to Promotions (Real-time)
         if (db) {
-            db.collection('promotions').onSnapshot(snapshot => {
+            db.collection('promotions_v2').onSnapshot(snapshot => {
                 const remotePromos = [];
                 snapshot.forEach(doc => remotePromos.push(doc.data()));
 
@@ -513,7 +513,7 @@ export async function addCase(subjectId, caseData) {
     // Firebase Update
     if (db) {
         try {
-            await db.collection('cases').doc(newId).set(newCase);
+            await db.collection('cases_v2').doc(newId).set(newCase);
             console.log("Caso guardado en Firebase");
         } catch (e) {
             console.error("Error guardando en Firebase:", e);
@@ -543,13 +543,13 @@ export async function addTask(caseId, taskData) {
     // Firebase Update
     if (db) {
         try {
-            await db.collection('cases').doc(caseId).update({
+            await db.collection('cases_v2').doc(caseId).update({
                 tasks: firebase.firestore.FieldValue.arrayUnion(newTask)
             });
         } catch (e) {
             console.error("Error agregando tarea a Firebase:", e);
             // Fallback
-            await db.collection('cases').doc(caseId).update({
+            await db.collection('cases_v2').doc(caseId).update({
                 tasks: c.tasks
             });
         }
@@ -580,7 +580,7 @@ export async function updateTask(caseId, taskId, updates) {
     if (db) {
         try {
             // Update the entire tasks array for simplicity, or use a transaction
-            await db.collection('cases').doc(caseId).update({
+            await db.collection('cases_v2').doc(caseId).update({
                 tasks: c.tasks
             });
         } catch (e) {
@@ -606,7 +606,7 @@ export async function updateCase(caseId, updatedData) {
     // Firebase Update
     if (db) {
         try {
-            await db.collection('cases').doc(caseId).update(updatedData);
+            await db.collection('cases_v2').doc(caseId).update(updatedData);
         } catch (e) {
             console.error("Error actualizando en Firebase:", e);
         }
@@ -633,7 +633,7 @@ export async function deleteCase(caseId) {
     // Firebase Delete
     if (db) {
         try {
-            await db.collection('cases').doc(caseId).delete();
+            await db.collection('cases_v2').doc(caseId).delete();
         } catch (e) {
             console.error("Error borrando en Firebase:", e);
         }
@@ -656,7 +656,7 @@ export async function updatePromotion(promoId, updates) {
 
     // Firebase Sync
     if (db) {
-        db.collection('promotions').doc(promoId).update(updates).catch(e => console.error("Error updating promo cloud:", e));
+        db.collection('promotions_v2').doc(promoId).update(updates).catch(e => console.error("Error updating promo cloud:", e));
     }
 
     return true;
@@ -673,21 +673,21 @@ export async function wipeCloudData() {
             console.log("Iniciando borrado masivo...");
 
             // 1. Delete Cases
-            const casesQ = await db.collection('cases').get();
+            const casesQ = await db.collection('cases_v2').get();
             const caseBatch = db.batch();
             casesQ.forEach(doc => caseBatch.delete(doc.ref));
             await caseBatch.commit();
             console.log(`Eliminados ${casesQ.size} casos.`);
 
             // 2. Delete Tasks
-            const tasksQ = await db.collection('tasks').get();
+            const tasksQ = await db.collection('tasks_v2').get();
             const tasksBatch = db.batch();
             tasksQ.forEach(doc => tasksBatch.delete(doc.ref));
             await tasksBatch.commit();
             console.log(`Eliminadas ${tasksQ.size} tareas.`);
 
             // 3. Delete Promotions
-            const promosQ = await db.collection('promotions').get();
+            const promosQ = await db.collection('promotions_v2').get();
             const promosBatch = db.batch();
             promosQ.forEach(doc => promosBatch.delete(doc.ref));
             await promosBatch.commit();
@@ -793,7 +793,7 @@ export async function addImageToCase(caseId, fileObj, onProgress) {
         // Update Case in Firebase
         if (db) {
             try {
-                await db.collection('cases').doc(caseId).update({
+                await db.collection('cases_v2').doc(caseId).update({
                     images: firebase.firestore.FieldValue.arrayUnion(newImg),
                     lastUpdate: c.lastUpdate
                 });

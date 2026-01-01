@@ -9,18 +9,18 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Rules for 'cases' collection
-    match /cases/{caseId} {
+    // Rules for 'cases_v2' collection
+    match /cases_v2/{caseId} {
       allow read, write: if isAuthenticated();
     }
 
-    // Rules for 'promotions' collection (uploads)
-    match /promotions/{promoId} {
+    // Rules for 'promotions_v2' collection (uploads)
+    match /promotions_v2/{promoId} {
       allow read, write: if isAuthenticated();
     }
 
-    // Rules for 'tasks' collection (dashboard tasks)
-    match /tasks/{taskId} {
+    // Rules for 'tasks_v2' collection (dashboard tasks)
+    match /tasks_v2/{taskId} {
       allow read, write: if isAuthenticated();
     }
 
