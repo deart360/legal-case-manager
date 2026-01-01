@@ -53,7 +53,7 @@ export let appData = storedData ? JSON.parse(storedData) : {
 };
 
 // Helper to save to LocalStorage
-function saveToLocal() {
+export function saveToLocal() {
     try {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData));
         console.log("Datos guardados localmente");
